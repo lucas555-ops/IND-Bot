@@ -181,6 +181,23 @@ export async function getProfileSnapshotByTelegramUserId(client, telegramUserId)
   return decorateProfileSnapshot(client, result.rows[0] || null);
 }
 
+
+export async function hideProfileListingByUserId(client, userId) {
+  await client.query(
+    `
+      update member_profiles
+      set
+        visibility_status = 'hidden',
+        updated_at = now()
+      where user_id = $1
+        and visibility_status = 'listed'
+    `,
+    [userId]
+  );
+
+  return getProfileSnapshotByUserId(client, userId);
+}
+
 export async function updateProfileField(client, { userId, fieldKey, value }) {
   const meta = getProfileFieldMeta(fieldKey);
   if (!meta) {
