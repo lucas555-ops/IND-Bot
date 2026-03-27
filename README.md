@@ -1,6 +1,9 @@
 # LinkedIn Telegram Directory Bot
 
-STEP024.9 reconciliation baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, durable notification receipt diagnostics, an allowlisted in-Telegram operator surface, deploy-readiness micro-hardening, public legal/web surfaces for app registration, deploy-stable webhook/bot-init protection, and a live OAuth route import-resolution hotfix.
+STEP025 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, durable notification receipt diagnostics, an allowlisted in-Telegram operator surface, deploy-readiness micro-hardening, public legal/web surfaces for app registration, deploy-stable webhook/bot-init protection, the OAuth route import-resolution hotfix, and a reconciled LinkedIn URL profile-edit session schema.
+
+
+Migration note: Run the latest database migration so `profile_edit_sessions.field_key` accepts `li` before testing the LinkedIn URL editor.
 
 ## What this repo is
 
