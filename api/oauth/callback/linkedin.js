@@ -1,18 +1,18 @@
-import { getLinkedInConfig, getTelegramConfig } from '../../../../src/config/env.js';
+import { getLinkedInConfig, getTelegramConfig } from '../../../src/config/env.js';
 import {
   exchangeCodeForToken,
   fetchOidcDiscovery,
   fetchUserInfo,
   validateIdToken,
   verifySignedState
-} from '../../../../src/lib/linkedin/oidc.js';
+} from '../../../src/lib/linkedin/oidc.js';
 import {
   buildConnectedSummary,
   buildPersistenceSummary,
   pickLinkedInIdentityClaims
-} from '../../../../src/lib/linkedin/profile.js';
-import { persistLinkedInIdentity } from '../../../../src/lib/storage/linkedinIdentityStore.js';
-import { sendTelegramMessage } from '../../../../src/lib/telegram/botApi.js';
+} from '../../../src/lib/linkedin/profile.js';
+import { persistLinkedInIdentity } from '../../../src/lib/storage/linkedinIdentityStore.js';
+import { sendTelegramMessage } from '../../../src/lib/telegram/botApi.js';
 
 function escapeHtml(input) {
   return String(input)
