@@ -32,9 +32,6 @@ const inboxText = renderIntroInboxText({
     sent: [sentAccepted]
   }
 });
-if (!inboxText.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
-}
 
 const inboxKeyboard = renderIntroInboxKeyboard({
   inboxState: {

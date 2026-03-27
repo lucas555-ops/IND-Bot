@@ -12,9 +12,6 @@ const inboxState = {
 };
 
 const text = renderIntroInboxText({ persistenceEnabled: true, inboxState });
-if (!text.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
-}
 if (!text.includes('Received pending actions:') || !text.includes('Sent recent requests:')) {
   throw new Error('Intro inbox text must expose received and sent row sections');
 }
@@ -42,6 +39,10 @@ if (!flattened.some((button) => button.url === 'https://www.linkedin.com/in/alic
 }
 if (flattened.some((button) => button.callback_data === 'intro:acc:12' || button.callback_data === 'intro:dec:12')) {
   throw new Error('Sent rows must not expose accept/decline actions');
+}
+
+if (!flattened.some((button) => button.callback_data === 'intro:inbox' && button.text === '🔄 Refresh')) {
+  throw new Error('Intro inbox keyboard must expose refresh action with compact label');
 }
 
 console.log('OK: intro inbox actions baseline');

@@ -24,8 +24,8 @@ const inboxText = renderIntroInboxText({
   }
 });
 
-if (!inboxText.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
+if (!inboxText.includes('Review incoming intros and track the ones you have sent.')) {
+  throw new Error('Intro inbox text must use product-facing summary copy');
 }
 if (!inboxText.includes('Received: 2/3 pending/total')) {
   throw new Error('Intro inbox text must show received counters');
@@ -37,7 +37,7 @@ if (!inboxText.includes('Received pending actions:') || !inboxText.includes('Sen
 const inboxKeyboard = renderIntroInboxKeyboard({
   inboxState: { received: [{ intro_request_id: 1 }], sent: [] }
 });
-if (!inboxKeyboard.inline_keyboard.flat().some((button) => button.callback_data === 'intro:inbox')) {
+if (!inboxKeyboard.inline_keyboard.flat().some((button) => button.callback_data === 'intro:inbox' && button.text === '🔄 Refresh')) {
   throw new Error('Intro inbox keyboard must expose refresh callback');
 }
 

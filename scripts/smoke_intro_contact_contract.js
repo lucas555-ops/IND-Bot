@@ -53,9 +53,6 @@ const inboxState = {
 };
 
 const text = renderIntroInboxText({ persistenceEnabled: true, inboxState });
-if (!text.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
-}
 if (!text.includes('contact unlocked')) {
   throw new Error('Accepted sent rows with a URL must describe unlocked contact');
 }

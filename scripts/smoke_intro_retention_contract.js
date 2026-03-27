@@ -22,9 +22,6 @@ const inboxText = renderIntroInboxText({
   }
 });
 
-if (!inboxText.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
-}
 if (!inboxText.includes('archived snapshot')) {
   throw new Error('Intro inbox text must describe archived snapshot rows');
 }

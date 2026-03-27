@@ -32,6 +32,9 @@ const homeKeyboard = renderHomeKeyboard({
 if (!JSON.stringify(homeKeyboard).includes('dir:list:0')) {
   throw new Error('Home keyboard must expose browse directory entrypoint when persistence is enabled');
 }
+if (homeKeyboard.inline_keyboard.flat().some((button) => button.callback_data === 'home:root')) {
+  throw new Error('Home keyboard must not include a Home button on the home surface');
+}
 
 const listText = renderDirectoryListText({ profiles: sampleProfiles, page: 0, totalCount: 1, persistenceEnabled: true });
 if (!listText.includes('Public directory') || !listText.includes('Rustam Lukmanov')) {

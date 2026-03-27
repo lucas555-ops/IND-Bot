@@ -38,8 +38,5 @@ if (!runtimeGuardStoreSource.includes('cleanupExpiredRuntimeGuards')) {
 if (!notificationStoreSource.includes('guardCleanup')) {
   throw new Error('Notification retry path must report guard cleanup summary');
 }
-if (!renderSource.includes('STEP020 baseline')) {
-  throw new Error('Intro surfaces must expose STEP020 baseline text');
-}
 
 console.log('OK: anti-abuse / retry / dedupe hardening baseline');

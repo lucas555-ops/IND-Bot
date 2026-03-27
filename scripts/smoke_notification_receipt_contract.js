@@ -52,9 +52,6 @@ const inboxText = renderIntroInboxText({
     sent: []
   }
 });
-if (!inboxText.includes('STEP020 baseline')) {
-  throw new Error('Intro inbox text must state the STEP020 baseline');
-}
 
 const notificationRepoSource = readFileSync(new URL('../src/db/notificationRepo.js', import.meta.url), 'utf8');
 if (!notificationRepoSource.includes('notification_receipts')) {
