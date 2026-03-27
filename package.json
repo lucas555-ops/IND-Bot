@@ -38,7 +38,7 @@
     "smoke:bot-init": "node scripts/smoke_telegram_bot_init_contract.js"
   },
   "dependencies": {
-    "grammy": "^1.41.1",
+    "grammy": "1.41.1",
     "jose": "^5.9.6",
     "pg": "^8.13.3"
   }
