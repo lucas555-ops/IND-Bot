@@ -1,1 +1,19 @@
-1
+export async function sendTelegramMessage({ botToken, chatId, text, replyMarkup }) {
+  const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      reply_markup: replyMarkup,
+      parse_mode: 'HTML'
+    })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.ok === false) {
+    throw new Error(`Telegram sendMessage failed: ${response.status} ${JSON.stringify(payload)}`);
+  }
+
+  return payload;
+}
