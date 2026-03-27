@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP026.1 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, clean user-facing Telegram surfaces, durable notification receipts, an allowlisted operator diagnostics layer, deploy-stable Vercel settings, and public legal/web surfaces for app registration.
+STEP026.3 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, clean user-facing Telegram surfaces, a reconciled command contract, durable notification receipts, an allowlisted operator diagnostics layer, deploy-stable Vercel settings, and public legal/web surfaces for app registration.
 
 ## What this repo is
 
@@ -36,7 +36,8 @@ Not:
 - STEP024.8 — OAuth route import fix
 - STEP024.9 — repo/docs/smoke reconciliation baseline
 - STEP025 — profile edit session schema fix for LinkedIn URL
-- STEP026.1 — product surface polish + navigation consistency
+- STEP026.2 — reconciled self-contained baseline for product surface polish + compatibility
+- STEP026.3 — command contract cleanup for /help, /profile, /browse, /inbox, and operator-only /ops
 
 ## Current code baseline
 
@@ -61,6 +62,25 @@ Not:
 - public `/`, `/privacy`, and `/terms` static surfaces for Vercel + LinkedIn app setup
 - Node 20.x deploy baseline, root `.npmrc`, and public npm lockfile hygiene
 - migration `012_profile_edit_sessions_linkedin_url_field_key.sql` for the `li` edit-session contract
+
+## Telegram public commands
+
+Manual BotFather command list for the public menu:
+
+```text
+start - Start the bot
+menu - Open the main menu
+profile - Open your profile
+browse - Browse the directory
+inbox - Open your intro inbox
+help - Learn how to use the bot
+```
+
+Operator-only command kept out of the public menu:
+
+```text
+ops - Open operator diagnostics
+```
 
 ## Smoke commands
 
@@ -94,10 +114,12 @@ Not:
 - `npm run smoke:cron`
 - `npm run smoke:legal`
 - `npm run smoke:bot-init`
+- `npm run smoke:commands`
 - `npm run smoke:product-surfaces`
 
 ## Truth note
 
 - Source baseline is ahead of live confirmation
 - Last known live deploy baseline before this repo pass was STEP024.7 deploy-stable
-- STEP026.1 source now also carries forward the STEP024.8, STEP024.9, and STEP025 fixes needed for consistency
+- STEP026.2 source is self-contained and carries forward the STEP024.8, STEP024.9, STEP025, STEP026, and STEP026.1 fixes needed for consistency
+- STEP026.3 adds a clean command layer so the public command menu matches real handlers and /ops stays operator-only in practice
