@@ -36,7 +36,7 @@
     "smoke:legal": "node scripts/smoke_public_legal_surfaces_contract.js"
   },
   "dependencies": {
-    "grammy": "^1.35.1",
+    "grammy": "^1.41.1",
     "jose": "^5.9.6",
     "pg": "^8.13.3"
   }
