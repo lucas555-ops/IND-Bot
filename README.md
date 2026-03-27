@@ -1,9 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP025 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, durable notification receipt diagnostics, an allowlisted in-Telegram operator surface, deploy-readiness micro-hardening, public legal/web surfaces for app registration, deploy-stable webhook/bot-init protection, the OAuth route import-resolution hotfix, and a reconciled LinkedIn URL profile-edit session schema.
-
-
-Migration note: Run the latest database migration so `profile_edit_sessions.field_key` accepts `li` before testing the LinkedIn URL editor.
+STEP026 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, clean user-facing Telegram surfaces, durable notification receipts, an allowlisted operator diagnostics layer, deploy-stable Vercel settings, and public legal/web surfaces for app registration.
 
 ## What this repo is
 
@@ -35,47 +32,35 @@ Not:
 
 ## Current STEP
 
-- STEP012 — webhook secret hardening + intro inbox row actions baseline
-- STEP013 — real intro accept/decline transitions + inbox decision visibility
-- STEP014 — privacy-first post-decision contact contract around submitted LinkedIn URLs
-- STEP015 — intro detail surfaces / sent-received decision visibility
-- STEP016 — anti-abuse / retry / dedupe hardening
-- STEP017 — intro retention / history safety baseline
-- STEP018 — bot runtime code split refactor
-- STEP019 — data-layer split refactor / `directoryRepo` extraction
-- STEP020 — notification / receipt layer
-- STEP021 — notification retry / receipt history SPIKE
-- STEP022 — notification retry baseline
-- STEP023 — receipt history / operator diagnostics baseline
-- STEP024 — lightweight operator/admin diagnostics surface
-- STEP024.5 — micro-hardening / deploy-readiness gap close
-- STEP024.6 — public legal/web surfaces baseline + Vercel config fix
-- STEP024.7 — deploy-stable webhook/bot-init + public npm registry lock baseline
-- STEP024.8 — LinkedIn OAuth route import-resolution hotfix + regression smoke
-- STEP024.9 — repo reconciliation pack merging STEP024.7 + STEP024.8 into one consistent handoff baseline
+- STEP024.7 — deploy-stable Vercel + webhook/init baseline
+- STEP024.8 — OAuth route import fix
+- STEP024.9 — repo/docs/smoke reconciliation baseline
+- STEP025 — profile edit session schema fix for LinkedIn URL
+- STEP026 — product surface polish + navigation consistency
 
 ## Current code baseline
 
-- Telegram `/start` home surface
-- LinkedIn OIDC start + callback scaffold
+- Telegram `/start` home surface with state-based CTA ordering
+- LinkedIn OIDC start + callback routes with friendly browser-facing error pages
 - PostgreSQL persistence baseline
-- In-Telegram profile completion
-- Curated skills selection
-- Public directory browse + filters + search narrowing
-- Public profile card outbound actions with privacy-first contact gating
-- Intro request persistence baseline with row-level inbox actions, real decisions, and post-decision contact gating
-- Fail-closed Telegram webhook secret guard
+- in-Telegram profile completion
+- curated skills selection
+- public directory browse + filters + search narrowing
+- public profile card outbound actions with privacy-first contact gating
+- intro request persistence with row-level inbox actions, real decisions, and post-decision contact gating
+- fail-closed Telegram webhook secret guard
 - intro detail surfaces for received/sent requests
 - DB-backed webhook update dedupe + short-lived intro action throttles
-- Intro history retention with archived snapshots and `SET NULL` foreign-key safety for removed users/profiles
-- Slim `createBot.js` with split composers, shared surface builders, and bot-runtime utility modules
-- `directoryRepo.js` now owns listed-profile browse/search/filter queries while `profileRepo.js` keeps profile truth, visibility, and skills logic
+- intro history retention with archived snapshots and `SET NULL` foreign-key safety for removed users/profiles
+- slim `createBot.js` with split composers, shared surface builders, and bot-runtime utility modules
+- `directoryRepo.js` owns listed-profile browse/search/filter queries while `profileRepo.js` keeps profile truth, visibility, and skills logic
 - best-effort Telegram service notifications with durable notification receipts for intro create / accept / decline events
 - due receipt retry baseline with attempt counters, next-at scheduling, and a protected retry endpoint
 - protected read-only receipt diagnostics endpoint with recent history, operator buckets, and per-intro summary
 - allowlisted `/ops` diagnostics surface with retry_due / failed / exhausted sections and per-intro drilldown
 - public `/`, `/privacy`, and `/terms` static surfaces for Vercel + LinkedIn app setup
-- Vercel config aligned for default Node.js API handling and a stable Node 20.x deploy baseline
+- Node 20.x deploy baseline, root `.npmrc`, and public npm lockfile hygiene
+- migration `012_profile_edit_sessions_linkedin_url_field_key.sql` for the `li` edit-session contract
 
 ## Smoke commands
 
@@ -84,7 +69,9 @@ Not:
 - `npm run smoke:auth`
 - `npm run smoke:oauth-routes`
 - `npm run smoke:router`
+- `npm run smoke:storage`
 - `npm run smoke:profile`
+- `npm run smoke:profile-session-schema`
 - `npm run smoke:skills`
 - `npm run smoke:directory`
 - `npm run smoke:filters`
@@ -102,13 +89,15 @@ Not:
 - `npm run smoke:data-split`
 - `npm run smoke:receipts`
 - `npm run smoke:notification-retry`
-- `npm run smoke:cron`
 - `npm run smoke:notification-history`
 - `npm run smoke:ops`
+- `npm run smoke:cron`
 - `npm run smoke:legal`
 - `npm run smoke:bot-init`
+- `npm run smoke:product-surfaces`
 
 ## Truth note
 
 - Source baseline is ahead of live confirmation
-- Live status not confirmed — manual verification required
+- Last known live deploy baseline before this repo pass was STEP024.7 deploy-stable
+- STEP026 source now also carries forward the STEP024.8, STEP024.9, and STEP025 fixes needed for consistency
