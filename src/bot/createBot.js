@@ -1,4 +1,4 @@
-import { Bot } from 'grammy';
+import { Bot } from 'grammy'; 
 import { getAppConfig, getTelegramConfig } from '../config/env.js';
 import { createDirectoryComposer } from './composers/directoryComposer.js';
 import { createHomeComposer } from './composers/homeComposer.js';
