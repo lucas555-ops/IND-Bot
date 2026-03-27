@@ -25,9 +25,10 @@ function fallbackRenderHelpText() {
 function fallbackRenderHelpKeyboard() {
   return {
     inline_keyboard: [
-      [{ text: '🧩 Profile', callback_data: 'nav:profile' }, { text: '🌐 Browse directory', callback_data: 'dir:open' }],
+      [{ text: '🧩 Profile', callback_data: 'p:menu' }],
+      [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
       [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
-      [{ text: '🏠 Home', callback_data: 'nav:home' }]
+      [{ text: '🏠 Home', callback_data: 'home:root' }]
     ]
   };
 }
