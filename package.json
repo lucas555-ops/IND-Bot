@@ -1,6 +1,6 @@
 {
   "name": "linkedin-telegram-directory-bot",
-  "version": "0.0.24-step024.5",
+  "version": "0.0.24-step024.6",
   "private": true,
   "type": "module",
   "engines": {
@@ -32,7 +32,8 @@
     "smoke:notification-retry": "node scripts/smoke_notification_retry_contract.js",
     "smoke:notification-history": "node scripts/smoke_notification_receipt_history_contract.js",
     "smoke:ops": "node scripts/smoke_operator_diagnostics_surface_contract.js",
-    "smoke:cron": "node scripts/smoke_cron_contract.js"
+    "smoke:cron": "node scripts/smoke_cron_contract.js",
+    "smoke:legal": "node scripts/smoke_public_legal_surfaces_contract.js"
   },
   "dependencies": {
     "grammy": "^1.35.1",

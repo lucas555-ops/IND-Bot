@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP024.5 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, durable notification receipt diagnostics, an allowlisted in-Telegram operator surface, and deploy-readiness micro-hardening.
+STEP024.6 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, durable notification receipt diagnostics, an allowlisted in-Telegram operator surface, deploy-readiness micro-hardening, and public legal/web surfaces for app registration.
 
 ## What this repo is
 
@@ -46,6 +46,7 @@ Not:
 - STEP023 — receipt history / operator diagnostics baseline
 - STEP024 — lightweight operator/admin diagnostics surface
 - STEP024.5 — micro-hardening / deploy-readiness gap close
+- STEP024.6 — public legal/web surfaces baseline + Vercel config fix
 
 ## Current code baseline
 
@@ -67,6 +68,8 @@ Not:
 - due receipt retry baseline with attempt counters, next-at scheduling, and a protected retry endpoint
 - protected read-only receipt diagnostics endpoint with recent history, operator buckets, and per-intro summary
 - allowlisted `/ops` diagnostics surface with retry_due / failed / exhausted sections and per-intro drilldown
+- public `/`, `/privacy`, and `/terms` static surfaces for Vercel + LinkedIn app setup
+- Vercel config aligned for default Node.js API handling and a stable Node 20.x deploy baseline
 
 ## Smoke commands
 
@@ -95,6 +98,7 @@ Not:
 - `npm run smoke:cron`
 - `npm run smoke:notification-history`
 - `npm run smoke:ops`
+- `npm run smoke:legal`
 
 ## Truth note
 
