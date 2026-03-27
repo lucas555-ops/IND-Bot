@@ -37,6 +37,7 @@
     "smoke:legal": "node scripts/smoke_public_legal_surfaces_contract.js",
     "smoke:bot-init": "node scripts/smoke_telegram_bot_init_contract.js",
     "smoke:commands": "node scripts/smoke_command_contract.js",
+    "smoke:help-surface-compat": "node scripts/smoke_help_surface_compat.js",
     "smoke:oauth-routes": "node scripts/smoke_oauth_route_imports.js",
     "smoke:profile-session-schema": "node scripts/smoke_profile_edit_session_schema_contract.js",
     "smoke:product-surfaces": "node scripts/smoke_product_surface_contract.js",
