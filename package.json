@@ -1,6 +1,6 @@
 {
   "name": "linkedin-telegram-directory-bot",
-  "version": "0.26.3",
+  "version": "0.26.6",
   "private": true,
   "type": "module",
   "packageManager": "npm@10.8.2",
@@ -43,7 +43,9 @@
     "smoke:product-surfaces": "node scripts/smoke_product_surface_contract.js",
     "smoke:profile-render-compat": "node scripts/smoke_profile_render_export_compat.js",
     "smoke:help-fallback": "node scripts/smoke_help_fallback_callback_contract.js",
-    "smoke:linkedin-callback-diagnostics": "node scripts/smoke_linkedin_callback_diagnostics_contract.js"
+    "smoke:linkedin-callback-diagnostics": "node scripts/smoke_linkedin_callback_diagnostics_contract.js",
+    "smoke:linkedin-relink-transfer": "node scripts/smoke_linkedin_relink_transfer_contract.js",
+    "smoke:linkedin-identity-transfer": "node scripts/smoke_linkedin_identity_store_transfer_contract.js"
   },
   "dependencies": {
     "grammy": "1.41.1",
