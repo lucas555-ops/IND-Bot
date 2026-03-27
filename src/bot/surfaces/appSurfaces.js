@@ -152,43 +152,57 @@ export function createSurfaceBuilders({ appBaseUrl }) {
     };
   }
 
-  async function buildDirectoryListSurface(ctx, page = 0, notice = null) {
-    const state = await loadDirectoryPage({
-      page,
-      viewerTelegramUserId: ctx.from.id
-    }).catch((error) => {
-      console.warn('[directory list] load failed', error?.message || error);
-      return {
-        persistenceEnabled: false,
-        page: 0,
-        profiles: [],
-        totalCount: 0,
-        hasPrev: false,
-        hasNext: false,
-        filterSummary: null,
-        reason: 'directory_list_load_failed'
-      };
-    });
-
+async function buildDirectoryListSurface(ctx, page = 0, notice = null) {
+  const state = await loadDirectoryPage({
+    page,
+    viewerTelegramUserId: ctx.from.id
+  }).catch((error) => {
+    console.warn('[directory list] load failed', error?.message || error);
     return {
-      text: renderDirectoryListText({
-        profiles: state.profiles,
-        page: state.page,
-        totalCount: state.totalCount,
-        persistenceEnabled: state.persistenceEnabled,
-        filterSummary: state.filterSummary,
-        notice
-      }),
-      reply_markup: renderDirectoryListKeyboard({
-        profiles: state.profiles,
-        page: state.page,
-        hasPrev: state.hasPrev,
-        hasNext: state.hasNext
-      })
+      persistenceEnabled: false,
+      page: 0,
+      profiles: [],
+      totalCount: 0,
+      hasPrev: false,
+      hasNext: false,
+      filterSummary: null,
+      reason: 'directory_list_load_failed'
     };
-  }
+  });
 
-  async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null) {
+  const viewerState = state.persistenceEnabled
+    ? await touchTelegramUserAndLoadProfile({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch(() => ({
+      persistenceEnabled: true,
+      profile: null,
+      reason: 'viewer_profile_load_failed'
+    }))
+    : { persistenceEnabled: false, profile: null };
+
+  return {
+    text: renderDirectoryListText({
+      profiles: state.profiles,
+      page: state.page,
+      totalCount: state.totalCount,
+      persistenceEnabled: state.persistenceEnabled,
+      filterSummary: state.filterSummary,
+      viewerProfile: viewerState.profile,
+      notice
+    }),
+    reply_markup: renderDirectoryListKeyboard({
+      profiles: state.profiles,
+      page: state.page,
+      hasPrev: state.hasPrev,
+      hasNext: state.hasNext,
+      viewerProfile: viewerState.profile,
+      filterSummary: state.filterSummary
+    })
+  };
+}
+
+async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null) {
     const state = await loadDirectoryCard({
       profileId,
       viewerTelegramUserId: ctx.from.id
