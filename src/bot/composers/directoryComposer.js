@@ -12,6 +12,7 @@ import {
 import { cancelProfileFieldEdit } from '../../lib/storage/profileEditStore.js';
 import { sendIntroRequestForTelegramUser } from '../../lib/storage/introRequestStore.js';
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
+import { formatUserFacingError } from '../utils/notices.js';
 
 export function createDirectoryComposer({
   clearAllPendingInputs,
@@ -75,15 +76,9 @@ export function createDirectoryComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Intro request saved for ${result.target?.display_name || 'this profile'}.`;
-      if (receiptResult?.sent) {
-        notice += ' Recipient received a Telegram notice.';
-      } else if (receiptResult?.duplicate) {
-        notice += ' Recipient notice was already recorded.';
-      } else if (receiptResult?.skipped) {
-        notice += ' Recipient notice was skipped.';
-      } else if (receiptResult?.failed) {
-        notice += ' Recipient notice delivery failed, but the intro request is saved.';
+      notice = `✅ Intro request sent to ${result.target?.display_name || 'this profile'}.`;
+      if (receiptResult?.failed) {
+        notice += ' Delivery notice may arrive a little later.';
       }
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatIntroRequestReason(result.reason)}`;
@@ -124,7 +119,7 @@ export function createDirectoryComposer({
         reply_markup: renderDirectoryFilterInputKeyboard()
       });
     } catch (error) {
-      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${String(error?.message || error)}`);
+      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this filter right now.')}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
     }
   });
@@ -147,7 +142,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not clear filter.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this filter right now.')}`;
     } else {
       notice = `✅ ${result.inputMeta?.label || 'Filter'} cleared.`;
     }
@@ -174,7 +169,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not update industry filter.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the industry filter right now.')}`;
     } else {
       notice = result.filterSummary.selectedIndustrySlug
         ? `✅ Industry filter: ${result.filterSummary.industryLabel}`
@@ -203,7 +198,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not update skill filter.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the skill filter right now.')}`;
     } else {
       notice = result.toggledOn
         ? `✅ Added skill filter: ${result.skillMeta.label}`
@@ -230,7 +225,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not clear directory filters.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear directory filters right now.')}`;
     } else {
       notice = '✅ Directory filters cleared.';
     }

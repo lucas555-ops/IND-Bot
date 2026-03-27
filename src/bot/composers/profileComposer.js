@@ -1,5 +1,5 @@
 import { Composer } from 'grammy';
-import { renderProfileInputKeyboard, renderProfileInputPrompt, renderProfileSavedNotice, renderProfilePreviewKeyboard } from '../../lib/telegram/render.js';
+import { renderProfileInputKeyboard, renderProfileInputPrompt, renderProfileSavedKeyboard, renderProfileSavedNotice } from '../../lib/telegram/render.js';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import { cancelDirectoryFilterInputForTelegramUser } from '../../lib/storage/directoryFilterStore.js';
 import {
@@ -8,6 +8,7 @@ import {
   toggleProfileSkillForTelegramUser,
   toggleProfileVisibilityForTelegramUser
 } from '../../lib/storage/profileEditStore.js';
+import { formatUserFacingError } from '../utils/notices.js';
 
 export function createProfileComposer({
   clearAllPendingInputs,
@@ -52,7 +53,7 @@ export function createProfileComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not clear skills.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear skills right now.')}`;
     } else {
       notice = '✅ Skills cleared. Add at least 1 skill to become directory-ready.';
     }
@@ -78,7 +79,7 @@ export function createProfileComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Could not update skill.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update this skill right now.')}`;
     } else {
       notice = result.toggledOn
         ? `✅ Added skill: ${result.skillMeta.label}`
@@ -107,7 +108,7 @@ export function createProfileComposer({
         reply_markup: renderProfileInputKeyboard()
       });
     } catch (error) {
-      const surface = await buildProfileMenuSurface(ctx, `⚠️ ${String(error?.message || error)}`);
+      const surface = await buildProfileMenuSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.')}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
     }
   });
@@ -129,7 +130,7 @@ export function createProfileComposer({
     } else if (result.blocked) {
       notice = '⚠️ Complete all required fields and add at least 1 skill before listing in the directory.';
     } else if (!result.changed) {
-      notice = `⚠️ ${result.reason || 'Visibility update failed.'}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update directory visibility right now.')}`;
     } else {
       notice = `✅ Visibility is now ${result.profile.visibility_status}.`;
     }

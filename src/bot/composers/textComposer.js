@@ -1,7 +1,8 @@
 import { Composer } from 'grammy';
-import { renderProfileSavedNotice, renderProfilePreviewKeyboard } from '../../lib/telegram/render.js';
+import { renderProfileSavedKeyboard, renderProfileSavedNotice } from '../../lib/telegram/render.js';
 import { applyDirectoryFilterInputForTelegramUser } from '../../lib/storage/directoryFilterStore.js';
 import { applyProfileFieldInput } from '../../lib/storage/profileEditStore.js';
+import { formatUserFacingError } from '../utils/notices.js';
 
 export function createTextComposer({ buildDirectoryFiltersSurface }) {
   const composer = new Composer();
@@ -26,7 +27,7 @@ export function createTextComposer({ buildDirectoryFiltersSurface }) {
         fieldLabel: profileResult.fieldMeta.label,
         profileSnapshot: profileResult.profile
       }), {
-        reply_markup: renderProfilePreviewKeyboard()
+        reply_markup: renderProfileSavedKeyboard()
       });
       return;
     }
@@ -48,12 +49,12 @@ export function createTextComposer({ buildDirectoryFiltersSurface }) {
     }
 
     if (profileResult.errored) {
-      await ctx.reply(`⚠️ ${profileResult.reason}`);
+      await ctx.reply(`⚠️ ${formatUserFacingError(profileResult.reason, 'Could not save this field right now.')}`);
       return;
     }
 
     if (directoryResult.errored) {
-      await ctx.reply(`⚠️ ${directoryResult.reason}`);
+      await ctx.reply(`⚠️ ${formatUserFacingError(directoryResult.reason, 'Could not save this filter right now.')}`);
       return;
     }
 

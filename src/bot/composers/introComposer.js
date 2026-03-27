@@ -2,6 +2,7 @@ import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import { decideIntroRequestForTelegramUser } from '../../lib/storage/introRequestStore.js';
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
+import { formatUserFacingError } from '../utils/notices.js';
 
 export function createIntroComposer({
   clearAllPendingInputs,
@@ -82,15 +83,9 @@ export function createIntroComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Accepted intro request from ${result.introRequest?.display_name || 'this member'}. If you set a public LinkedIn URL, the requester can now open it from their accepted intro row.`;
-      if (receiptResult?.sent) {
-        notice += ' The requester received a Telegram notice.';
-      } else if (receiptResult?.duplicate) {
-        notice += ' The requester notice was already recorded.';
-      } else if (receiptResult?.skipped) {
-        notice += ' The requester notice was skipped.';
-      } else if (receiptResult?.failed) {
-        notice += ' Requester notice delivery failed, but the decision is saved.';
+      notice = `✅ Accepted intro request from ${result.introRequest?.display_name || 'this member'}. If you set a public LinkedIn URL, the requester can open it from the accepted intro.`;
+      if (receiptResult?.failed) {
+        notice += ' Delivery notice may arrive a little later.';
       }
     } else if (result.changed && result.reason === 'intro_request_declined') {
       receiptResult = await deliverIntroNotificationReceipt({
@@ -105,14 +100,8 @@ export function createIntroComposer({
       }));
 
       notice = `✅ Declined intro request from ${result.introRequest?.display_name || 'this member'}.`;
-      if (receiptResult?.sent) {
-        notice += ' The requester received a Telegram notice.';
-      } else if (receiptResult?.duplicate) {
-        notice += ' The requester notice was already recorded.';
-      } else if (receiptResult?.skipped) {
-        notice += ' The requester notice was skipped.';
-      } else if (receiptResult?.failed) {
-        notice += ' Requester notice delivery failed, but the decision is saved.';
+      if (receiptResult?.failed) {
+        notice += ' Delivery notice may arrive a little later.';
       }
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatIntroDecisionReason(result.reason)}`;
@@ -121,7 +110,7 @@ export function createIntroComposer({
     } else if (result.blocked) {
       notice = `⚠️ ${formatIntroDecisionReason(result.reason)}`;
     } else {
-      notice = `⚠️ ${formatIntroDecisionReason(result.reason)}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the intro request right now.')}`;
     }
 
     const detailRequestId = result.introRequest?.intro_request_id || introRequestId;
