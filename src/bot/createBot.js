@@ -30,7 +30,8 @@ export async function createBot() {
   bot.use(createHomeComposer({
     appBaseUrl,
     clearAllPendingInputs,
-    buildHomeSurface: surfaces.buildHomeSurface
+    buildHomeSurface: surfaces.buildHomeSurface,
+    buildHelpSurface: surfaces.buildHelpSurface
   }));
 
   bot.use(createIntroComposer({
