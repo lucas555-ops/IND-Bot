@@ -44,18 +44,22 @@ function completionLine(profileSnapshot) {
 function readinessLine(profileSnapshot) {
   const completion = profileSnapshot?.completion;
   if (!completion) {
-    return 'Listing readiness: not ready yet';
+    return 'Directory readiness: not ready yet';
   }
 
   if (!completion.hasRequiredSkills) {
-    return 'Listing readiness: add at least 1 skill';
+    return 'Directory readiness: add at least 1 skill';
   }
 
   if (!completion.isReady) {
-    return 'Listing readiness: not ready yet';
+    return 'Directory readiness: complete all required fields';
   }
 
-  return `Listing readiness: ready • Visibility ${profileSnapshot.visibility_status || 'hidden'} • State ${profileSnapshot.profile_state || 'draft'}`;
+  if (profileSnapshot?.visibility_status === 'listed') {
+    return 'Directory readiness: ready • currently listed';
+  }
+
+  return 'Directory readiness: ready • currently hidden';
 }
 
 function buildFieldStatusLines(profileSnapshot) {
@@ -259,6 +263,22 @@ function notificationHeadline(value) {
   return normalized === '—' ? 'No headline' : normalized;
 }
 
+function homeNextStepLine(profileSnapshot) {
+  if (!profileSnapshot?.linkedin_sub) {
+    return 'Next step: connect LinkedIn to create your profile card.';
+  }
+
+  if (!profileSnapshot?.completion?.isReady) {
+    return 'Next step: complete your profile to appear in the directory.';
+  }
+
+  if (profileSnapshot?.visibility_status === 'listed') {
+    return 'Your profile is live in the directory.';
+  }
+
+  return 'Next step: list your profile when you are ready to accept intros.';
+}
+
 export function renderIntroNotificationText({ eventType = null, introRequest = null } = {}) {
   const member = toDisplayValue(introRequest?.display_name, 'Unknown member');
   const headline = notificationHeadline(introRequest?.headline_user);
@@ -364,42 +384,42 @@ export function buildLinkedInStartUrl({ appBaseUrl, telegramUserId, returnTo = '
 
 export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false } = {}) {
   const lines = [
-    '💼 LinkedIn Directory',
+    '💼 Intro Deck',
     '',
-    'Connect LinkedIn to bootstrap identity, then complete your professional profile inside Telegram.',
+    'Trusted profiles and warm intros inside Telegram.',
     ''
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Persistence: disabled in current environment');
+    lines.push('Profile saving is unavailable right now.');
   } else if (!profileSnapshot?.linkedin_sub) {
     lines.push('LinkedIn: not connected yet');
+    lines.push(homeNextStepLine(profileSnapshot));
   } else {
     const displayName = profileSnapshot.display_name || profileSnapshot.linkedin_name || 'Profile linked';
-    lines.push(`LinkedIn: connected as ${displayName}`);
-    lines.push(`Profile state: ${profileSnapshot.profile_state || 'draft'}`);
-    lines.push(`Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
+    lines.push(`Connected as: ${displayName}`);
+    lines.push(`Profile status: ${profileSnapshot.profile_state || 'draft'} • ${profileSnapshot.visibility_status || 'hidden'}`);
     lines.push(completionLine(profileSnapshot));
+    lines.push(readinessLine(profileSnapshot));
     lines.push(`Skills: ${formatSkillSummary(profileSnapshot)}`);
+    lines.push(homeNextStepLine(profileSnapshot));
   }
 
   if (directoryStats) {
     lines.push('');
-    lines.push(`Directory: ${directoryStats.totalCount} listed profile${directoryStats.totalCount === 1 ? '' : 's'} visible now`);
+    lines.push(`Directory: ${directoryStats.totalCount} live profile${directoryStats.totalCount === 1 ? '' : 's'}`);
   }
 
   if (introInboxStats) {
     lines.push('');
-    lines.push(`Intro inbox: ${introInboxStats.receivedPending || 0} pending received • ${introInboxStats.sentPending || 0} pending sent`);
+    lines.push(`Intros: ${introInboxStats.receivedPending || 0} pending received • ${introInboxStats.sentPending || 0} pending sent`);
   }
 
   if (isOperator) {
     lines.push('');
-    lines.push('Operator tools: notification diagnostics available.');
+    lines.push('Operator diagnostics are available for this account.');
   }
 
-  lines.push('');
-  lines.push('STEP024 adds a lightweight operator diagnostics surface on top of receipt history and retry truth.');
   return lines.join('\n');
 }
 
@@ -409,8 +429,8 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
   if (!profileSnapshot?.linkedin_sub) {
     rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
   } else if (persistenceEnabled) {
-    rows.push([{ text: '🧩 Complete profile', callback_data: 'p:menu' }]);
-    rows.push([{ text: '👁 Preview card', callback_data: 'p:prev' }]);
+    const profileLabel = profileSnapshot?.completion?.isReady ? '🧩 Edit profile' : '🧩 Complete profile';
+    rows.push([{ text: profileLabel, callback_data: 'p:menu' }]);
   }
 
   if (persistenceEnabled) {
@@ -425,24 +445,24 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
     rows.push([{ text: '🛠 Ops diagnostics', callback_data: 'ops:diag' }]);
   }
 
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
   const lines = [
-    '🧩 Profile draft editor',
+    '🧩 Profile editor',
     ''
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Persistence is disabled in this environment. Profile editing is unavailable.');
+    lines.push('Profile editing is unavailable right now.');
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('Connect LinkedIn first before editing your directory card.');
+    lines.push('Connect LinkedIn first, then return here to complete your profile.');
   } else {
-    lines.push(`Connected identity: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
-    lines.push(`Display card: ${toDisplayValue(profileSnapshot.display_name)}`);
-    lines.push(`State: ${profileSnapshot.profile_state || 'draft'}`);
+    lines.push(`Connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
+    lines.push(`Card name: ${toDisplayValue(profileSnapshot.display_name)}`);
+    lines.push(`Profile status: ${profileSnapshot.profile_state || 'draft'}`);
+    lines.push(`Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
     lines.push(readinessLine(profileSnapshot));
     lines.push(completionLine(profileSnapshot));
     lines.push('');
@@ -483,14 +503,14 @@ export function renderProfileMenuKeyboard({ profileSnapshot = null } = {}) {
 
 export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
   const lines = [
-    '👁 Directory card preview',
+    '👁 Profile preview',
     ''
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Persistence is disabled in this environment. Preview is unavailable.');
+    lines.push('Preview is unavailable right now.');
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('Connect LinkedIn first before previewing your directory card.');
+    lines.push('Connect LinkedIn first before previewing your profile.');
   } else {
     lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
@@ -519,7 +539,7 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
 
 export function renderProfilePreviewKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '✏️ Edit profile', callback_data: 'p:menu' }],
+    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -540,7 +560,7 @@ export function renderProfileInputPrompt({ fieldKey, profileSnapshot = null } = 
     `Limit: ${meta.maxLength} characters`,
     '',
     'Reply with plain text in the chat. Your next text message will update this field.',
-    'Use the buttons below to cancel or return home.'
+    'Use the buttons below to go back or return home.'
   ];
 
   return lines.join('\n');
@@ -570,14 +590,14 @@ export function renderDirectoryFilterInputPrompt({ kind, filterSummary = summari
     `Limit: ${limit} characters`,
     '',
     'Reply with plain text in the chat. Your next text message will update this directory filter.',
-    'Use the buttons below to cancel or return home.'
+    'Use the buttons below to go back or return home.'
   ].join('\n');
 }
 
 export function renderDirectoryFilterInputKeyboard() {
   return buildInlineKeyboard([
     [{ text: '↩️ Back to filters', callback_data: 'dir:flt' }],
-    [{ text: '🌐 Back to directory', callback_data: 'dir:list:0' }],
+    [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -633,21 +653,37 @@ export function renderProfileSavedNotice({ fieldLabel, profileSnapshot }) {
   ].join('\n');
 }
 
-export function renderDirectoryListText({ profiles = [], page = 0, totalCount = 0, persistenceEnabled = false, filterSummary = summarizeDirectoryFilters(), notice = null } = {}) {
+export function renderProfileSavedKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
+    [{ text: '👁 Preview card', callback_data: 'p:prev' }],
+    [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ]);
+}
+
+export function renderDirectoryListText({ profiles = [], page = 0, totalCount = 0, persistenceEnabled = false, filterSummary = summarizeDirectoryFilters(), viewerProfile = null, notice = null } = {}) {
   const lines = [
     '🌐 Public directory',
     '',
-    'Browse profiles that are both listed and active. Narrow the list by text query, city, one industry bucket, and any number of skill filters.',
+    'Browse listed, active profiles. Use filters to narrow by text, city, industry, or skills.',
     '',
     ...renderFilterSummaryLines(filterSummary)
   ];
 
   if (!persistenceEnabled) {
     lines.push('');
-    lines.push('Persistence is disabled in this environment. Directory browse is unavailable.');
+    lines.push('Directory browse is unavailable right now.');
   } else if (!profiles.length) {
     lines.push('');
-    lines.push(filterSummary.isDefault ? 'No listed profiles yet.' : 'No listed profiles match the current filters.');
+    if (!filterSummary.isDefault) {
+      lines.push('No listed profiles match the current filters.');
+    } else if (viewerProfile?.linkedin_sub && !viewerProfile?.completion?.isReady) {
+      lines.push('No listed profiles yet. Complete your profile to become one of the first visible members.');
+    } else if (viewerProfile?.completion?.isReady && viewerProfile?.visibility_status !== 'listed') {
+      lines.push('No listed profiles yet. Your profile is ready — list it to be one of the first visible members.');
+    } else {
+      lines.push('No listed profiles yet. Check back soon or complete your own profile to join the directory.');
+    }
   } else {
     lines.push('');
     lines.push(`Page: ${page + 1}`);
@@ -667,7 +703,7 @@ export function renderDirectoryListText({ profiles = [], page = 0, totalCount = 
   return lines.join('\n');
 }
 
-export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev = false, hasNext = false } = {}) {
+export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev = false, hasNext = false, viewerProfile = null, filterSummary = summarizeDirectoryFilters() } = {}) {
   const rows = profiles.map((profile, index) => [{
     text: `${index + 1}. ${truncate(toDisplayValue(profile.display_name, profile.linkedin_name || 'Unnamed'), 28)}`,
     callback_data: `dir:open:${profile.profile_id}:${page}`
@@ -685,6 +721,17 @@ export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev =
   }
 
   rows.push([{ text: '🎯 Filters', callback_data: 'dir:flt' }]);
+
+  if (!profiles.length && viewerProfile?.linkedin_sub) {
+    if (!viewerProfile?.completion?.isReady) {
+      rows.push([{ text: '🧩 Complete my profile', callback_data: 'p:menu' }]);
+    } else if (viewerProfile?.visibility_status !== 'listed' && filterSummary.isDefault) {
+      rows.push([{ text: '🌍 List my profile', callback_data: 'p:vis' }]);
+    } else {
+      rows.push([{ text: '👁 Preview my card', callback_data: 'p:prev' }]);
+    }
+  }
+
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
@@ -746,12 +793,12 @@ export function renderIntroInboxText({ persistenceEnabled = false, inboxState = 
   const lines = [
     '📥 Intro inbox',
     '',
-    "STEP020 baseline: intro inbox/detail surfaces preserve intro history, keep STEP016 retry/dedupe guards intact, and now add best-effort service notifications with durable receipt records."
+    'Review incoming intros and track the ones you have sent.'
   ];
 
   if (!persistenceEnabled) {
     lines.push('');
-    lines.push('Persistence is disabled in this environment. Intro inbox is unavailable.');
+    lines.push('Intro inbox is unavailable right now.');
   } else {
     const counts = inboxState?.counts || { receivedPending: 0, receivedTotal: 0, sentPending: 0, sentTotal: 0 };
     const receivedItems = Array.isArray(inboxState?.received) ? inboxState.received : [];
@@ -832,7 +879,7 @@ export function renderIntroInboxKeyboard({ inboxState = null } = {}) {
   }
 
   const hasItems = rows.length > 0;
-  rows.push([{ text: hasItems ? '🔄 Refresh inbox' : '🔄 Check inbox again', callback_data: 'intro:inbox' }]);
+  rows.push([{ text: '🔄 Refresh', callback_data: 'intro:inbox' }]);
   rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
 
@@ -841,9 +888,9 @@ export function renderIntroInboxKeyboard({ inboxState = null } = {}) {
 
 export function renderIntroDetailText({ persistenceEnabled = false, introRequest = null, notice = null } = {}) {
   const lines = [
-    '🧾 Intro request detail',
+    '🧾 Intro request',
     '',
-    'STEP020 baseline: intro detail keeps sender/recipient decision visibility, preserves archived counterparty snapshots, and now coexists with out-of-band receipt messages.'
+    'Review the current state of this intro and any unlocked contact details.'
   ];
 
   if (!persistenceEnabled) {
@@ -924,7 +971,7 @@ export function renderDirectoryFiltersText({ persistenceEnabled = false, filterS
   const lines = [
     '🎯 Directory filters',
     '',
-    'Use text query, city, one industry bucket, and any number of skills to narrow the public directory. Skill filters match any selected skill.',
+    'Use text, city, one industry bucket, and any number of skills to narrow the public directory. Skill filters match any selected skill.',
     '',
     ...renderFilterSummaryLines(filterSummary)
   ];
@@ -970,8 +1017,10 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
     rows.push(chunk);
   }
 
-  rows.push([{ text: '🧹 Clear filters', callback_data: 'dir:fc' }]);
-  rows.push([{ text: '↩️ Apply & back to directory', callback_data: 'dir:list:0' }]);
+  if (!filterSummary.isDefault) {
+    rows.push([{ text: '🧹 Clear filters', callback_data: 'dir:fc' }]);
+  }
+  rows.push([{ text: '↩️ Back to directory', callback_data: 'dir:list:0' }]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
 
   return buildInlineKeyboard(rows);
