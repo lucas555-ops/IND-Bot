@@ -49,7 +49,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, duplicate: true });
     }
 
-    const bot = createBot();
+    const bot = await createBot();
     await bot.handleUpdate(req.body);
     return res.status(200).json({ ok: true, dedupeDegraded: Boolean(receipt.degraded) });
   } catch (error) {
