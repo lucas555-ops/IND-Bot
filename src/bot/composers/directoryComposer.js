@@ -24,12 +24,24 @@ export function createDirectoryComposer({
 }) {
   const composer = new Composer();
 
+  const renderDirectoryList = async (ctx, page = 0, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildDirectoryListSurface(ctx, page, notice);
+    if (method === 'reply') {
+      await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  composer.command('browse', async (ctx) => {
+    await renderDirectoryList(ctx, 0, 'reply');
+  });
+
   composer.callbackQuery(/^dir:list:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    await clearAllPendingInputs(ctx.from.id);
     const page = Number.parseInt(ctx.match?.[1] || '0', 10);
-    const surface = await buildDirectoryListSurface(ctx, page);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderDirectoryList(ctx, page, 'edit');
   });
 
   composer.callbackQuery(/^dir:open:(\d+):(\d+)$/, async (ctx) => {
@@ -76,9 +88,15 @@ export function createDirectoryComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Intro request sent to ${result.target?.display_name || 'this profile'}.`;
-      if (receiptResult?.failed) {
-        notice += ' Delivery notice may arrive a little later.';
+      notice = `✅ Intro request saved for ${result.target?.display_name || 'this profile'}.`;
+      if (receiptResult?.sent) {
+        notice += ' Recipient received a Telegram notice.';
+      } else if (receiptResult?.duplicate) {
+        notice += ' Recipient notice was already recorded.';
+      } else if (receiptResult?.skipped) {
+        notice += ' Recipient notice was skipped.';
+      } else if (receiptResult?.failed) {
+        notice += ' Recipient notice delivery failed, but the intro request is saved.';
       }
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatIntroRequestReason(result.reason)}`;
@@ -119,7 +137,7 @@ export function createDirectoryComposer({
         reply_markup: renderDirectoryFilterInputKeyboard()
       });
     } catch (error) {
-      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this filter right now.')}`);
+      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open filters right now.')}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
     }
   });

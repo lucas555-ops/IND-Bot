@@ -18,11 +18,23 @@ export function createProfileComposer({
 }) {
   const composer = new Composer();
 
+  const renderProfileMenu = async (ctx, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildProfileMenuSurface(ctx, notice);
+    if (method === 'reply') {
+      await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  composer.command('profile', async (ctx) => {
+    await renderProfileMenu(ctx, 'reply');
+  });
+
   composer.callbackQuery('p:menu', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await clearAllPendingInputs(ctx.from.id);
-    const surface = await buildProfileMenuSurface(ctx);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderProfileMenu(ctx, 'edit');
   });
 
   composer.callbackQuery('p:prev', async (ctx) => {
@@ -108,8 +120,7 @@ export function createProfileComposer({
         reply_markup: renderProfileInputKeyboard()
       });
     } catch (error) {
-      const surface = await buildProfileMenuSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.')}`);
-      await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.')}`);
     }
   });
 

@@ -13,11 +13,23 @@ export function createIntroComposer({
 }) {
   const composer = new Composer();
 
+  const renderIntroInbox = async (ctx, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildIntroInboxSurface(ctx, notice);
+    if (method === 'reply') {
+      await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  composer.command('inbox', async (ctx) => {
+    await renderIntroInbox(ctx, 'reply');
+  });
+
   composer.callbackQuery('intro:inbox', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await clearAllPendingInputs(ctx.from.id);
-    const surface = await buildIntroInboxSurface(ctx);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderIntroInbox(ctx, 'edit');
   });
 
   composer.callbackQuery('intro:noop', async (ctx) => {
@@ -39,8 +51,7 @@ export function createIntroComposer({
     const surface = await buildDirectoryCardSurface(ctx, profileId, 0, 'Opened from intro inbox.');
 
     if (!surface.reply_markup?.inline_keyboard?.length || surface.text.includes('Listed profile not found.')) {
-      const inboxSurface = await buildIntroInboxSurface(ctx, '⚠️ Linked profile card is not available right now.');
-      await safeEditOrReply(ctx, inboxSurface.text, { reply_markup: inboxSurface.reply_markup });
+      await renderIntroInbox(ctx, 'edit', '⚠️ Linked profile card is not available right now.');
       return;
     }
 
@@ -83,9 +94,15 @@ export function createIntroComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Accepted intro request from ${result.introRequest?.display_name || 'this member'}. If you set a public LinkedIn URL, the requester can open it from the accepted intro.`;
-      if (receiptResult?.failed) {
-        notice += ' Delivery notice may arrive a little later.';
+      notice = `✅ Accepted intro request from ${result.introRequest?.display_name || 'this member'}. If you set a public LinkedIn URL, the requester can now open it from their accepted intro row.`;
+      if (receiptResult?.sent) {
+        notice += ' The requester received a Telegram notice.';
+      } else if (receiptResult?.duplicate) {
+        notice += ' The requester notice was already recorded.';
+      } else if (receiptResult?.skipped) {
+        notice += ' The requester notice was skipped.';
+      } else if (receiptResult?.failed) {
+        notice += ' Requester notice delivery failed, but the decision is saved.';
       }
     } else if (result.changed && result.reason === 'intro_request_declined') {
       receiptResult = await deliverIntroNotificationReceipt({
@@ -100,8 +117,14 @@ export function createIntroComposer({
       }));
 
       notice = `✅ Declined intro request from ${result.introRequest?.display_name || 'this member'}.`;
-      if (receiptResult?.failed) {
-        notice += ' Delivery notice may arrive a little later.';
+      if (receiptResult?.sent) {
+        notice += ' The requester received a Telegram notice.';
+      } else if (receiptResult?.duplicate) {
+        notice += ' The requester notice was already recorded.';
+      } else if (receiptResult?.skipped) {
+        notice += ' The requester notice was skipped.';
+      } else if (receiptResult?.failed) {
+        notice += ' Requester notice delivery failed, but the decision is saved.';
       }
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatIntroDecisionReason(result.reason)}`;
@@ -110,7 +133,7 @@ export function createIntroComposer({
     } else if (result.blocked) {
       notice = `⚠️ ${formatIntroDecisionReason(result.reason)}`;
     } else {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the intro request right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, formatIntroDecisionReason(result.reason))}`;
     }
 
     const detailRequestId = result.introRequest?.intro_request_id || introRequestId;
