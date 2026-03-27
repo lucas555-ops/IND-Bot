@@ -69,8 +69,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok: true,
-      step: 'STEP024.5',
-      docsStep: 'STEP024.5',
+      step: 'STEP026.3',
+      docsStep: 'STEP026.3',
       filters: {
         introRequestId,
         bucket,
