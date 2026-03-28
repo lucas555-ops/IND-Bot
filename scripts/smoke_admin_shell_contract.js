@@ -16,27 +16,27 @@ if (operatorHomeKeyboard.includes('ops:diag')) {
   throw new Error('Operator home keyboard must not expose the legacy diagnostics callback directly');
 }
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP028' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const adminHome = await surfaces.buildAdminHomeSurface();
-if (!adminHome.text.includes('👑 Admin')) {
-  throw new Error('Admin home surface must expose the Admin title');
+if (!adminHome.text.includes('👑 Админка')) {
+  throw new Error('Admin home surface must expose the Russian admin title');
 }
-for (const callback of ['adm:ops', 'adm:comms', 'adm:sys', 'home:root']) {
+for (const callback of ['adm:ops', 'adm:comms', 'adm:sys', 'adm:home:funnel:connected', 'adm:home:funnel:ready_not_listed', 'home:root']) {
   if (!JSON.stringify(adminHome.reply_markup.inline_keyboard).includes(callback)) {
     throw new Error(`Admin home keyboard missing ${callback}`);
   }
 }
 
 const operatorComposerSource = readFileSync(new URL('../src/bot/composers/operatorComposer.js', import.meta.url), 'utf8');
-for (const callback of ['adm:home', 'adm:ops', 'adm:comms', 'adm:sys', 'adm:health', 'adm:retry', 'adm:opscope']) {
-  if (!operatorComposerSource.includes(`composer.callbackQuery('${callback}'`)) {
-    throw new Error(`Operator composer missing ${callback} callback handler`);
+for (const fragment of ['adm:home:funnel:', 'adm:ops:funnel:', 'adm:comms:funnel:', 'adm:sys:funnel:']) {
+  if (!operatorComposerSource.includes(fragment)) {
+    throw new Error(`Operator composer missing funnel routing fragment: ${fragment}`);
   }
 }
 
 const createBotSource = readFileSync(new URL('../src/bot/createBot.js', import.meta.url), 'utf8');
-if (!createBotSource.includes('createAdminSurfaceBuilders')) {
-  throw new Error('Bot factory must wire admin surface builders');
+if (!createBotSource.includes("currentStep: 'STEP040'")) {
+  throw new Error('Bot factory must wire STEP040 admin surfaces');
 }
 
 console.log('OK: admin shell contract');

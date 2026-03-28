@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createAdminSurfaceBuilders } from '../src/bot/surfaces/adminSurfaces.js';
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP030' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const surface = await surfaces.buildAdminNoticeSurface({
   state: {
     persistenceEnabled: true,
@@ -14,8 +14,8 @@ const surface = await surfaces.buildAdminNoticeSurface({
   }
 });
 
-if (!surface.text.includes('📣 Notice')) {
-  throw new Error('Notice surface must expose the Notice title');
+if (!surface.text.includes('📣 Уведомление')) {
+  throw new Error('Notice surface must expose the Russian notice title');
 }
 for (const callback of ['adm:not:edit', 'adm:not:aud', 'adm:not:preview']) {
   if (!JSON.stringify(surface.reply_markup.inline_keyboard).includes(callback)) {

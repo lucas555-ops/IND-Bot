@@ -3,17 +3,17 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP039.1
-- Phase: live user-product baseline plus hardened operator communications, delivery controls, and refined operator productivity
+- Current STEP: STEP040
+- Phase: live user-product baseline plus hardened operator communications, delivery controls, and refined operator productivity plus compact analytics drilldowns and Russian admin funnel readouts
 - Primary mode: Telegram SaaS / Bot + product hardening
 - Secondary mode: Docs / Handoff discipline
-- Runtime status: working source baseline with LinkedIn auth, persistence, in-Telegram profile completion, curated skill selection, public browse, intro inbox/detail, notification retry diagnostics, LinkedIn relink transfer flow, operator admin shell, operator Users + User Card, and a first Communications layer with Notice / Broadcast / Outbox; now includes batch-safe broadcast delivery materialization, failures drilldown, and outbox progress truth; now includes admin compact counters, hub summaries, polished operator rows, tighter empty-state/navigation consistency, refined operator segments, quick actions, scoped user drilldowns, and compact admin trend counters across hub screens; still needs live re-deploy to confirm STEP039.1 in production
+- Runtime status: working source baseline with LinkedIn auth, persistence, in-Telegram profile completion, curated skill selection, public browse, intro inbox/detail, notification retry diagnostics, LinkedIn relink transfer flow, operator admin shell, operator Users + User Card, and a first Communications layer with Notice / Broadcast / Outbox; now includes batch-safe broadcast delivery materialization, failures drilldown, and outbox progress truth; now includes admin compact counters, hub summaries, polished operator rows, tighter empty-state/navigation consistency, refined operator segments, quick actions, scoped user drilldowns, and compact admin trend counters across hub screens; still needs live re-deploy to confirm STEP040 in production
 
 ## Audit status
 
 - Syntax check: ready to run in-repo
 - Smoke suite: expanded with oauth-route, bot-init, product-surface, admin-shell, admin-users, admin-user-card, notice, broadcast, outbox, admin-intros, and admin-delivery contracts
-- Docs link scan: updated through STEP039.1 continuity
+- Docs link scan: updated through STEP040 continuity
 - Live deployment proof: not refreshed from this repo snapshot
 
 ## What exists now
@@ -80,7 +80,7 @@
 - end-user notification center
 - resend / requeue mutations from operator diagnostics
 - advanced retry / resend controls for failed broadcast recipients
-- deep analytics / dashboards beyond current compact operator trends
+- deep analytics / dashboards beyond current compact operator trends and funnel drilldowns
 - migration runner / deploy automation
 - direct resend / repair actions from delivery detail
 - production observability beyond `/api/health`
@@ -124,8 +124,8 @@
 
 ## Next recommended step
 
-- STEP039 — Operator productivity shortcuts v2 + scoped search on top of the STEP039 operator baseline
-- STEP039.1 — narrow founder-only admin entry visibility hotfix with `/admin` fallback and allowlist visibility wired to `ADMIN_CHAT_ID` + `TG_OPERATOR_IDS`
+- STEP041 — safe bulk actions for segment-based operator response
+- STEP042 — launch/ops runbook + freeze
 
 
 ## STEP032 delta
@@ -192,3 +192,12 @@
 - home keyboard keeps the existing `👑 Admin` button but now shows it for founder/operator accounts resolved from `ADMIN_CHAT_ID` and `TG_OPERATOR_IDS` (with legacy `OPERATOR_TELEGRAM_USER_IDS` still accepted as compatibility input)
 - `/admin` now mirrors `/ops` as an operator-only fallback entrypoint without changing the public command list
 - added founder-only visibility smoke and refreshed env/docs freeze for the new allowlist source of truth
+
+
+## STEP040 delta
+
+- translated the admin/operator layer into a consistent Russian surface across Admin / Operations / Communications / System hubs and key operator read screens
+- added compact funnel readouts for users, profile activation, intros, communications, and delivery health
+- added live drilldown entrypoints from hub counters into existing Users / Intros / Delivery / Outbox / Audit segments
+- extended admin dashboard summary wiring with connected, profile-started, ready, listed-active, first-intro, accepted-intro, and notice-visibility readouts without requiring a new migration
+- refreshed admin smoke coverage for Russian shell wording, funnel drilldowns, and STEP040 contract expectations

@@ -556,9 +556,9 @@ export function createOperatorComposer({
       ? await loadAdminDashboardSummary().catch((error) => ({
         persistenceEnabled: true,
         summary: {
-          home: { totalUsers: 0, listedUsers: 0, pendingIntros: 0, failedDeliveries: 0, activeNotice: false, latestBroadcastStatus: 'none', newUsers24h: 0, newUsers7d: 0, connected24h: 0, connected7d: 0, listed24h: 0, listed7d: 0, intros24h: 0, intros7d: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0, failures24h: 0, failures7d: 0, exhaustedNow: 0, broadcasts7d: 0, directMessages7d: 0 },
-          operations: { totalUsers: 0, readyNotListed: 0, listedIncomplete: 0, pendingIntros: 0, staleIntros: 0, deliveryIssues: 0, connectedNoProfile: 0, readyNoSkills: 0, listedActive: 0, listedInactive: 0, noIntroYet: 0, recentRelinks7d: 0, newIntros24h: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0 },
-          communications: { activeNotice: false, draftBroadcastReady: false, latestBroadcastStatus: 'none', recentDirectMessages: 0, recentOutboxFailures: 0, directMessages24h: 0, directMessages7d: 0, broadcasts7d: 0, broadcastDeliveredRecipients7d: 0, broadcastFailedRecipients7d: 0, outboxFailures24h: 0, outboxFailures7d: 0, latestBroadcastRecipients: 0, latestBroadcastDelivered: 0, latestBroadcastFailed: 0 },
+          home: { totalUsers: 0, connectedUsers: 0, profileStartedUsers: 0, readyProfiles: 0, readyNotListed: 0, listedUsers: 0, listedActiveUsers: 0, pendingIntros: 0, noIntroYet: 0, firstIntroUsers: 0, acceptedIntroUsers: 0, failedDeliveries: 0, activeNotice: false, latestBroadcastStatus: 'none', latestBroadcastId: 0, newUsers24h: 0, newUsers7d: 0, connected24h: 0, connected7d: 0, listed24h: 0, listed7d: 0, intros24h: 0, intros7d: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0, failures24h: 0, failures7d: 0, exhaustedNow: 0, broadcasts7d: 0, directMessages7d: 0 },
+          operations: { totalUsers: 0, connectedUsers: 0, profileStartedUsers: 0, readyProfiles: 0, readyNotListed: 0, listedIncomplete: 0, pendingIntros: 0, staleIntros: 0, deliveryIssues: 0, connectedNoProfile: 0, readyNoSkills: 0, listedActive: 0, listedInactive: 0, noIntroYet: 0, firstIntroUsers: 0, acceptedIntroUsers: 0, recentRelinks7d: 0, newIntros24h: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0 },
+          communications: { activeNotice: false, draftBroadcastReady: false, latestBroadcastStatus: 'none', latestBroadcastId: 0, recentDirectMessages: 0, recentOutboxFailures: 0, directMessages24h: 0, directMessages7d: 0, broadcasts7d: 0, broadcastDeliveredRecipients7d: 0, broadcastFailedRecipients7d: 0, outboxFailures24h: 0, outboxFailures7d: 0, noticeVisibilityEstimate: 0, latestBroadcastAudienceKey: null, latestBroadcastRecipients: 0, latestBroadcastDelivered: 0, latestBroadcastFailed: 0 },
           system: { retryDue: 0, exhausted: 0, recentAuditEvents: 0, failedDeliveries: 0, failures24h: 0, failures7d: 0, delivered24h: 0, delivered7d: 0, operatorActions24h: 0, operatorActions7d: 0, listingChanges7d: 0, relinks7d: 0 }
         },
         reason: String(error?.message || error)
@@ -645,6 +645,120 @@ export function createOperatorComposer({
 
   composer.command('admin', async (ctx) => {
     await renderOperatorEntry(ctx);
+  });
+
+
+  composer.callbackQuery(/^adm:home:funnel:(connected|noprofile|ready_not_listed|listed|nointro|firstintro|accepted|dlv_fail)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    switch (ctx.match?.[1]) {
+      case 'connected':
+        await renderAdminUsers(ctx, { segmentKey: 'conn', page: 0 }, 'edit');
+        return;
+      case 'noprofile':
+        await renderAdminUsers(ctx, { segmentKey: 'noprof', page: 0 }, 'edit');
+        return;
+      case 'ready_not_listed':
+        await renderAdminUsers(ctx, { segmentKey: 'ready', page: 0 }, 'edit');
+        return;
+      case 'listed':
+        await renderAdminUsers(ctx, { segmentKey: 'listd', page: 0 }, 'edit');
+        return;
+      case 'nointro':
+        await renderAdminUsers(ctx, { segmentKey: 'nointro', page: 0 }, 'edit');
+        return;
+      case 'firstintro':
+        await renderAdminIntros(ctx, { segmentKey: 'all', page: 0, notice: 'Показываю список интро для проверки первого касания.' }, 'edit');
+        return;
+      case 'accepted':
+        await renderAdminIntros(ctx, { segmentKey: 'arec', page: 0 }, 'edit');
+        return;
+      case 'dlv_fail':
+        await renderAdminDelivery(ctx, { segmentKey: 'fail', page: 0 }, 'edit');
+        return;
+      default:
+        await renderAdminSurface(ctx, 'home', 'edit');
+    }
+  });
+
+  composer.callbackQuery(/^adm:ops:funnel:(conn_noprofile|ready_no_skills|listed_active|listed_inactive|no_intro|intro_p24|intro_p72|delivery_issue|retry_due|exhausted)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    switch (ctx.match?.[1]) {
+      case 'conn_noprofile':
+        await renderAdminUsers(ctx, { segmentKey: 'noprof', page: 0 }, 'edit');
+        return;
+      case 'ready_no_skills':
+        await renderAdminUsers(ctx, { segmentKey: 'noskills', page: 0 }, 'edit');
+        return;
+      case 'listed_active':
+        await renderAdminUsers(ctx, { segmentKey: 'listact', page: 0 }, 'edit');
+        return;
+      case 'listed_inactive':
+        await renderAdminUsers(ctx, { segmentKey: 'listinact', page: 0 }, 'edit');
+        return;
+      case 'no_intro':
+        await renderAdminUsers(ctx, { segmentKey: 'nointro', page: 0 }, 'edit');
+        return;
+      case 'intro_p24':
+        await renderAdminIntros(ctx, { segmentKey: 'p24', page: 0 }, 'edit');
+        return;
+      case 'intro_p72':
+        await renderAdminIntros(ctx, { segmentKey: 'p72', page: 0 }, 'edit');
+        return;
+      case 'delivery_issue':
+        await renderAdminDelivery(ctx, { segmentKey: 'fail', page: 0 }, 'edit');
+        return;
+      case 'retry_due':
+        await renderAdminDelivery(ctx, { segmentKey: 'due', page: 0 }, 'edit');
+        return;
+      case 'exhausted':
+        await renderAdminDelivery(ctx, { segmentKey: 'exh', page: 0 }, 'edit');
+        return;
+      default:
+        await renderAdminSurface(ctx, 'ops', 'edit');
+    }
+  });
+
+  composer.callbackQuery(/^adm:comms:funnel:(notice_visibility|last_bc|outbox_fail|direct_recent)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    switch (ctx.match?.[1]) {
+      case 'notice_visibility':
+        await renderAdminNotice(ctx, {}, 'edit');
+        return;
+      case 'last_bc':
+        await renderAdminOutbox(ctx, { notice: 'Открываю outbox для последнего broadcast.' }, 'edit');
+        return;
+      case 'outbox_fail':
+        await renderAdminOutbox(ctx, { notice: 'Открываю outbox с recent failures.' }, 'edit');
+        return;
+      case 'direct_recent':
+        await renderAdminOutbox(ctx, { notice: 'Открываю outbox для recent direct messages.' }, 'edit');
+        return;
+      default:
+        await renderAdminSurface(ctx, 'comms', 'edit');
+    }
+  });
+
+  composer.callbackQuery(/^adm:sys:funnel:(retry_due|exhausted|audit_recent|listing_changes|relinks)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    switch (ctx.match?.[1]) {
+      case 'retry_due':
+        await renderAdminDelivery(ctx, { segmentKey: 'due', page: 0 }, 'edit');
+        return;
+      case 'exhausted':
+        await renderAdminDelivery(ctx, { segmentKey: 'exh', page: 0 }, 'edit');
+        return;
+      case 'audit_recent':
+        await renderAdminAudit(ctx, { segmentKey: 'all', page: 0 }, 'edit');
+        return;
+      case 'listing_changes':
+        await renderAdminAudit(ctx, { segmentKey: 'user', page: 0, notice: 'Показываю аудит пользовательских действий; listing changes помечены внутри событий.' }, 'edit');
+        return;
+      case 'relinks':
+        await renderAdminAudit(ctx, { segmentKey: 'relink', page: 0 }, 'edit');
+        return;
+      default:
+        await renderAdminSurface(ctx, 'sys', 'edit');
+    }
   });
 
   composer.callbackQuery('adm:home', async (ctx) => {

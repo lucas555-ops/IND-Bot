@@ -25,7 +25,7 @@ for (const fragment of [
   }
 }
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP038' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const surface = await surfaces.buildAdminNoticeSurface({
   state: {
     notice: {
@@ -38,7 +38,7 @@ const surface = await surfaces.buildAdminNoticeSurface({
   }
 });
 
-for (const fragment of ['📣 Notice', 'Connected, no profile', 'Estimated visibility: 14']) {
+for (const fragment of ['📣 Уведомление', 'Подключили, без профиля', 'Оценка видимости: 14']) {
   if (!surface.text.includes(fragment)) {
     throw new Error(`Notice surface missing targeting fragment: ${fragment}`);
   }

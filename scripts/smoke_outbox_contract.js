@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createAdminSurfaceBuilders } from '../src/bot/surfaces/adminSurfaces.js';
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP030' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const surface = await surfaces.buildAdminOutboxSurface({
   records: [{
     id: 4,
@@ -13,8 +13,8 @@ const surface = await surfaces.buildAdminOutboxSurface({
   }]
 });
 
-if (!surface.text.includes('📤 Outbox')) {
-  throw new Error('Outbox surface must expose the Outbox title');
+if (!surface.text.includes('📤 Исходящие')) {
+  throw new Error('Outbox surface must expose the Russian outbox title');
 }
 if (!JSON.stringify(surface.reply_markup.inline_keyboard).includes('adm:outbox:open:4')) {
   throw new Error('Outbox keyboard must expose record drilldown');

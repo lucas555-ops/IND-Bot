@@ -27,7 +27,7 @@ for (const fragment of [
   }
 }
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP038' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const hub = await surfaces.buildAdminTemplatesSurface({
   state: {
     noticeTemplates: [{ key: 'complete_profile', label: 'Complete profile', audienceKey: 'PROFILE_INCOMPLETE' }],
@@ -35,7 +35,7 @@ const hub = await surfaces.buildAdminTemplatesSurface({
     directTemplates: [{ key: 'complete', label: 'Complete profile' }]
   }
 });
-for (const fragment of ['📌 Templates', 'Notice templates: 1', 'Broadcast templates: 1']) {
+for (const fragment of ['📌 Шаблоны', 'Шаблоны уведомлений: 1', 'Шаблоны рассылки: 1']) {
   if (!hub.text.includes(fragment)) {
     throw new Error(`Templates hub missing fragment: ${fragment}`);
   }
@@ -50,7 +50,7 @@ const noticePicker = await surfaces.buildAdminNoticeTemplatePickerSurface({
   state: { notice: { audienceKey: 'ALL' }, estimate: 5 },
   templates: [{ key: 'complete_profile', label: 'Complete profile', audienceKey: 'PROFILE_INCOMPLETE' }]
 });
-if (!noticePicker.text.includes('Complete profile → Profile incomplete')) {
+if (!noticePicker.text.includes('Complete profile → Профиль не завершён')) {
   throw new Error('Notice template picker missing template line');
 }
 if (!JSON.stringify(noticePicker.reply_markup.inline_keyboard).includes('adm:not:tpl:complete_profile')) {
@@ -61,7 +61,7 @@ const broadcastPicker = await surfaces.buildAdminBroadcastTemplatePickerSurface(
   state: { draft: { audienceKey: 'ALL_CONNECTED' }, estimate: 9 },
   templates: [{ key: 'list_profile', label: 'List ready profiles', audienceKey: 'READY_NOT_LISTED' }]
 });
-if (!broadcastPicker.text.includes('List ready profiles → Ready not listed')) {
+if (!broadcastPicker.text.includes('List ready profiles → Готовые, но не опубликованы')) {
   throw new Error('Broadcast template picker missing template line');
 }
 if (!JSON.stringify(broadcastPicker.reply_markup.inline_keyboard).includes('adm:bc:tpl:list_profile')) {

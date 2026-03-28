@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createAdminSurfaceBuilders } from '../src/bot/surfaces/adminSurfaces.js';
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP033' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const compose = await surfaces.buildAdminUserMessageSurface({
   card: {
     user_id: 7,
@@ -22,8 +22,8 @@ const compose = await surfaces.buildAdminUserMessageSurface({
   page: 0
 });
 
-if (!compose.text.includes('✉️ Direct message')) {
-  throw new Error('Direct message compose surface must expose the Direct message title');
+if (!compose.text.includes('✉️ Личное сообщение')) {
+  throw new Error('Direct message compose surface must expose the Russian title');
 }
 for (const callback of ['adm:msg:tpl:7:all:0', 'adm:msg:edit:7:all:0', 'adm:msg:preview:7:all:0', 'adm:msg:clear:7:all:0']) {
   if (!JSON.stringify(compose.reply_markup.inline_keyboard).includes(callback)) {

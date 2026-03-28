@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createAdminSurfaceBuilders } from '../src/bot/surfaces/adminSurfaces.js';
 
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP031' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 const deliveryList = await surfaces.buildAdminDeliverySurface({
   state: {
     persistenceEnabled: true,
@@ -32,10 +32,10 @@ const deliveryList = await surfaces.buildAdminDeliverySurface({
   }
 });
 
-if (!deliveryList.text.includes('🧾 Delivery')) {
-  throw new Error('Admin delivery surface must expose the Delivery title');
+if (!deliveryList.text.includes('🧾 Доставка')) {
+  throw new Error('Admin delivery surface must expose the Russian delivery title');
 }
-if (!deliveryList.text.includes('Retry due 1')) {
+if (!deliveryList.text.includes('ждут повтора 1')) {
   throw new Error('Admin delivery surface must include the retry due summary');
 }
 

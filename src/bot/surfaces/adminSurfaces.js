@@ -48,7 +48,7 @@ function countLine(label, value) {
 }
 
 function adminSearchScopeLabel(scopeKey) {
-  return ADMIN_SEARCH_SCOPES[normalizeAdminSearchScope(scopeKey)]?.label || 'Search';
+  return ADMIN_SEARCH_SCOPES[normalizeAdminSearchScope(scopeKey)]?.label || 'Поиск';
 }
 
 function adminSearchBackCallback(scopeKey) {
@@ -65,214 +65,250 @@ function adminSearchBackCallback(scopeKey) {
 
 function profileReadinessLabel(card) {
   if (!card?.profile_id) {
-    return 'no profile yet';
+    return 'профиля ещё нет';
   }
   if (card.profile_state === 'active' && card.visibility_status === 'listed') {
-    return 'ready • listed';
+    return 'готов • опубликован';
   }
   if (card.profile_state === 'active') {
-    return 'ready • hidden';
+    return 'готов • скрыт';
   }
-  return 'incomplete';
+  return 'не завершён';
+}
+
+function buildAdminStatusLabel(value, fallback = 'нет') {
+  const normalized = typeof value === 'string' && value.trim() ? value.trim().toLowerCase() : fallback;
+  switch (normalized) {
+    case 'none': return 'нет';
+    case 'active': return 'активен';
+    case 'inactive': return 'неактивен';
+    case 'ready': return 'готов';
+    case 'empty': return 'пусто';
+    case 'draft': return 'черновик';
+    case 'sending': return 'отправляется';
+    case 'sent': return 'отправлен';
+    case 'partial': return 'частично';
+    case 'failed': return 'ошибка';
+    case 'sent with failures':
+    case 'sent_with_failures': return 'отправлен с ошибками';
+    default: return formatShortStatus(value, fallback);
+  }
 }
 
 function buildAdminHomeText({ summary = null } = {}) {
   return [
-    '👑 Admin',
+    '👑 Админка',
     '',
-    'Operator control plane for Intro Deck.',
+    'Компактный founder/operator overview.',
     '',
-    countLine('Users', summary?.totalUsers || 0),
-    countLine('Listed', summary?.listedUsers || 0),
-    countLine('Pending intros', summary?.pendingIntros || 0),
-    countLine('Failed deliveries', summary?.failedDeliveries || 0),
-    `Notice: ${summary?.activeNotice ? 'active' : 'inactive'}`,
-    `Broadcast: ${formatShortStatus(summary?.latestBroadcastStatus, 'none')}`,
+    'Воронка:',
+    countLine('Пользователи всего', summary?.totalUsers || 0),
+    countLine('Подключили LinkedIn', summary?.connectedUsers || 0),
+    countLine('Начали профиль', summary?.profileStartedUsers || 0),
+    countLine('Готовые профили', summary?.readyProfiles || 0),
+    countLine('Готовые, но не опубликованы', summary?.readyNotListed || 0),
+    countLine('Опубликованы', summary?.listedUsers || 0),
+    countLine('Активны в каталоге', summary?.listedActiveUsers || 0),
+    countLine('Без интро', summary?.noIntroYet || 0),
+    countLine('Получили первое интро', summary?.firstIntroUsers || 0),
+    countLine('Получили принятое интро', summary?.acceptedIntroUsers || 0),
     '',
-    'Trends:',
-    `Users +${summary?.newUsers24h || 0}/24h • +${summary?.newUsers7d || 0}/7d`,
-    `Connected +${summary?.connected24h || 0}/24h • +${summary?.connected7d || 0}/7d`,
-    `Listed +${summary?.listed24h || 0}/24h • +${summary?.listed7d || 0}/7d`,
-    `Intros ${summary?.intros24h || 0}/24h • ${summary?.intros7d || 0}/7d`,
-    `Accepted ${summary?.accepted7d || 0}/7d • Declined ${summary?.declined7d || 0}/7d`,
-    `Pending >24h: ${summary?.pendingOlder24h || 0}`,
-    `Delivery failures ${summary?.failures24h || 0}/24h • ${summary?.failures7d || 0}/7d`,
-    `Broadcasts ${summary?.broadcasts7d || 0}/7d • Direct ${summary?.directMessages7d || 0}/7d`,
+    'Сводка 24ч / 7д:',
+    `Новые пользователи +${summary?.newUsers24h || 0} / +${summary?.newUsers7d || 0}`,
+    `Подключили LinkedIn +${summary?.connected24h || 0} / +${summary?.connected7d || 0}`,
+    `Опубликованы +${summary?.listed24h || 0} / +${summary?.listed7d || 0}`,
+    `Новые интро ${summary?.intros24h || 0} / ${summary?.intros7d || 0}`,
+    `Принятые ${summary?.accepted7d || 0} • Отклонённые ${summary?.declined7d || 0}`,
+    `Pending >24ч: ${summary?.pendingOlder24h || 0}`,
+    `Ошибки доставки ${summary?.failures24h || 0} / ${summary?.failures7d || 0}`,
+    `Рассылки ${summary?.broadcasts7d || 0}/7д • ЛС ${summary?.directMessages7d || 0}/7д`,
     '',
-    'Quick actions:',
-    'Users • Pending intros • Delivery issues • Notice • Broadcast • Outbox • Quality'
+    `Уведомление: ${summary?.activeNotice ? 'активно' : 'неактивно'}`,
+    `Последняя рассылка: ${buildAdminStatusLabel(summary?.latestBroadcastStatus, 'нет')}`
   ].join('\n');
 }
 
-function buildAdminHomeKeyboard() {
+function buildAdminHomeKeyboard({ summary = null } = {}) {
   return buildInlineKeyboard([
-    [{ text: '🧰 Operations', callback_data: 'adm:ops' }],
-    [{ text: '💬 Communications', callback_data: 'adm:comms' }],
-    [{ text: '⚙️ System', callback_data: 'adm:sys' }],
+    [{ text: '🧰 Операции', callback_data: 'adm:ops' }],
+    [{ text: '💬 Коммуникации', callback_data: 'adm:comms' }],
+    [{ text: '⚙️ Система', callback_data: 'adm:sys' }],
     [
-      { text: '👥 Users', callback_data: 'adm:usr:list' },
-      { text: '📨 Pending intros', callback_data: 'adm:intro:seg:pend' }
+      { text: `🔗 LinkedIn: ${summary?.connectedUsers || 0}`, callback_data: 'adm:home:funnel:connected' },
+      { text: `🧩 Без профиля: ${summary?.profileStartedUsers != null ? Math.max(0, (summary?.connectedUsers || 0) - (summary?.profileStartedUsers || 0)) : 0}`, callback_data: 'adm:home:funnel:noprofile' }
     ],
     [
-      { text: '🧾 Delivery issues', callback_data: 'adm:dlv:seg:fail' },
-      { text: '🚩 Quality', callback_data: 'adm:qual' }
+      { text: `✅ Не опубликованы: ${summary?.readyNotListed || 0}`, callback_data: 'adm:home:funnel:ready_not_listed' },
+      { text: `📇 Опубликованы: ${summary?.listedUsers || 0}`, callback_data: 'adm:home:funnel:listed' }
     ],
     [
-      { text: '📣 Notice', callback_data: 'adm:not' },
-      { text: '📬 Broadcast', callback_data: 'adm:bc' }
-    ],
-    [{ text: '📤 Outbox', callback_data: 'adm:outbox' }],
-    [
-      { text: '🔎 Users', callback_data: 'adm:search:users' },
-      { text: '🔎 Intros', callback_data: 'adm:search:intros' }
+      { text: `📭 Без интро: ${summary?.noIntroYet || 0}`, callback_data: 'adm:home:funnel:nointro' },
+      { text: `🤝 Принятые: ${summary?.acceptedIntroUsers || 0}`, callback_data: 'adm:home:funnel:accepted' }
     ],
     [
-      { text: '🔎 Delivery', callback_data: 'adm:search:delivery' },
-      { text: '🔎 Audit', callback_data: 'adm:search:audit' }
+      { text: `📨 Первое интро: ${summary?.firstIntroUsers || 0}`, callback_data: 'adm:home:funnel:firstintro' },
+      { text: `🧾 Ошибки доставки: ${summary?.failedDeliveries || 0}`, callback_data: 'adm:home:funnel:dlv_fail' }
     ],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '👥 Пользователи', callback_data: 'adm:usr:list' },
+      { text: '📨 Интро', callback_data: 'adm:intro:list' }
+    ],
+    [
+      { text: '📣 Уведомление', callback_data: 'adm:not' },
+      { text: '📬 Рассылка', callback_data: 'adm:bc' }
+    ],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildOperationsHubText({ summary = null } = {}) {
   return [
-    '🧰 Operations',
+    '🧰 Операции',
     '',
-    'Users, quality, intros, and delivery review. Fast path for the highest-friction operator work.',
+    'Продуктовая воронка и проблемные сегменты.',
     '',
-    countLine('Users', summary?.totalUsers || 0),
-    countLine('Ready not listed', summary?.readyNotListed || 0),
-    countLine('Listed incomplete', summary?.listedIncomplete || 0),
-    countLine('Pending intros', summary?.pendingIntros || 0),
-    countLine('Stale intros', summary?.staleIntros || 0),
-    countLine('Delivery issues', summary?.deliveryIssues || 0),
+    countLine('Пользователи', summary?.totalUsers || 0),
+    countLine('Подключили LinkedIn', summary?.connectedUsers || 0),
+    countLine('Начали профиль', summary?.profileStartedUsers || 0),
+    countLine('Готовые профили', summary?.readyProfiles || 0),
+    countLine('Готовые, но не опубликованы', summary?.readyNotListed || 0),
+    countLine('Опубликованы неполные', summary?.listedIncomplete || 0),
+    countLine('Проблемы доставки', summary?.deliveryIssues || 0),
     '',
-    'Pipeline:',
-    `Connected, no profile: ${summary?.connectedNoProfile || 0}`,
-    `Ready, no skills: ${summary?.readyNoSkills || 0}`,
-    `Listed active: ${summary?.listedActive || 0} • inactive ${summary?.listedInactive || 0}`,
-    `No intros yet: ${summary?.noIntroYet || 0}`,
-    `Recent relinks: ${summary?.recentRelinks7d || 0}/7d`,
-    `New intros: ${summary?.newIntros24h || 0}/24h`,
-    `Accepted ${summary?.accepted7d || 0}/7d • Declined ${summary?.declined7d || 0}/7d`,
-    `Pending >24h: ${summary?.pendingOlder24h || 0}`
+    'Drilldowns:',
+    `Подключили, но без профиля: ${summary?.connectedNoProfile || 0}`,
+    `Готовые без навыков: ${summary?.readyNoSkills || 0}`,
+    `Активны в каталоге: ${summary?.listedActive || 0} • неактивны ${summary?.listedInactive || 0}`,
+    `Без интро: ${summary?.noIntroYet || 0}`,
+    `Первое интро: ${summary?.firstIntroUsers || 0} • принятое ${summary?.acceptedIntroUsers || 0}`,
+    `Новые интро 24ч: ${summary?.newIntros24h || 0}`,
+    `Pending >24ч: ${summary?.pendingOlder24h || 0} • >72ч: ${summary?.staleIntros || 0}`,
+    `Недавние relink: ${summary?.recentRelinks7d || 0}/7д`
   ].join('\n');
 }
 
-function buildOperationsHubKeyboard() {
+function buildOperationsHubKeyboard({ summary = null } = {}) {
   return buildInlineKeyboard([
-    [{ text: '👥 Users', callback_data: 'adm:usr:list' }],
-    [{ text: '🚩 Quality', callback_data: 'adm:qual' }],
-    [{ text: '📨 Intros', callback_data: 'adm:intro:list' }],
-    [{ text: '🧾 Delivery', callback_data: 'adm:dlv' }],
     [
-      { text: '🔎 Search users', callback_data: 'adm:search:users' },
-      { text: '🔎 Search intros', callback_data: 'adm:search:intros' }
+      { text: `🧩 Без профиля: ${summary?.connectedNoProfile || 0}`, callback_data: 'adm:ops:funnel:conn_noprofile' },
+      { text: `🛠 Без навыков: ${summary?.readyNoSkills || 0}`, callback_data: 'adm:ops:funnel:ready_no_skills' }
     ],
-    [{ text: '↩️ Back to Admin', callback_data: 'adm:home' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: `📈 Активны: ${summary?.listedActive || 0}`, callback_data: 'adm:ops:funnel:listed_active' },
+      { text: `🕯 Неактивны: ${summary?.listedInactive || 0}`, callback_data: 'adm:ops:funnel:listed_inactive' }
+    ],
+    [
+      { text: `📭 Без интро: ${summary?.noIntroYet || 0}`, callback_data: 'adm:ops:funnel:no_intro' },
+      { text: `⏳ Pending >24ч: ${summary?.pendingOlder24h || 0}`, callback_data: 'adm:ops:funnel:intro_p24' }
+    ],
+    [
+      { text: `⌛ Pending >72ч: ${summary?.staleIntros || 0}`, callback_data: 'adm:ops:funnel:intro_p72' },
+      { text: `🧾 Доставка: ${summary?.deliveryIssues || 0}`, callback_data: 'adm:ops:funnel:delivery_issue' }
+    ],
+    [
+      { text: '👥 Пользователи', callback_data: 'adm:usr:list' },
+      { text: '🚩 Качество', callback_data: 'adm:qual' }
+    ],
+    [
+      { text: '📨 Интро', callback_data: 'adm:intro:list' },
+      { text: '🧾 Доставка', callback_data: 'adm:dlv' }
+    ],
+    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildCommunicationsHubText({ state = null, notice = null } = {}) {
   const lines = [
-    '💬 Communications',
+    '💬 Коммуникации',
     '',
-    'Notices, broadcasts, and unified outbox review. Use this hub for growth nudges and direct operator outreach.',
+    'Уведомления, рассылки, исходящие и охват аудиторий.',
     '',
-    `Notice: ${state?.notice?.isActive ? 'active' : 'inactive'} • ${ADMIN_NOTICE_AUDIENCES[normalizeAdminNoticeAudience(state?.notice?.audienceKey || 'ALL')]?.label || 'All users'}`,
-    `Broadcast draft: ${state?.broadcastDraft?.body ? 'ready' : 'empty'}`,
-    `Latest broadcast: ${formatShortStatus(state?.latestBroadcastStatus, 'none')}`,
-    countLine('Recent direct sends', state?.recentDirectMessages || 0),
-    countLine('Recent outbox failures', state?.recentOutboxFailures || 0),
-    countLine('Outbox records', state?.outboxCount || 0),
-    '',
-    'Comms trends:',
-    `Broadcasts: ${state?.broadcasts7d || 0}/7d`,
-    `Broadcast delivery: ${state?.broadcastDeliveredRecipients7d || 0} ok • ${state?.broadcastFailedRecipients7d || 0} failed`,
-    `Direct messages: ${state?.directMessages24h || 0}/24h • ${state?.directMessages7d || 0}/7d`,
-    `Outbox failures: ${state?.outboxFailures24h || 0}/24h • ${state?.outboxFailures7d || 0}/7d`,
-    `Latest broadcast recipients: ${state?.latestBroadcastRecipients || 0} • ok ${state?.latestBroadcastDelivered || 0} • fail ${state?.latestBroadcastFailed || 0}`
+    `Активное уведомление: ${state?.notice?.isActive ? 'да' : 'нет'} • ${ADMIN_NOTICE_AUDIENCES[normalizeAdminNoticeAudience(state?.notice?.audienceKey || 'ALL')]?.label || 'Все пользователи'}`,
+    `Видимость notice: ${state?.noticeVisibilityEstimate || 0}`,
+    `Черновик broadcast: ${state?.broadcastDraft?.body ? 'готов' : 'пусто'}`,
+    `Последняя рассылка: ${buildAdminStatusLabel(state?.latestBroadcastStatus, 'нет')}`,
+    `Аудитория последней рассылки: ${state?.latestBroadcastRecipients || 0}`,
+    `Доставлено: ${state?.latestBroadcastDelivered || 0} • ошибок: ${state?.latestBroadcastFailed || 0}`,
+    countLine('Личные сообщения 24ч', state?.directMessages24h || 0),
+    countLine('Личные сообщения 7д', state?.directMessages7d || 0),
+    countLine('Ошибки outbox 24ч', state?.outboxFailures24h || 0),
+    countLine('Ошибки outbox 7д', state?.outboxFailures7d || 0)
   ];
-
-  if (notice) {
-    lines.push('', notice);
-  }
-
+  if (notice) lines.push('', notice);
   return lines.join('\n');
 }
 
-function buildCommunicationsHubKeyboard() {
+function buildCommunicationsHubKeyboard({ state = null } = {}) {
   return buildInlineKeyboard([
-    [{ text: '📣 Notice', callback_data: 'adm:not' }],
-    [{ text: '📬 Broadcast', callback_data: 'adm:bc' }],
-    [{ text: '📌 Templates', callback_data: 'adm:tpl' }],
-    [{ text: '📤 Outbox', callback_data: 'adm:outbox' }],
-    [{ text: '🔎 Search outbox', callback_data: 'adm:search:outbox' }],
-    [{ text: '↩️ Back to Admin', callback_data: 'adm:home' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: `📣 Видимость notice: ${state?.noticeVisibilityEstimate || 0}`, callback_data: 'adm:comms:funnel:notice_visibility' },
+      { text: `📬 Последняя рассылка: ${state?.latestBroadcastRecipients || 0}`, callback_data: 'adm:comms:funnel:last_bc' }
+    ],
+    [
+      { text: `❌ Ошибки исходящих: ${state?.recentOutboxFailures || 0}`, callback_data: 'adm:comms:funnel:outbox_fail' },
+      { text: `✉️ ЛС 24ч: ${state?.directMessages24h || 0}`, callback_data: 'adm:comms:funnel:direct_recent' }
+    ],
+    [{ text: '📣 Уведомление', callback_data: 'adm:not' }],
+    [{ text: '📬 Рассылка', callback_data: 'adm:bc' }],
+    [{ text: '📌 Шаблоны', callback_data: 'adm:tpl' }],
+    [{ text: '📤 Исходящие', callback_data: 'adm:outbox' }],
+    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildSystemHubText({ summary = null } = {}) {
   return [
-    '⚙️ System',
+    '⚙️ Система',
     '',
-    'Runtime health, retry visibility, audit, and operator scope. Use it when something looks off or needs a trail.',
+    'Рантайм, повторные попытки, аудит и операторская активность.',
     '',
-    countLine('Retry due', summary?.retryDue || 0),
-    countLine('Exhausted', summary?.exhausted || 0),
-    countLine('Failed deliveries', summary?.failedDeliveries || 0),
-    countLine('Recent audit events', summary?.recentAuditEvents || 0),
+    countLine('Ждут повтора', summary?.retryDue || 0),
+    countLine('Исчерпано', summary?.exhausted || 0),
+    countLine('Ошибки доставки', summary?.failedDeliveries || 0),
+    countLine('События аудита 7д', summary?.recentAuditEvents || 0),
     '',
-    'Runtime trends:',
-    `Failures ${summary?.failures24h || 0}/24h • ${summary?.failures7d || 0}/7d`,
-    `Delivered ${summary?.delivered24h || 0}/24h • ${summary?.delivered7d || 0}/7d`,
-    `Operator actions ${summary?.operatorActions24h || 0}/24h • ${summary?.operatorActions7d || 0}/7d`,
-    `Listing changes ${summary?.listingChanges7d || 0}/7d • relinks ${summary?.relinks7d || 0}/7d`
+    `Ошибки ${summary?.failures24h || 0}/24ч • ${summary?.failures7d || 0}/7д`,
+    `Доставлено ${summary?.delivered24h || 0}/24ч • ${summary?.delivered7d || 0}/7д`,
+    `Действия операторов ${summary?.operatorActions24h || 0}/24ч • ${summary?.operatorActions7d || 0}/7д`,
+    `Изменения листинга ${summary?.listingChanges7d || 0}/7д • релинки ${summary?.relinks7d || 0}/7д`
   ].join('\n');
 }
 
-function buildSystemHubKeyboard() {
+function buildSystemHubKeyboard({ summary = null } = {}) {
   return buildInlineKeyboard([
-    [{ text: '🩺 Health', callback_data: 'adm:health' }],
-    [{ text: '🔁 Retry', callback_data: 'adm:retry' }],
-    [{ text: '📜 Audit', callback_data: 'adm:audit' }],
-    [{ text: '👮 Operators', callback_data: 'adm:opscope' }],
     [
-      { text: '🔎 Search audit', callback_data: 'adm:search:audit' },
-      { text: '🔎 Search delivery', callback_data: 'adm:search:delivery' }
+      { text: `🔁 Ждут повтора: ${summary?.retryDue || 0}`, callback_data: 'adm:sys:funnel:retry_due' },
+      { text: `🧯 Исчерпано: ${summary?.exhausted || 0}`, callback_data: 'adm:sys:funnel:exhausted' }
     ],
-    [{ text: '↩️ Back to Admin', callback_data: 'adm:home' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: `📜 Аудит 7д: ${summary?.recentAuditEvents || 0}`, callback_data: 'adm:sys:funnel:audit_recent' },
+      { text: `📝 Изменения листинга: ${summary?.listingChanges7d || 0}`, callback_data: 'adm:sys:funnel:listing_changes' }
+    ],
+    [{ text: `🔄 Релинки 7д: ${summary?.relinks7d || 0}`, callback_data: 'adm:sys:funnel:relinks' }],
+    [{ text: '🩺 Здоровье', callback_data: 'adm:health' }],
+    [{ text: '📜 Аудит', callback_data: 'adm:audit' }],
+    [{ text: '👮 Операторы', callback_data: 'adm:opscope' }],
+    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildPlaceholderText({ title, description, nextStep }) {
   const lines = [title, '', description];
   if (nextStep) {
-    lines.push('', `Planned next: ${nextStep}`);
+    lines.push('', `Следующий шаг: ${nextStep}`);
   }
   return lines.join('\n');
 }
 
 function buildDetailFooter(backCallback) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Back', callback_data: backCallback }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '↩️ Назад', callback_data: backCallback }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
-
-function buildUsersSegmentRow(currentSegmentKey) {
-  const ordered = ['all', 'conn', 'noprof', 'inc', 'noskills', 'ready', 'listd', 'listact', 'listinact', 'nointro', 'pend', 'relink'];
-  const buttons = ordered.map((segmentKey) => ({
-    text: `${currentSegmentKey === segmentKey ? '✅' : '▫️'} ${ADMIN_USER_SEGMENTS[segmentKey].label}`,
-    callback_data: `adm:usr:seg:${segmentKey}`
-  }));
-
-  return [buttons.slice(0, 2), buttons.slice(2, 4), buttons.slice(4, 6), buttons.slice(6, 8), buttons.slice(8, 10), buttons.slice(10, 12)];
-}
-
 
 function buildIntroSegmentRows(currentSegmentKey) {
   const ordered = ['all', 'pend', 'p24', 'p72', 'acc', 'arec', 'dec', 'drec', 'fail', 'dprob'];
@@ -358,15 +394,15 @@ function renderIntroListLine(item, index, page = 0, pageSize = 8) {
 
 function buildAdminIntrosText({ state = null, notice = null } = {}) {
   if (!state?.persistenceEnabled) {
-    return ['📨 Intros', '', notice || '⚠️ Intro data is unavailable in this environment.'].join('\n');
+    return ['📨 Интро', '', notice || '⚠️ Данные интро недоступны в этой среде.'].join('\n');
   }
 
   const lines = [
-    '📨 Intros',
+    '📨 Интро',
     '',
-    `Segment: ${ADMIN_INTRO_SEGMENTS[state.segmentKey]?.label || 'All'} • page ${state.page + 1}`,
-    `Visible in this segment: ${state.totalCount}`,
-    `Pending ${state.counts?.pending || 0} • Accepted ${state.counts?.accepted || 0} • Declined ${state.counts?.declined || 0} • Stale ${state.counts?.stale || 0} • Failed notify ${state.counts?.failedNotify || 0}`
+    `Сегмент: ${ADMIN_INTRO_SEGMENTS[state.segmentKey]?.label || 'Все'} • стр. ${state.page + 1}`,
+    `Видно в этом сегменте: ${state.totalCount}`,
+    `Pending ${state.counts?.pending || 0} • принято ${state.counts?.accepted || 0} • отклонено ${state.counts?.declined || 0} • просрочено ${state.counts?.stale || 0} • сбой уведомления ${state.counts?.failedNotify || 0}`
   ];
 
   if (notice) {
@@ -374,11 +410,11 @@ function buildAdminIntrosText({ state = null, notice = null } = {}) {
   }
 
   if (!state.intros?.length) {
-    lines.push('', 'No intros found for this segment yet.');
+    lines.push('', 'В этом сегменте пока нет интро.');
     return lines.join('\n');
   }
 
-  lines.push('', 'Open an intro:');
+  lines.push('', 'Открой интро:');
   lines.push(...state.intros.map((item, index) => renderIntroListLine(item, index, state.page, state.pageSize)));
   return lines.join('\n');
 }
@@ -392,50 +428,50 @@ function buildAdminIntrosKeyboard({ state = null } = {}) {
   })));
 
   for (const item of state?.intros || []) {
-    const label = truncate(`${item?.requesterDisplayName || 'Unknown'} → ${item?.targetDisplayName || 'Unknown'}`, 42);
+    const label = truncate(`${item?.requesterDisplayName || 'Неизвестно'} → ${item?.targetDisplayName || 'Неизвестно'}`, 42);
     rows.push([{ text: `📄 ${label}`, callback_data: targetUserId ? `adm:intro:user:${targetUserId}:open:${item.introRequestId}:${segmentKey}:${state?.page || 0}` : `adm:intro:open:${item.introRequestId}:${segmentKey}:${state?.page || 0}` }]);
   }
 
   const pager = [];
   if (state?.hasPrev) {
-    pager.push({ text: '◀️ Prev', callback_data: targetUserId ? `adm:intro:user:${targetUserId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:intro:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
+    pager.push({ text: '◀️ Назад', callback_data: targetUserId ? `adm:intro:user:${targetUserId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:intro:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
   }
   if (state?.hasNext) {
-    pager.push({ text: 'Next ▶️', callback_data: targetUserId ? `adm:intro:user:${targetUserId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:intro:page:${segmentKey}:${(state?.page || 0) + 1}` });
+    pager.push({ text: 'Вперёд ▶️', callback_data: targetUserId ? `adm:intro:user:${targetUserId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:intro:page:${segmentKey}:${(state?.page || 0) + 1}` });
   }
   if (pager.length) {
     rows.push(pager);
   }
 
-  rows.push([{ text: '🔎 Search intros', callback_data: 'adm:search:intros' }]);
-  rows.push([{ text: targetUserId ? '↩️ Back to User Card' : '↩️ Back to Operations', callback_data: targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск интро', callback_data: 'adm:search:intros' }]);
+  rows.push([{ text: targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Операции', callback_data: targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:ops' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminIntroDetailText({ intro = null, notificationSummary = null, recentReceipts = [], notice = null } = {}) {
   if (!intro) {
-    return ['📄 Intro Detail', '', notice || '⚠️ Intro not found.'].join('\n');
+    return ['📄 Деталь интро', '', notice || '⚠️ Интро не найдено.'].join('\n');
   }
 
   const lines = [
-    '📄 Intro Detail',
+    '📄 Деталь интро',
     '',
-    `Sender: ${toDisplayValue(intro.requester_display_name)}${intro.requester_headline_user ? ` • ${truncate(intro.requester_headline_user, 60)}` : ''}`,
-    `Recipient: ${toDisplayValue(intro.target_display_name)}${intro.target_headline_user ? ` • ${truncate(intro.target_headline_user, 60)}` : ''}`,
-    `Status: ${toDisplayValue(intro.status)}`,
-    `Created: ${formatDateTimeShort(intro.created_at)}`,
-    `Updated: ${formatDateTimeShort(intro.updated_at)}`,
+    `Отправитель: ${toDisplayValue(intro.requester_display_name)}${intro.requester_headline_user ? ` • ${truncate(intro.requester_headline_user, 60)}` : ''}`,
+    `Получатель: ${toDisplayValue(intro.target_display_name)}${intro.target_headline_user ? ` • ${truncate(intro.target_headline_user, 60)}` : ''}`,
+    `Статус: ${toDisplayValue(intro.status)}`,
+    `Создано: ${formatDateTimeShort(intro.created_at)}`,
+    `Обновлено: ${formatDateTimeShort(intro.updated_at)}`,
     '',
-    'Payload summary:',
+    'Сводка payload:',
     `${truncate(intro.requester_display_name, 32)} → ${truncate(intro.target_display_name, 32)}`,
     '',
-    `Delivery: sent ${notificationSummary?.sentCount || 0} • failed ${notificationSummary?.failedCount || 0} • retry due ${notificationSummary?.retryDueCount || 0} • exhausted ${notificationSummary?.exhaustedCount || 0}`
+    `Доставка: отправлено ${notificationSummary?.sentCount || 0} • ошибок ${notificationSummary?.failedCount || 0} • ждут повтора ${notificationSummary?.retryDueCount || 0} • исчерпано ${notificationSummary?.exhaustedCount || 0}`
   ];
 
   if (recentReceipts?.length) {
-    lines.push('', 'Recent delivery events:');
-    lines.push(...recentReceipts.slice(0, 3).map((item) => `• ${item.operatorBucket} • ${item.eventType} • attempts ${item.attemptCount}/${item.maxAttempts}`));
+    lines.push('', 'Последние события доставки:');
+    lines.push(...recentReceipts.slice(0, 3).map((item) => `• ${item.operatorBucket} • ${item.eventType} • попыток ${item.attemptCount}/${item.maxAttempts}`));
   }
 
   if (notice) {
@@ -448,38 +484,38 @@ function buildAdminIntroDetailText({ intro = null, notificationSummary = null, r
 function buildAdminIntroDetailKeyboard({ intro = null, backCallback = 'adm:intro:list' } = {}) {
   const rows = [];
   if (intro?.requester_user_id) {
-    rows.push([{ text: '👤 Sender', callback_data: `adm:usr:open:${intro.requester_user_id}:all:0` }]);
+    rows.push([{ text: '👤 Отправитель', callback_data: `adm:usr:open:${intro.requester_user_id}:all:0` }]);
   }
   if (intro?.target_user_id) {
-    rows.push([{ text: '👤 Recipient', callback_data: `adm:usr:open:${intro.target_user_id}:all:0` }]);
+    rows.push([{ text: '👤 Получатель', callback_data: `adm:usr:open:${intro.target_user_id}:all:0` }]);
   }
-  rows.push([{ text: '🧾 Delivery', callback_data: `adm:intro:dlv:${intro?.intro_request_id || 0}` }]);
-  rows.push([{ text: '↩️ Back to Intros', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🧾 Доставка', callback_data: `adm:intro:dlv:${intro?.intro_request_id || 0}` }]);
+  rows.push([{ text: '↩️ Назад к интро', callback_data: backCallback }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function renderDeliveryListLine(item, index, page = 0, pageSize = 8) {
   const ordinal = page * pageSize + index + 1;
-  const target = truncate(item?.recipientDisplayName || 'Unknown recipient', 18);
-  const counterpart = truncate(`${item?.requesterDisplayName || 'Unknown'} → ${item?.targetDisplayName || 'Unknown'}`, 24);
+  const target = truncate(item?.recipientDisplayName || 'Неизвестный получатель', 18);
+  const counterpart = truncate(`${item?.requesterDisplayName || 'Неизвестно'} → ${item?.targetDisplayName || 'Неизвестно'}`, 24);
   const state = formatShortStatus(item?.operatorBucket, 'failed');
   const errorSuffix = item?.lastErrorCode ? ` • ${truncate(item.lastErrorCode, 16)}` : '';
-  return `${ordinal}. ${target} • ${state} • ${counterpart} • tries ${item?.attemptCount || 0}/${item?.maxAttempts || 0}${errorSuffix}`;
+  return `${ordinal}. ${target} • ${state} • ${counterpart} • попыток ${item?.attemptCount || 0}/${item?.maxAttempts || 0}${errorSuffix}`;
 }
 
 function buildAdminDeliveryText({ state = null, notice = null } = {}) {
   if (!state?.persistenceEnabled) {
-    return ['🧾 Delivery', '', notice || '⚠️ Delivery data is unavailable in this environment.'].join('\n');
+    return ['🧾 Доставка', '', notice || '⚠️ Данные доставки недоступны в этой среде.'].join('\n');
   }
 
   const lines = [
-    '🧾 Delivery',
+    '🧾 Доставка',
     '',
-    `Segment: ${ADMIN_DELIVERY_SEGMENTS[state.segmentKey]?.label || 'All'} • page ${state.page + 1}`,
-    state.introRequestId ? `Scoped to intro #${state.introRequestId}` : 'All intro notifications',
-    `Visible in this segment: ${state.totalCount}`,
-    `Failures ${state.counts?.failed || 0} • Retry due ${state.counts?.retryDue || 0} • Exhausted ${state.counts?.exhausted || 0} • Delivered ${state.counts?.sent || 0}`
+    `Сегмент: ${ADMIN_DELIVERY_SEGMENTS[state.segmentKey]?.label || 'Все'} • стр. ${state.page + 1}`,
+    state.introRequestId ? `Только для интро #${state.introRequestId}` : 'Все уведомления по интро',
+    `Видно в этом сегменте: ${state.totalCount}`,
+    `Ошибки ${state.counts?.failed || 0} • ждут повтора ${state.counts?.retryDue || 0} • исчерпано ${state.counts?.exhausted || 0} • доставлено ${state.counts?.sent || 0}`
   ];
 
   if (notice) {
@@ -487,11 +523,11 @@ function buildAdminDeliveryText({ state = null, notice = null } = {}) {
   }
 
   if (!state.records?.length) {
-    lines.push('', 'No delivery records found for this segment yet.');
+    lines.push('', 'Для этого сегмента пока нет записей доставки.');
     return lines.join('\n');
   }
 
-  lines.push('', 'Open a delivery record:');
+  lines.push('', 'Открой запись доставки:');
   lines.push(...state.records.map((item, index) => renderDeliveryListLine(item, index, state.page, state.pageSize)));
   return lines.join('\n');
 }
@@ -502,7 +538,7 @@ function buildAdminDeliveryKeyboard({ state = null } = {}) {
   const rows = [...buildDeliverySegmentRows(segmentKey, introRequestId)];
 
   for (const item of state?.records || []) {
-    const label = truncate(`${item?.recipientDisplayName || 'Unknown'} • ${item?.operatorBucket || 'failed'} • #${item?.notificationReceiptId}`, 42);
+    const label = truncate(`${item?.recipientDisplayName || 'Неизвестно'} • ${item?.operatorBucket || 'failed'} • #${item?.notificationReceiptId}`, 42);
     const callback = introRequestId
       ? `adm:dlv:intro:${introRequestId}:open:${item.notificationReceiptId}`
       : `adm:dlv:open:${item.notificationReceiptId}:${segmentKey}:${state?.page || 0}`;
@@ -511,39 +547,39 @@ function buildAdminDeliveryKeyboard({ state = null } = {}) {
 
   const pager = [];
   if (state?.hasPrev) {
-    pager.push({ text: '◀️ Prev', callback_data: introRequestId ? `adm:dlv:intro:${introRequestId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:dlv:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
+    pager.push({ text: '◀️ Назад', callback_data: introRequestId ? `adm:dlv:intro:${introRequestId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:dlv:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
   }
   if (state?.hasNext) {
-    pager.push({ text: 'Next ▶️', callback_data: introRequestId ? `adm:dlv:intro:${introRequestId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:dlv:page:${segmentKey}:${(state?.page || 0) + 1}` });
+    pager.push({ text: 'Вперёд ▶️', callback_data: introRequestId ? `adm:dlv:intro:${introRequestId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:dlv:page:${segmentKey}:${(state?.page || 0) + 1}` });
   }
   if (pager.length) {
     rows.push(pager);
   }
 
-  rows.push([{ text: '🔎 Search delivery', callback_data: 'adm:search:delivery' }]);
-  rows.push([{ text: introRequestId ? '↩️ Back to Intro Detail' : '↩️ Back to Operations', callback_data: introRequestId ? `adm:intro:open:${introRequestId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск доставки', callback_data: 'adm:search:delivery' }]);
+  rows.push([{ text: introRequestId ? '↩️ Back to Intro Detail' : '↩️ Назад в Операции', callback_data: introRequestId ? `adm:intro:open:${introRequestId}:all:0` : 'adm:ops' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminDeliveryRecordText({ record = null, notice = null } = {}) {
   if (!record) {
-    return ['🧾 Delivery Detail', '', notice || 'Delivery record not found.'].join('\n');
+    return ['🧾 Деталь доставки', '', notice || 'Запись доставки не найдена.'].join('\n');
   }
 
   const lines = [
-    '🧾 Delivery Detail',
+    '🧾 Деталь доставки',
     '',
-    `Event: ${toDisplayValue(record.event_type)}`,
-    `Intro: #${record.intro_request_id || '—'}`,
-    `Recipient: ${toDisplayValue(record.recipient_display_name)}`,
-    `Status: ${toDisplayValue(record.delivery_status)} • bucket ${toDisplayValue(record.operator_bucket)}`,
-    `Attempts: ${record.attempt_count || 0}/${record.max_attempts || 0}`,
-    `Next retry: ${formatDateTimeShort(record.next_attempt_at)}`,
-    `Last attempt: ${formatDateTimeShort(record.last_attempt_at)}`,
-    `Delivered: ${formatDateTimeShort(record.delivered_at)}`,
-    `Created: ${formatDateTimeShort(record.created_at)}`,
-    `Error: ${truncate(record.last_error_code || record.error_message, 180)}`
+    `Событие: ${toDisplayValue(record.event_type)}`,
+    `Интро: #${record.intro_request_id || '—'}`,
+    `Получатель: ${toDisplayValue(record.recipient_display_name)}`,
+    `Статус: ${toDisplayValue(record.delivery_status)} • бакет ${toDisplayValue(record.operator_bucket)}`,
+    `Попытки: ${record.attempt_count || 0}/${record.max_attempts || 0}`,
+    `Следующий повтор: ${formatDateTimeShort(record.next_attempt_at)}`,
+    `Последняя попытка: ${formatDateTimeShort(record.last_attempt_at)}`,
+    `Доставлено: ${formatDateTimeShort(record.delivered_at)}`,
+    `Создано: ${formatDateTimeShort(record.created_at)}`,
+    `Ошибка: ${truncate(record.last_error_code || record.error_message, 180)}`
   ];
 
   if (notice) {
@@ -555,13 +591,13 @@ function buildAdminDeliveryRecordText({ record = null, notice = null } = {}) {
 function buildAdminDeliveryRecordKeyboard({ record = null, backCallback = 'adm:dlv' } = {}) {
   const rows = [];
   if (record?.recipient_user_id) {
-    rows.push([{ text: '👤 Open user', callback_data: `adm:usr:open:${record.recipient_user_id}:all:0` }]);
+    rows.push([{ text: '👤 Открыть пользователя', callback_data: `adm:usr:open:${record.recipient_user_id}:all:0` }]);
   }
   if (record?.intro_request_id) {
-    rows.push([{ text: '📄 Open intro', callback_data: `adm:intro:open:${record.intro_request_id}:all:0` }]);
+    rows.push([{ text: '📄 Открыть интро', callback_data: `adm:intro:open:${record.intro_request_id}:all:0` }]);
   }
-  rows.push([{ text: '↩️ Back to Delivery', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к доставке', callback_data: backCallback }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -571,28 +607,28 @@ function renderUsersListLine(item, index, page = 0, pageSize = 8) {
   const linkedIn = compactBooleanLabel(item?.hasLinkedIn, 'LI', 'no LI');
   const listing = item?.visibilityStatus === 'listed' ? 'listed' : item?.profileId ? 'hidden' : 'no profile';
   const readiness = item?.profileState === 'active' ? 'ready' : 'incomplete';
-  const intros = item?.pendingIntroCount ? `pending ${item.pendingIntroCount}` : 'no pending';
+  const intros = item?.pendingIntroCount ? `pending ${item.pendingIntroCount}` : 'без pending';
   return `${ordinal}. ${name} • ${linkedIn} • ${listing} • ${readiness} • ${intros}`;
 }
 
 function buildUsersListText({ state = null, notice = null } = {}) {
   if (!state?.persistenceEnabled) {
     return [
-      '👥 Users',
+      '👥 Пользователи',
       '',
-      notice || '⚠️ Users data is unavailable in this environment.'
+      notice || '⚠️ Данные пользователей недоступны в этой среде.'
     ].join('\n');
   }
 
   const lines = [
-    '👥 Users',
+    '👥 Пользователи',
     '',
-    `Segment: ${ADMIN_USER_SEGMENTS[state.segmentKey]?.label || 'All'} • page ${state.page + 1}`,
-    countLine('Visible in this segment', state.totalCount),
-    `Connected ${state.counts?.connected || 0} • No profile ${state.counts?.connectedNoProfile || 0} • Incomplete ${state.counts?.incomplete || 0}`,
-    `Ready hidden ${state.counts?.readyNotListed || 0} • Ready no skills ${state.counts?.readyNoSkills || 0}`,
-    `Listed ${state.counts?.listed || 0} • active ${state.counts?.listedActive || 0} • inactive ${state.counts?.listedInactive || 0}`,
-    `No intros yet ${state.counts?.noIntroYet || 0} • Pending intros ${state.counts?.pendingIntros || 0} • Relinks ${state.counts?.relinks || 0}`
+    `Сегмент: ${ADMIN_USER_SEGMENTS[state.segmentKey]?.label || 'Все'} • стр. ${state.page + 1}`,
+    countLine('Видно в этом сегменте', state.totalCount),
+    `Подключили LinkedIn ${state.counts?.connected || 0} • без профиля ${state.counts?.connectedNoProfile || 0} • неполные ${state.counts?.incomplete || 0}`,
+    `Готовы, но скрыты ${state.counts?.readyNotListed || 0} • готовы без навыков ${state.counts?.readyNoSkills || 0}`,
+    `Опубликованы ${state.counts?.listed || 0} • активны ${state.counts?.listedActive || 0} • неактивны ${state.counts?.listedInactive || 0}`,
+    `Без интро ${state.counts?.noIntroYet || 0} • pending-интро ${state.counts?.pendingIntros || 0} • релинки ${state.counts?.relinks || 0}`
   ];
 
   if (notice) {
@@ -600,11 +636,11 @@ function buildUsersListText({ state = null, notice = null } = {}) {
   }
 
   if (!state.users?.length) {
-    lines.push('', 'No users match this segment right now.');
+    lines.push('', 'В этом сегменте сейчас нет пользователей.');
     return lines.join('\n');
   }
 
-  lines.push('', 'Open a user card from the quality bucket:');
+  lines.push('', 'Открой карточку пользователя из quality-бакета:');
   lines.push(...state.users.map((item, index) => renderUsersListLine(item, index, state.page, state.pageSize)));
   return lines.join('\n');
 }
@@ -620,28 +656,28 @@ function buildUsersListKeyboard({ state = null } = {}) {
 
   const pager = [];
   if (state?.hasPrev) {
-    pager.push({ text: '◀️ Prev', callback_data: `adm:usr:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
+    pager.push({ text: '◀️ Назад', callback_data: `adm:usr:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
   }
   if (state?.hasNext) {
-    pager.push({ text: 'Next ▶️', callback_data: `adm:usr:page:${segmentKey}:${(state?.page || 0) + 1}` });
+    pager.push({ text: 'Вперёд ▶️', callback_data: `adm:usr:page:${segmentKey}:${(state?.page || 0) + 1}` });
   }
   if (pager.length) {
     rows.push(pager);
   }
 
-  rows.push([{ text: '🔎 Search users', callback_data: 'adm:search:users' }]);
-  rows.push([{ text: state?.targetUserId ? '↩️ Back to User Card' : '↩️ Back to Operations', callback_data: state?.targetUserId ? `adm:usr:open:${state.targetUserId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск пользователей', callback_data: 'adm:search:users' }]);
+  rows.push([{ text: state?.targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Операции', callback_data: state?.targetUserId ? `adm:usr:open:${state.targetUserId}:all:0` : 'adm:ops' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminUserCardText({ card = null, notice = null } = {}) {
   if (!card) {
-    return ['🪪 User card', '', notice || '⚠️ User not found.'].join('\n');
+    return ['🪪 Карточка пользователя', '', notice || '⚠️ Пользователь не найден.'].join('\n');
   }
 
   const lines = [
-    '🪪 User Card',
+    '🪪 Карточка пользователя',
     '',
     `Telegram: ${toDisplayValue(card.telegram_username ? `@${card.telegram_username}` : null, `id ${card.telegram_user_id}`)}`,
     `Display name: ${toDisplayValue(card.display_name, card.linkedin_name || '—')}`,
@@ -650,16 +686,16 @@ function buildAdminUserCardText({ card = null, notice = null } = {}) {
     `Listing: ${card.profile_id ? formatShortStatus(card.visibility_status, 'hidden') : '—'}`,
     `Skills: ${card.skills?.length || 0}`,
     `Headline: ${truncate(card.headline_user, 72)}`,
-    `Intros: sent ${card.intro_sent_count || 0} • received ${card.intro_received_count || 0} • pending ${card.pending_intro_count || 0}`,
+    `Интро: отправлено ${card.intro_sent_count || 0} • получено ${card.intro_received_count || 0} • pending ${card.pending_intro_count || 0}`,
     `Last active: ${formatDateTimeShort(card.last_seen_at)}`,
     `Quick links: message • intros • audit`
   ];
 
   if (card.operator_note_text) {
-    lines.push('', `Operator note: ${truncate(card.operator_note_text, 140)}`);
+    lines.push('', `Заметка оператора: ${truncate(card.operator_note_text, 140)}`);
     lines.push(`Note updated: ${formatDateTimeShort(card.operator_note_updated_at)}`);
   } else {
-    lines.push('', 'Operator note: —');
+    lines.push('', 'Заметка оператора: —');
   }
 
   if (notice) {
@@ -684,21 +720,21 @@ function buildAdminUserCardKeyboard({ card = null, segmentKey = 'all', page = 0 
     { text: '✉️ Message', callback_data: `adm:card:msg:${card?.user_id || 0}:${segmentKey}:${page}` }
   ]);
   rows.push([
-    { text: '📨 Intros', callback_data: `adm:card:intros:${card?.user_id || 0}` },
-    { text: '📜 Audit', callback_data: `adm:card:audit:${card?.user_id || 0}` }
+    { text: '📨 Интро', callback_data: `adm:card:intros:${card?.user_id || 0}` },
+    { text: '📜 Аудит', callback_data: `adm:card:audit:${card?.user_id || 0}` }
   ]);
-  rows.push([{ text: '↩️ Back to Users', callback_data: `adm:usr:page:${segmentKey}:${page}` }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к пользователям', callback_data: `adm:usr:page:${segmentKey}:${page}` }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminUserPublicCardText({ card = null, notice = null } = {}) {
   if (!card?.profile_id) {
-    return ['👁 Public card preview', '', notice || 'This user does not have a profile yet.'].join('\n');
+    return ['👁 Превью публичной карточки', '', notice || 'У этого пользователя пока нет профиля.'].join('\n');
   }
 
   const lines = [
-    '👁 Public card preview',
+    '👁 Превью публичной карточки',
     '',
     toDisplayValue(card.display_name, card.linkedin_name || 'Unnamed member'),
     truncate(card.headline_user, 120),
@@ -723,8 +759,8 @@ function buildAdminUserPublicCardText({ card = null, notice = null } = {}) {
 
 function buildAdminUserPublicCardKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Back to User Card', callback_data: `adm:usr:open:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '↩️ Назад в карточку пользователя', callback_data: `adm:usr:open:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
@@ -733,11 +769,11 @@ function directTemplateLabel(templateKey) {
 }
 
 function noticeTemplateLabel(templateKey) {
-  return ADMIN_NOTICE_TEMPLATES[normalizeAdminNoticeTemplate(templateKey)]?.label || 'Notice template';
+  return ADMIN_NOTICE_TEMPLATES[normalizeAdminNoticeTemplate(templateKey)]?.label || 'Шаблон notice';
 }
 
 function broadcastTemplateLabel(templateKey) {
-  return ADMIN_BROADCAST_TEMPLATES[normalizeAdminBroadcastTemplate(templateKey)]?.label || 'Broadcast template';
+  return ADMIN_BROADCAST_TEMPLATES[normalizeAdminBroadcastTemplate(templateKey)]?.label || 'Шаблон broadcast';
 }
 
 function formatOutboxTarget(record) {
@@ -751,14 +787,14 @@ function buildAdminUserMessageText({ card = null, state = null, notice = null } 
   const draft = state?.draft || {};
   const targetLabel = toDisplayValue(card?.display_name, card?.linkedin_name || card?.telegram_username || draft?.targetDisplayName || draft?.targetLinkedinName || 'this user');
   const lines = [
-    '✉️ Direct message',
+    '✉️ Личное сообщение',
     '',
-    `Target: ${targetLabel}`,
+    `Цель: ${targetLabel}`,
     `Telegram: ${toDisplayValue(card?.telegram_username ? `@${card.telegram_username}` : null, card?.telegram_user_id ? `id ${card.telegram_user_id}` : draft?.targetTelegramUserId ? `id ${draft.targetTelegramUserId}` : '—')}`,
     `Template: ${directTemplateLabel(draft?.templateKey || 'blank')}`,
-    `Updated: ${formatDateTimeShort(draft?.updatedAt)}`,
+    `Обновлено: ${formatDateTimeShort(draft?.updatedAt)}`,
     '',
-    draft?.body ? truncate(draft.body, 500) : 'No direct message draft yet.'
+    draft?.body ? truncate(draft.body, 500) : 'Черновик direct message пока пустой.'
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -767,21 +803,21 @@ function buildAdminUserMessageText({ card = null, state = null, notice = null } 
 function buildAdminUserMessageKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
     [{ text: '📌 Use template', callback_data: `adm:msg:tpl:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '✏️ Edit text', callback_data: `adm:msg:edit:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '👁 Preview', callback_data: `adm:msg:preview:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🗑 Clear draft', callback_data: `adm:msg:clear:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '↩️ Back to User Card', callback_data: `adm:usr:open:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '✏️ Изменить текст', callback_data: `adm:msg:edit:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '👁 Превью', callback_data: `adm:msg:preview:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '🗑 Очистить черновик', callback_data: `adm:msg:clear:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '↩️ Назад в карточку пользователя', callback_data: `adm:usr:open:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildAdminDirectTemplatePickerText({ card = null, state = null, notice = null } = {}) {
   const targetLabel = toDisplayValue(card?.display_name, card?.linkedin_name || card?.telegram_username || state?.draft?.targetDisplayName || 'this user');
   const lines = [
-    '📌 Direct message template',
+    '📌 Шаблон личного сообщения',
     '',
-    `Target: ${targetLabel}`,
-    `Current template: ${directTemplateLabel(state?.draft?.templateKey || 'blank')}`
+    `Цель: ${targetLabel}`,
+    `Текущий шаблон: ${directTemplateLabel(state?.draft?.templateKey || 'blank')}`
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -790,49 +826,49 @@ function buildAdminDirectTemplatePickerText({ card = null, state = null, notice 
 function buildAdminDirectTemplatePickerKeyboard({ targetUserId, segmentKey = 'all', page = 0, state = null } = {}) {
   const current = state?.draft?.templateKey || 'blank';
   const rows = Object.values(ADMIN_DIRECT_MESSAGE_TEMPLATES).map((item) => ([{ text: `${current === item.key ? '✅' : '▫️'} ${item.label}`, callback_data: `adm:msg:tplset:${targetUserId}:${segmentKey}:${page}:${item.key}` }]));
-  rows.push([{ text: '↩️ Back to Message', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к сообщению', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
-function buildAdminDirectPreviewText({ card = null, state = null, notice = null } = {}) {
+function buildAdminDirectПревьюText({ card = null, state = null, notice = null } = {}) {
   const draft = state?.draft || {};
   const targetLabel = toDisplayValue(card?.display_name, card?.linkedin_name || card?.telegram_username || draft?.targetDisplayName || 'this user');
   const lines = [
-    '👁 Direct message preview',
+    '👁 Превью личного сообщения',
     '',
-    `Target: ${targetLabel}`,
+    `Цель: ${targetLabel}`,
     `Template: ${directTemplateLabel(draft?.templateKey || 'blank')}`,
     '',
-    draft?.body || 'No direct message draft yet.'
+    draft?.body || 'Черновик direct message пока пустой.'
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
 }
 
-function buildAdminDirectPreviewKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
+function buildAdminDirectПревьюKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
-    [{ text: '✅ Confirm send', callback_data: `adm:msg:confirm:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '↩️ Back to Message', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '✅ Подтвердить отправку', callback_data: `adm:msg:confirm:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '↩️ Назад к сообщению', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildAdminUserNotePromptText({ card = null } = {}) {
   return [
-    '✍️ Operator note',
+    '✍️ Заметка оператора',
     '',
     `Send the note text for ${toDisplayValue(card?.display_name, card?.linkedin_name || card?.telegram_username || 'this user')}.`,
     'The latest note will replace the previous one.',
     '',
-    `Current note: ${truncate(card?.operator_note_text, 220)}`
+    `Текущая заметка: ${truncate(card?.operator_note_text, 220)}`
   ].join('\n');
 }
 
 function buildAdminUserNotePromptKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Cancel', callback_data: `adm:card:cancelnote:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '↩️ Отмена', callback_data: `adm:card:cancelnote:${targetUserId}:${segmentKey}:${page}` }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
@@ -840,16 +876,16 @@ function buildAdminUserNotePromptKeyboard({ targetUserId, segmentKey = 'all', pa
 
 function buildAdminQualityText({ state = null, notice = null } = {}) {
   if (!state?.persistenceEnabled) {
-    return ['🚩 Quality', '', notice || '⚠️ Quality data is unavailable in this environment.'].join('\n');
+    return ['🚩 Качество', '', notice || '⚠️ Данные quality недоступны в этой среде.'].join('\n');
   }
 
   const lines = [
-    '🚩 Quality',
+    '🚩 Качество',
     '',
-    `Segment: ${ADMIN_QUALITY_SEGMENTS[state.segmentKey]?.label || 'Listed incomplete'} • page ${state.page + 1}`,
-    countLine('Visible in this bucket', state.totalCount),
-    `Listed incomplete ${state.counts?.listedIncomplete || 0} • Ready not listed ${state.counts?.readyNotListed || 0}`,
-    `Missing fields ${state.counts?.missingCritical || 0} • Duplicates ${state.counts?.duplicateLike || 0} • Relinks ${state.counts?.relink || 0}`
+    `Сегмент: ${ADMIN_QUALITY_SEGMENTS[state.segmentKey]?.label || 'Листинг неполный'} • стр. ${state.page + 1}`,
+    countLine('Видно в этом бакете', state.totalCount),
+    `Листинг неполный ${state.counts?.listedIncomplete || 0} • готовы, но не опубликованы ${state.counts?.readyNotListed || 0}`,
+    `Не хватает полей ${state.counts?.missingCritical || 0} • дубли ${state.counts?.duplicateLike || 0} • релинки ${state.counts?.relink || 0}`
   ];
 
   if (notice) {
@@ -857,12 +893,12 @@ function buildAdminQualityText({ state = null, notice = null } = {}) {
   }
 
   if (!state.users?.length) {
-    lines.push('', 'No profiles match this quality bucket right now.');
+    lines.push('', 'В этом quality-сегменте сейчас нет профилей.');
     return lines.join('\n');
   }
 
-  lines.push('', 'Open a user card from the quality bucket:');
-  lines.push(...state.users.map((item, index) => `${state.page * state.pageSize + index + 1}. ${truncate(item?.displayName || item?.linkedinName || item?.telegramUsername || `User ${item?.telegramUserId}`, 22)} • ${qualityReasonLabel(item)} • skills ${item?.skillsCount || 0} • pending ${item?.pendingIntroCount || 0}`));
+  lines.push('', 'Открой карточку пользователя из quality-бакета:');
+  lines.push(...state.users.map((item, index) => `${state.page * state.pageSize + index + 1}. ${truncate(item?.displayName || item?.linkedinName || item?.telegramUsername || `User ${item?.telegramUserId}`, 22)} • ${qualityReasonLabel(item)} • навыков ${item?.skillsCount || 0} • pending ${item?.pendingIntroCount || 0}`));
   return lines.join('\n');
 }
 
@@ -876,34 +912,34 @@ function buildAdminQualityKeyboard({ state = null } = {}) {
   }
 
   const pager = [];
-  if (state?.hasPrev) pager.push({ text: '◀️ Prev', callback_data: `adm:qual:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
-  if (state?.hasNext) pager.push({ text: 'Next ▶️', callback_data: `adm:qual:page:${segmentKey}:${(state?.page || 0) + 1}` });
+  if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: `adm:qual:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
+  if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:qual:page:${segmentKey}:${(state?.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
 
-  rows.push([{ text: '🔎 Search users', callback_data: 'adm:search:users' }]);
-  rows.push([{ text: state?.targetUserId ? '↩️ Back to User Card' : '↩️ Back to Operations', callback_data: state?.targetUserId ? `adm:usr:open:${state.targetUserId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск пользователей', callback_data: 'adm:search:users' }]);
+  rows.push([{ text: state?.targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Операции', callback_data: state?.targetUserId ? `adm:usr:open:${state.targetUserId}:all:0` : 'adm:ops' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminAuditText({ state = null, notice = null } = {}) {
   if (!state?.persistenceEnabled) {
-    return ['📜 Audit', '', notice || '⚠️ Audit data is unavailable in this environment.'].join('\n');
+    return ['📜 Аудит', '', notice || '⚠️ Данные аудита недоступны в этой среде.'].join('\n');
   }
 
   const lines = [
-    '📜 Audit',
+    '📜 Аудит',
     '',
-    `Segment: ${ADMIN_AUDIT_SEGMENTS[state.segmentKey]?.label || 'All'} • page ${state.page + 1}`,
-    state.targetUserId ? `Scoped to user #${state.targetUserId}` : 'Recent operator and system actions',
-    countLine('Visible in this segment', state.totalCount)
+    `Сегмент: ${ADMIN_AUDIT_SEGMENTS[state.segmentKey]?.label || 'Все'} • стр. ${state.page + 1}`,
+    state.targetUserId ? `Только для пользователя #${state.targetUserId}` : 'Недавние действия операторов и системы',
+    countLine('Видно в этом сегменте', state.totalCount)
   ];
   if (notice) lines.push('', notice);
   if (!state.records?.length) {
-    lines.push('', 'No audit events for this segment yet.');
+    lines.push('', 'В этом сегменте аудита пока нет событий.');
     return lines.join('\n');
   }
-  lines.push('', 'Recent events:');
+  lines.push('', 'Последние события:');
   lines.push(...state.records.map((item, index) => `${state.page * state.pageSize + index + 1}. ${truncate(item.event_type, 18)} • ${truncate(item.summary || '', 36)} • ${formatAuditActor(item)} • ${formatDateTimeShort(item.created_at)}`));
   return lines.join('\n');
 }
@@ -921,27 +957,27 @@ function buildAdminAuditKeyboard({ state = null } = {}) {
     rows.push([{ text: `📄 ${truncate(item.event_type, 18)} • #${item.id}`, callback_data: targetUserId ? `adm:audit:user:${targetUserId}:open:${item.id}:${segmentKey}:${state?.page || 0}` : `adm:audit:open:${item.id}:${segmentKey}:${state?.page || 0}` }]);
   }
   const pager = [];
-  if (state?.hasPrev) pager.push({ text: '◀️ Prev', callback_data: targetUserId ? `adm:audit:user:${targetUserId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:audit:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
-  if (state?.hasNext) pager.push({ text: 'Next ▶️', callback_data: targetUserId ? `adm:audit:user:${targetUserId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:audit:page:${segmentKey}:${(state?.page || 0) + 1}` });
+  if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: targetUserId ? `adm:audit:user:${targetUserId}:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` : `adm:audit:page:${segmentKey}:${Math.max(0, (state?.page || 0) - 1)}` });
+  if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: targetUserId ? `adm:audit:user:${targetUserId}:page:${segmentKey}:${(state?.page || 0) + 1}` : `adm:audit:page:${segmentKey}:${(state?.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
-  rows.push([{ text: '🔎 Search audit', callback_data: 'adm:search:audit' }]);
-  rows.push([{ text: targetUserId ? '↩️ Back to User Card' : '↩️ Back to System', callback_data: targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:sys' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск аудита', callback_data: 'adm:search:audit' }]);
+  rows.push([{ text: targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Систему', callback_data: targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:sys' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminAuditRecordText({ record = null, notice = null } = {}) {
   if (!record) {
-    return ['📄 Audit detail', '', notice || 'Audit record not found.'].join('\n');
+    return ['📄 Деталь аудита', '', notice || 'Запись аудита не найдена.'].join('\n');
   }
   const detailText = record.detail ? JSON.stringify(record.detail, null, 2) : '—';
   const lines = [
-    '📄 Audit detail',
+    '📄 Деталь аудита',
     '',
-    `Type: ${toDisplayValue(record.event_type)}`,
+    `Тип: ${toDisplayValue(record.event_type)}`,
     `Actor: ${formatAuditActor(record)}`,
-    `Target: ${formatAuditTarget(record)}`,
-    `Created: ${formatDateTimeShort(record.created_at)}`,
+    `Цель: ${formatAuditTarget(record)}`,
+    `Создано: ${formatDateTimeShort(record.created_at)}`,
     `Intro: ${record.intro_request_id || '—'}`,
     `Delivery: ${record.notification_receipt_id || '—'}`,
     '',
@@ -956,38 +992,38 @@ function buildAdminAuditRecordText({ record = null, notice = null } = {}) {
 function buildAdminAuditRecordKeyboard({ record = null, backCallback = 'adm:audit' } = {}) {
   const rows = [];
   if (record?.target_user_id) {
-    rows.push([{ text: '👤 Open user', callback_data: `adm:usr:open:${record.target_user_id}:all:0` }]);
+    rows.push([{ text: '👤 Открыть пользователя', callback_data: `adm:usr:open:${record.target_user_id}:all:0` }]);
   }
   if (record?.intro_request_id) {
-    rows.push([{ text: '📄 Open intro', callback_data: `adm:intro:open:${record.intro_request_id}:all:0` }]);
+    rows.push([{ text: '📄 Открыть интро', callback_data: `adm:intro:open:${record.intro_request_id}:all:0` }]);
   }
   if (record?.detail?.outboxId) {
-    rows.push([{ text: '📤 Open outbox', callback_data: `adm:outbox:open:${record.detail.outboxId}` }]);
+    rows.push([{ text: '📤 Открыть outbox', callback_data: `adm:outbox:open:${record.detail.outboxId}` }]);
   }
-  rows.push([{ text: '↩️ Back to Audit', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к аудиту', callback_data: backCallback }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function adminNoticeAudienceLabel(audienceKey) {
-  return ADMIN_NOTICE_AUDIENCES[normalizeAdminNoticeAudience(audienceKey)]?.label || 'All users';
+  return ADMIN_NOTICE_AUDIENCES[normalizeAdminNoticeAudience(audienceKey)]?.label || 'Все пользователи';
 }
 
 function adminBroadcastAudienceLabel(audienceKey) {
-  return ADMIN_BROADCAST_AUDIENCES[normalizeAdminBroadcastAudience(audienceKey)]?.label || 'All connected';
+  return ADMIN_BROADCAST_AUDIENCES[normalizeAdminBroadcastAudience(audienceKey)]?.label || 'Все подключённые';
 }
 
 function buildAdminNoticeText({ state = null, notice = null } = {}) {
   const current = state?.notice || { body: '', audienceKey: 'ALL', isActive: false };
   const lines = [
-    '📣 Notice',
+    '📣 Уведомление',
     '',
-    `Status: ${current.isActive ? 'active' : 'inactive'}`,
-    `Audience: ${adminNoticeAudienceLabel(current.audienceKey)}`,
-    `Estimated visibility: ${state?.estimate || 0}`,
-    `Updated: ${formatDateTimeShort(current.updatedAt)}`,
+    `Статус: ${current.isActive ? 'активно' : 'неактивно'}`,
+    `Аудитория: ${adminNoticeAudienceLabel(current.audienceKey)}`,
+    `Оценка видимости: ${state?.estimate || 0}`,
+    `Обновлено: ${formatDateTimeShort(current.updatedAt)}`,
     '',
-    current.body ? truncate(current.body, 500) : 'No notice text yet.'
+    current.body ? truncate(current.body, 500) : 'Текст notice пока пустой.'
   ];
   if (notice) {
     lines.push('', notice);
@@ -998,13 +1034,13 @@ function buildAdminNoticeText({ state = null, notice = null } = {}) {
 function buildAdminNoticeKeyboard({ state = null } = {}) {
   const current = state?.notice || { isActive: false };
   return buildInlineKeyboard([
-    [{ text: '✏️ Edit text', callback_data: 'adm:not:edit' }],
-    [{ text: '📌 Templates', callback_data: 'adm:not:tpl' }],
-    [{ text: '🎯 Audience', callback_data: 'adm:not:aud' }],
-    [{ text: '👁 Preview', callback_data: 'adm:not:preview' }],
-    [{ text: current.isActive ? '⛔ Disable' : '✅ Activate', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
-    [{ text: '↩️ Back to Communications', callback_data: 'adm:comms' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '✏️ Изменить текст', callback_data: 'adm:not:edit' }],
+    [{ text: '📌 Шаблоны', callback_data: 'adm:not:tpl' }],
+    [{ text: '🎯 Аудитория', callback_data: 'adm:not:aud' }],
+    [{ text: '👁 Превью', callback_data: 'adm:not:preview' }],
+    [{ text: current.isActive ? '⛔ Выключить' : '✅ Включить', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
+    [{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
@@ -1014,29 +1050,29 @@ function buildAdminNoticeAudienceSurface({ state = null, notice = null } = {}) {
     text: `${normalizeAdminNoticeAudience(current.audienceKey) === item.key ? '✅' : '▫️'} ${item.label}`,
     callback_data: `adm:not:aud:${item.key}`
   }]));
-  rows.push([{ text: '↩️ Back to Notice', callback_data: 'adm:not' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
-  const lines = ['🎯 Notice audience', '', `Current: ${adminNoticeAudienceLabel(current.audienceKey)}`];
+  rows.push([{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  const lines = ['🎯 Аудитория notice', '', `Текущее: ${adminNoticeAudienceLabel(current.audienceKey)}`];
   if (notice) {
     lines.push('', notice);
   }
   return { text: lines.join('\n'), reply_markup: buildInlineKeyboard(rows) };
 }
 
-function buildAdminNoticePreviewSurface({ state = null } = {}) {
+function buildAdminNoticeПревьюSurface({ state = null } = {}) {
   const current = state?.notice || { body: '', audienceKey: 'ALL', isActive: false };
   return {
     text: [
-      '👁 Notice preview',
+      '👁 Превью уведомления',
       '',
-      `Audience: ${adminNoticeAudienceLabel(current.audienceKey)}`,
+      `Аудитория: ${adminNoticeAudienceLabel(current.audienceKey)}`,
       '',
-      current.body ? current.body : 'No notice text yet.'
+      current.body ? current.body : 'Текст notice пока пустой.'
     ].join('\n'),
     reply_markup: buildInlineKeyboard([
-      [{ text: current.isActive ? '⛔ Disable' : '✅ Activate', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
-      [{ text: '↩️ Back to Notice', callback_data: 'adm:not' }],
-      [{ text: '🏠 Home', callback_data: 'home:root' }]
+      [{ text: current.isActive ? '⛔ Выключить' : '✅ Включить', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
+      [{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }],
+      [{ text: '🏠 Главная', callback_data: 'home:root' }]
     ])
   };
 }
@@ -1045,23 +1081,23 @@ function buildAdminBroadcastText({ state = null, notice = null } = {}) {
   const draft = state?.draft || { body: '', audienceKey: 'ALL_CONNECTED' };
   const latest = state?.latestRecord || null;
   const lines = [
-    '📬 Broadcast',
+    '📬 Рассылка',
     '',
-    `Audience: ${adminBroadcastAudienceLabel(draft.audienceKey)}`,
+    `Аудитория: ${adminBroadcastAudienceLabel(draft.audienceKey)}`,
     countLine('Estimated recipients', state?.estimate || 0),
-    `Updated: ${formatDateTimeShort(draft.updatedAt)}`
+    `Обновлено: ${formatDateTimeShort(draft.updatedAt)}`
   ];
 
   if (latest) {
-    lines.push(`Latest job: #${latest.id} • ${formatShortStatus(latest.status, 'none')}`);
+    lines.push(`Последняя задача: #${latest.id} • ${formatShortStatus(latest.status, 'none')}`);
     lines.push(`Progress: ${latest.delivered_count || 0}/${latest.estimated_recipient_count ?? 0} delivered • ${latest.failed_count || 0} failed • ${latest.pending_count || 0} pending`);
     lines.push(`Batch: ${latest.batch_size || '—'} • cursor ${latest.cursor || 0}`);
     if (latest.last_error) {
-      lines.push(`Last error: ${truncate(latest.last_error, 80)}`);
+      lines.push(`Последняя ошибка: ${truncate(latest.last_error, 80)}`);
     }
   }
 
-  lines.push('', draft.body ? truncate(draft.body, 420) : 'No broadcast draft yet.');
+  lines.push('', draft.body ? truncate(draft.body, 420) : 'Черновик broadcast пока пустой.');
   if (notice) {
     lines.push('', notice);
   }
@@ -1071,20 +1107,20 @@ function buildAdminBroadcastText({ state = null, notice = null } = {}) {
 function buildAdminBroadcastKeyboard({ state = null } = {}) {
   const latest = state?.latestRecord || null;
   const rows = [
-    [{ text: '✏️ Edit text', callback_data: 'adm:bc:edit' }],
-    [{ text: '📌 Templates', callback_data: 'adm:bc:tpl' }],
-    [{ text: '🎯 Audience', callback_data: 'adm:bc:aud' }],
-    [{ text: '👁 Preview', callback_data: 'adm:bc:preview' }],
-    [{ text: '📨 Send', callback_data: 'adm:bc:send' }],
-    [{ text: '🔄 Refresh', callback_data: 'adm:bc:refresh' }]
+    [{ text: '✏️ Изменить текст', callback_data: 'adm:bc:edit' }],
+    [{ text: '📌 Шаблоны', callback_data: 'adm:bc:tpl' }],
+    [{ text: '🎯 Аудитория', callback_data: 'adm:bc:aud' }],
+    [{ text: '👁 Превью', callback_data: 'adm:bc:preview' }],
+    [{ text: '📨 Отправить', callback_data: 'adm:bc:send' }],
+    [{ text: '🔄 Обновить', callback_data: 'adm:bc:refresh' }]
   ];
   if (latest?.failed_count > 0 || latest?.retry_due_count > 0 || latest?.exhausted_count > 0) {
-    rows.push([{ text: '🧾 Failures', callback_data: `adm:bc:fail:${latest.id}:0` }]);
+    rows.push([{ text: '🧾 Ошибки', callback_data: `adm:bc:fail:${latest.id}:0` }]);
   }
-  rows.push([{ text: '🗑 Clear draft', callback_data: 'adm:bc:clear' }]);
-  rows.push([{ text: '🔎 Search outbox', callback_data: 'adm:search:outbox' }]);
-  rows.push([{ text: '↩️ Back to Communications', callback_data: 'adm:comms' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🗑 Очистить черновик', callback_data: 'adm:bc:clear' }]);
+  rows.push([{ text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' }]);
+  rows.push([{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1094,9 +1130,9 @@ function buildAdminBroadcastAudienceSurface({ state = null, notice = null } = {}
     text: `${normalizeAdminBroadcastAudience(draft.audienceKey) === item.key ? '✅' : '▫️'} ${item.label}`,
     callback_data: `adm:bc:aud:${item.key}`
   }]));
-  rows.push([{ text: '↩️ Back to Broadcast', callback_data: 'adm:bc' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
-  const lines = ['🎯 Broadcast audience', '', `Current: ${adminBroadcastAudienceLabel(draft.audienceKey)}`];
+  rows.push([{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  const lines = ['🎯 Аудитория рассылки', '', `Текущее: ${adminBroadcastAudienceLabel(draft.audienceKey)}`];
   if (notice) {
     lines.push('', notice);
   }
@@ -1106,12 +1142,12 @@ function buildAdminBroadcastAudienceSurface({ state = null, notice = null } = {}
 function buildAdminBroadcastPreviewSurface({ state = null, notice = null } = {}) {
   const draft = state?.draft || { body: '', audienceKey: 'ALL_CONNECTED' };
   const lines = [
-    '👁 Broadcast preview',
+    '👁 Превью рассылки',
     '',
-    `Audience: ${adminBroadcastAudienceLabel(draft.audienceKey)}`,
+    `Аудитория: ${adminBroadcastAudienceLabel(draft.audienceKey)}`,
     `Estimated recipients: ${state?.estimate || 0}`,
     '',
-    draft.body ? draft.body : 'No broadcast draft yet.'
+    draft.body ? draft.body : 'Черновик broadcast пока пустой.'
   ];
   if (notice) {
     lines.push('', notice);
@@ -1119,9 +1155,9 @@ function buildAdminBroadcastPreviewSurface({ state = null, notice = null } = {})
   return {
     text: lines.join('\n'),
     reply_markup: buildInlineKeyboard([
-      [{ text: '✅ Confirm send', callback_data: 'adm:bc:confirm' }],
-      [{ text: '↩️ Back to Broadcast', callback_data: 'adm:bc' }],
-      [{ text: '🏠 Home', callback_data: 'home:root' }]
+      [{ text: '✅ Подтвердить отправку', callback_data: 'adm:bc:confirm' }],
+      [{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }],
+      [{ text: '🏠 Главная', callback_data: 'home:root' }]
     ])
   };
 }
@@ -1131,13 +1167,13 @@ function buildAdminTemplatesText({ state = null, notice = null } = {}) {
   const broadcastTemplates = state?.broadcastTemplates || [];
   const directTemplates = state?.directTemplates || [];
   const lines = [
-    '📌 Templates',
+    '📌 Шаблоны',
     '',
-    `Notice templates: ${noticeTemplates.length}`,
-    `Broadcast templates: ${broadcastTemplates.length}`,
-    `Direct templates: ${directTemplates.length}`,
+    `Шаблоны уведомлений: ${noticeTemplates.length}`,
+    `Шаблоны рассылки: ${broadcastTemplates.length}`,
+    `Шаблоны личных сообщений: ${directTemplates.length}`,
     '',
-    'Use notice templates for compact banners and broadcast templates for larger nudges. Direct-message templates stay available inside User Card → Message.'
+    'Шаблоны уведомлений подходят для компактных баннеров, шаблоны рассылки — для массовых касаний. Шаблоны личных сообщений доступны в карточке пользователя → сообщение.'
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -1145,23 +1181,23 @@ function buildAdminTemplatesText({ state = null, notice = null } = {}) {
 
 function buildAdminTemplatesKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '📣 Notice templates', callback_data: 'adm:tpl:not' }],
-    [{ text: '📬 Broadcast templates', callback_data: 'adm:tpl:bc' }],
-    [{ text: '✉️ Direct templates', callback_data: 'adm:tpl:direct' }],
-    [{ text: '↩️ Back to Communications', callback_data: 'adm:comms' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '📣 Шаблоны уведомлений', callback_data: 'adm:tpl:not' }],
+    [{ text: '📬 Шаблоны рассылки', callback_data: 'adm:tpl:bc' }],
+    [{ text: '✉️ Шаблоны личных сообщений', callback_data: 'adm:tpl:direct' }],
+    [{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildAdminNoticeTemplatePickerText({ state = null, templates = [], notice = null } = {}) {
   const currentAudience = adminNoticeAudienceLabel(state?.notice?.audienceKey || 'ALL');
   const lines = [
-    '📣 Notice templates',
+    '📣 Шаблоны уведомлений',
     '',
-    `Current audience: ${currentAudience}`,
-    `Current estimate: ${state?.estimate || 0}`,
+    `Текущая аудитория: ${currentAudience}`,
+    `Текущая оценка: ${state?.estimate || 0}`,
     '',
-    'Pick a template to prefill the notice text and suggested audience.'
+    'Выбери шаблон, чтобы предзаполнить текст уведомления и рекомендуемую аудиторию.'
   ];
   if (templates.length) {
     lines.push('', ...templates.map((item, index) => `${index + 1}. ${item.label} → ${adminNoticeAudienceLabel(item.audienceKey)}`));
@@ -1172,20 +1208,20 @@ function buildAdminNoticeTemplatePickerText({ state = null, templates = [], noti
 
 function buildAdminNoticeTemplatePickerKeyboard({ templates = [] } = {}) {
   const rows = templates.map((item) => ([{ text: `📌 ${item.label}`, callback_data: `adm:not:tpl:${item.key}` }]));
-  rows.push([{ text: '↩️ Back to Notice', callback_data: 'adm:not' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminBroadcastTemplatePickerText({ state = null, templates = [], notice = null } = {}) {
   const currentAudience = adminBroadcastAudienceLabel(state?.draft?.audienceKey || 'ALL_CONNECTED');
   const lines = [
-    '📬 Broadcast templates',
+    '📬 Шаблоны рассылки',
     '',
-    `Current audience: ${currentAudience}`,
-    `Current estimate: ${state?.estimate || 0}`,
+    `Текущая аудитория: ${currentAudience}`,
+    `Текущая оценка: ${state?.estimate || 0}`,
     '',
-    'Pick a template to prefill the broadcast body and suggested audience.'
+    'Выбери шаблон, чтобы предзаполнить текст рассылки и рекомендуемую аудиторию.'
   ];
   if (templates.length) {
     lines.push('', ...templates.map((item, index) => `${index + 1}. ${item.label} → ${adminBroadcastAudienceLabel(item.audienceKey)}`));
@@ -1196,19 +1232,19 @@ function buildAdminBroadcastTemplatePickerText({ state = null, templates = [], n
 
 function buildAdminBroadcastTemplatePickerKeyboard({ templates = [] } = {}) {
   const rows = templates.map((item) => ([{ text: `📌 ${item.label}`, callback_data: `adm:bc:tpl:${item.key}` }]));
-  rows.push([{ text: '↩️ Back to Broadcast', callback_data: 'adm:bc' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminOutboxText({ records = [], notice = null } = {}) {
-  const lines = ['📤 Outbox', ''];
+  const lines = ['📤 Исходящие', ''];
   if (!records.length) {
-    lines.push('No communications records yet.');
-    lines.push('Once you activate a notice, send a broadcast, or send a direct message, it will appear here.');
+    lines.push('Коммуникационных записей пока нет.');
+    lines.push('После активации notice, отправки broadcast или direct message запись появится здесь.');
   } else {
-    lines.push('Recent records:');
-    lines.push(...records.map((item, index) => `${index + 1}. ${item.event_type} • ${truncate(formatOutboxTarget(item), 20)} • ${formatShortStatus(item.status, 'draft')} • ok ${item.delivered_count ?? 0}/${item.estimated_recipient_count ?? '—'} • fail ${item.failed_count ?? 0} • ${formatDateTimeShort(item.sent_at || item.created_at)}`));
+    lines.push('Последние записи:');
+    lines.push(...records.map((item, index) => `${index + 1}. ${item.event_type} • ${truncate(formatOutboxTarget(item), 20)} • ${formatShortStatus(item.status, 'draft')} • ок ${item.delivered_count ?? 0}/${item.estimated_recipient_count ?? '—'} • ошибок ${item.failed_count ?? 0} • ${formatDateTimeShort(item.sent_at || item.created_at)}`));
   }
   if (notice) {
     lines.push('', notice);
@@ -1218,38 +1254,38 @@ function buildAdminOutboxText({ records = [], notice = null } = {}) {
 
 function buildAdminOutboxKeyboard({ records = [] } = {}) {
   const rows = records.map((item) => ([{ text: `📄 ${item.event_type} • #${item.id}`, callback_data: `adm:outbox:open:${item.id}` }]));
-  rows.push([{ text: '🔎 Search outbox', callback_data: 'adm:search:outbox' }]);
-  rows.push([{ text: '↩️ Back to Communications', callback_data: 'adm:comms' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' }]);
+  rows.push([{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminOutboxRecordText({ record = null, notice = null } = {}) {
   if (!record) {
-    return ['📄 Outbox record', '', notice || 'Record not found.'].join('\n');
+    return ['📄 Запись исходящих', '', notice || 'Запись не найдена.'].join('\n');
   }
   const lines = [
-    '📄 Outbox record',
+    '📄 Запись исходящих',
     '',
-    `Type: ${record.event_type}`,
-    `Status: ${record.status}`,
-    `Audience: ${record.audience_key || '—'}`,
-    `Target: ${formatOutboxTarget(record)}`,
-    `Estimated: ${record.estimated_recipient_count ?? '—'}`,
-    `Delivered: ${record.delivered_count ?? '—'}`,
-    `Failed: ${record.failed_count ?? '—'}`,
-    `Pending: ${record.pending_count ?? '—'}`,
-    `Batch size: ${record.batch_size ?? '—'}`,
-    `Cursor: ${record.cursor ?? '—'}`,
-    `Started: ${formatDateTimeShort(record.started_at)}`,
-    `Finished: ${formatDateTimeShort(record.finished_at)}`,
-    `Created: ${formatDateTimeShort(record.created_at)}`,
-    `Sent: ${formatDateTimeShort(record.sent_at)}`,
+    `Тип: ${record.event_type}`,
+    `Статус: ${record.status}`,
+    `Аудитория: ${record.audience_key || '—'}`,
+    `Цель: ${formatOutboxTarget(record)}`,
+    `Оценка: ${record.estimated_recipient_count ?? '—'}`,
+    `Доставлено: ${record.delivered_count ?? '—'}`,
+    `Ошибок: ${record.failed_count ?? '—'}`,
+    `В ожидании: ${record.pending_count ?? '—'}`,
+    `Размер батча: ${record.batch_size ?? '—'}`,
+    `Курсор: ${record.cursor ?? '—'}`,
+    `Старт: ${formatDateTimeShort(record.started_at)}`,
+    `Завершено: ${formatDateTimeShort(record.finished_at)}`,
+    `Создано: ${formatDateTimeShort(record.created_at)}`,
+    `Отправлено: ${formatDateTimeShort(record.sent_at)}`,
     '',
     record.body || '—'
   ];
   if (record?.last_error) {
-    lines.push('', `Last error: ${truncate(record.last_error, 220)}`);
+    lines.push('', `Последняя ошибка: ${truncate(record.last_error, 220)}`);
   }
   if (notice) {
     lines.push('', notice);
@@ -1260,31 +1296,31 @@ function buildAdminOutboxRecordText({ record = null, notice = null } = {}) {
 function buildAdminOutboxRecordKeyboard({ record = null } = {}) {
   const rows = [];
   if (record?.target_user_id) {
-    rows.push([{ text: '👤 Open user', callback_data: `adm:usr:open:${record.target_user_id}:all:0` }]);
+    rows.push([{ text: '👤 Открыть пользователя', callback_data: `adm:usr:open:${record.target_user_id}:all:0` }]);
   }
   if (record?.event_type === 'broadcast' && ((record?.failed_count || 0) > 0 || (record?.retry_due_count || 0) > 0 || (record?.exhausted_count || 0) > 0)) {
-    rows.push([{ text: '🧾 Open failures', callback_data: `adm:bc:fail:${record.id}:0` }]);
+    rows.push([{ text: '🧾 Открыть ошибки', callback_data: `adm:bc:fail:${record.id}:0` }]);
   }
-  rows.push([{ text: '↩️ Back to Outbox', callback_data: 'adm:outbox' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к исходящим', callback_data: 'adm:outbox' }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminBroadcastFailuresText({ state = null, notice = null } = {}) {
   if (!state?.record) {
-    return ['🧾 Broadcast failures', '', notice || 'No broadcast record found.'].join('\n');
+    return ['🧾 Ошибки broadcast', '', notice || 'Запись broadcast не найдена.'].join('\n');
   }
   const lines = [
-    '🧾 Broadcast failures',
+    '🧾 Ошибки broadcast',
     '',
-    `Broadcast: #${state.record.id} • ${state.record.status}`,
-    `Failures: ${state.totalCount || 0} • page ${(state.page || 0) + 1}`
+    `Рассылка: #${state.record.id} • ${state.record.status}`,
+    `Ошибки: ${state.totalCount || 0} • стр. ${(state.page || 0) + 1}`
   ];
   if (!state.items?.length) {
-    lines.push('', 'No failed or retry-due recipients for this broadcast.');
+    lines.push('', 'Для этого broadcast нет получателей с ошибками или retry due.');
   } else {
-    lines.push('', 'Recipients needing attention:');
-    lines.push(...state.items.map((item, index) => `${(state.page || 0) * (state.pageSize || 10) + index + 1}. ${truncate(item.target_display_name || item.target_telegram_username || `id ${item.target_telegram_user_id}`, 28)} • ${item.status} • attempts ${item.attempts} • ${truncate(item.last_error, 64)}`));
+    lines.push('', 'Получатели, требующие внимания:');
+    lines.push(...state.items.map((item, index) => `${(state.page || 0) * (state.pageSize || 10) + index + 1}. ${truncate(item.target_display_name || item.target_telegram_username || `id ${item.target_telegram_user_id}`, 28)} • ${item.status} • попыток ${item.attempts} • ${truncate(item.last_error, 64)}`));
   }
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -1297,20 +1333,20 @@ function buildAdminBroadcastFailuresKeyboard({ state = null } = {}) {
     rows.push([{ text: `👤 ${label}`, callback_data: `adm:usr:open:${item.target_user_id}:all:0` }]);
   }
   const pager = [];
-  if (state?.hasPrev) pager.push({ text: '◀️ Prev', callback_data: `adm:bc:fail:${state.outboxId}:${Math.max(0, (state.page || 0) - 1)}` });
-  if (state?.hasNext) pager.push({ text: 'Next ▶️', callback_data: `adm:bc:fail:${state.outboxId}:${(state.page || 0) + 1}` });
+  if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: `adm:bc:fail:${state.outboxId}:${Math.max(0, (state.page || 0) - 1)}` });
+  if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:bc:fail:${state.outboxId}:${(state.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
-  rows.push([{ text: '↩️ Back to Outbox record', callback_data: `adm:outbox:open:${state?.outboxId || 0}` }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: '↩️ Назад к записи исходящих', callback_data: `adm:outbox:open:${state?.outboxId || 0}` }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 function buildAdminCommsEditPromptSurface({ title, currentValue, cancelCallback }) {
   return {
-    text: [title, '', 'Send the new text in the next message.', '', `Current value: ${truncate(currentValue, 280)}`].join('\n'),
+    text: [title, '', 'Отправь новый текст следующим сообщением.', '', `Текущее значение: ${truncate(currentValue, 280)}`].join('\n'),
     reply_markup: buildInlineKeyboard([
-      [{ text: '↩️ Cancel', callback_data: cancelCallback }],
-      [{ text: '🏠 Home', callback_data: 'home:root' }]
+      [{ text: '↩️ Отмена', callback_data: cancelCallback }],
+      [{ text: '🏠 Главная', callback_data: 'home:root' }]
     ])
   };
 }
@@ -1323,7 +1359,7 @@ function renderAdminSearchLine(scopeKey, item, index, page = 0, pageSize = 8) {
   const ordinal = page * pageSize + index + 1;
   switch (normalizeAdminSearchScope(scopeKey)) {
     case 'users':
-      return `${ordinal}. ${truncate(item.displayName || item.linkedinName || item.telegramUsername || `User ${item.telegramUserId}`, 26)} • ${item.hasLinkedIn ? 'LI' : 'no LI'} • ${item.visibilityStatus === 'listed' ? 'listed' : item.profileState === 'active' ? 'hidden' : 'incomplete'} • pending ${item.pendingIntroCount || 0}`;
+      return `${ordinal}. ${truncate(item.displayName || item.linkedinName || item.telegramUsername || `User ${item.telegramUserId}`, 26)} • ${item.hasLinkedIn ? 'LI' : 'без LI'} • ${item.visibilityStatus === 'listed' ? 'листинг' : item.profileState === 'active' ? 'скрыт' : 'неполный'} • pending ${item.pendingIntroCount || 0}`;
     case 'intros':
       return `${ordinal}. ${truncate(item.requesterDisplayName, 18)} → ${truncate(item.targetDisplayName, 18)} • ${formatShortStatus(item.status, 'pending')} • ${formatDateTimeShort(item.updatedAt || item.createdAt)}`;
     case 'delivery':
@@ -1342,7 +1378,7 @@ function buildAdminSearchPromptText({ scopeKey, currentQuery = '', notice = null
     '',
     'Send your search query in the next message.',
     '',
-    `Current query: ${currentQuery || '—'}`
+    `Текущий запрос: ${currentQuery || '—'}`
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -1350,24 +1386,24 @@ function buildAdminSearchPromptText({ scopeKey, currentQuery = '', notice = null
 
 function buildAdminSearchPromptKeyboard({ scopeKey } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Cancel', callback_data: adminSearchBackCallback(scopeKey) }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '↩️ Отмена', callback_data: adminSearchBackCallback(scopeKey) }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildAdminSearchResultsText({ scopeKey, state = null, notice = null } = {}) {
   const lines = [
-    `🔎 ${adminSearchScopeLabel(scopeKey)} results`,
+    `🔎 Результаты: ${adminSearchScopeLabel(scopeKey)}`,
     '',
-    `Query: ${state?.queryText || '—'}`,
-    `Results: ${state?.totalCount || 0} • page ${(state?.page || 0) + 1}`
+    `Запрос: ${state?.queryText || '—'}`,
+    `Результаты: ${state?.totalCount || 0} • стр. ${(state?.page || 0) + 1}`
   ];
   if (notice) lines.push('', notice);
   if (!state?.results?.length) {
-    lines.push('', state?.queryText ? 'No matches found for this query.' : 'Run a search to see matching records.');
+    lines.push('', state?.queryText ? 'По этому запросу ничего не найдено.' : 'Запусти поиск, чтобы увидеть записи.');
     return lines.join('\n');
   }
-  lines.push('', 'Open a result:');
+  lines.push('', 'Открой результат:');
   lines.push(...state.results.map((item, index) => renderAdminSearchLine(scopeKey, item, index, state?.page || 0, state?.pageSize || 8)));
   return lines.join('\n');
 }
@@ -1376,13 +1412,13 @@ function buildAdminSearchResultsKeyboard({ scopeKey, state = null } = {}) {
   const rows = [];
   for (const item of state?.results || []) {
     let callback = 'adm:home';
-    let label = 'Open';
+    let label = 'Открыть';
     if (scopeKey === 'users') {
       callback = `adm:usr:open:${item.userId}:all:0`;
       label = `🪪 ${truncate(item.displayName || item.linkedinName || item.telegramUsername || `User ${item.telegramUserId}`, 42)}`;
     } else if (scopeKey === 'intros') {
       callback = `adm:intro:open:${item.introRequestId}:all:0`;
-      label = `📄 ${truncate(`${item.requesterDisplayName || 'Unknown'} → ${item.targetDisplayName || 'Unknown'}`, 42)}`;
+      label = `📄 ${truncate(`${item.requesterDisplayName || 'Неизвестно'} → ${item.targetDisplayName || 'Неизвестно'}`, 42)}`;
     } else if (scopeKey === 'delivery') {
       callback = `adm:dlv:open:${item.notificationReceiptId}:all:0`;
       label = `🧾 ${truncate(item.recipientDisplayName || `Receipt ${item.notificationReceiptId}`, 42)}`;
@@ -1396,12 +1432,12 @@ function buildAdminSearchResultsKeyboard({ scopeKey, state = null } = {}) {
     rows.push([{ text: label, callback_data: callback }]);
   }
   const pager = [];
-  if (state?.hasPrev) pager.push({ text: '◀️ Prev', callback_data: `adm:search:${scopeKey}:page:${Math.max(0, (state?.page || 0) - 1)}` });
-  if (state?.hasNext) pager.push({ text: 'Next ▶️', callback_data: `adm:search:${scopeKey}:page:${(state?.page || 0) + 1}` });
+  if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: `adm:search:${scopeKey}:page:${Math.max(0, (state?.page || 0) - 1)}` });
+  if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:search:${scopeKey}:page:${(state?.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
-  rows.push([{ text: `🔎 Search again`, callback_data: `adm:search:${scopeKey}` }]);
-  rows.push([{ text: '↩️ Back', callback_data: adminSearchBackCallback(scopeKey) }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: `🔎 Искать снова`, callback_data: `adm:search:${scopeKey}` }]);
+  rows.push([{ text: '↩️ Назад', callback_data: adminSearchBackCallback(scopeKey) }]);
+  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1411,47 +1447,47 @@ function buildHealthText({ step = 'STEP039' } = {}) {
   const operators = getOperatorConfig();
   const runtimeGuards = getRuntimeGuardConfig();
   return [
-    '🩺 Health',
+    '🩺 Здоровье',
     '',
-    `Current step: ${step}`,
-    boolLine('Database configured', flags.dbConfigured),
-    boolLine('LinkedIn configured', flags.linkedInConfigured),
-    boolLine('Telegram configured', flags.telegramConfigured),
-    boolLine('Webhook secret configured', flags.telegramWebhookSecretConfigured),
-    boolLine('Notification receipts configured', flags.notificationReceiptsConfigured),
-    boolLine('Notification retry configured', flags.notificationRetryConfigured),
-    boolLine('Notification ops configured', flags.notificationOpsConfigured),
-    boolLine('Operator diagnostics configured', flags.operatorDiagnosticsSurfaceConfigured),
-    `Operators allowlisted: ${operators.operatorTelegramUserIds.length}`,
-    `Update dedupe TTL: ${runtimeGuards.updateDedupeTtlSeconds}s`,
-    `Action throttle: ${runtimeGuards.actionThrottleSeconds}s`
+    `Текущий шаг: ${step}`,
+    boolLine('База данных настроена', flags.dbConfigured),
+    boolLine('LinkedIn настроен', flags.linkedInConfigured),
+    boolLine('Telegram настроен', flags.telegramConfigured),
+    boolLine('Секрет webhook настроен', flags.telegramWebhookSecretConfigured),
+    boolLine('Квитанции уведомлений настроены', flags.notificationReceiptsConfigured),
+    boolLine('Повтор уведомлений настроен', flags.notificationRetryConfigured),
+    boolLine('Операторский слой уведомлений настроен', flags.notificationOpsConfigured),
+    boolLine('Операторская диагностика настроена', flags.operatorDiagnosticsSurfaceConfigured),
+    `Операторов в allowlist: ${operators.operatorTelegramUserIds.length}`,
+    `TTL дедупликации update: ${runtimeGuards.updateDedupeTtlSeconds}s`,
+    `Троттлинг действий: ${runtimeGuards.actionThrottleSeconds}s`
   ].join('\n');
 }
 
 function buildHealthKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '🔁 Retry diagnostics', callback_data: 'adm:retry' }],
-    [{ text: '👮 Operators', callback_data: 'adm:opscope' }],
-    [{ text: '↩️ Back to System', callback_data: 'adm:sys' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '🔁 Диагностика повторов', callback_data: 'adm:retry' }],
+    [{ text: '👮 Операторы', callback_data: 'adm:opscope' }],
+    [{ text: '↩️ Назад в Систему', callback_data: 'adm:sys' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildOperatorsText({ summary = null } = {}) {
   const operators = getOperatorConfig();
   const lines = [
-    '👮 Operators',
+    '👮 Операторы',
     '',
-    `Allowlisted operator accounts: ${operators.operatorTelegramUserIds.length}`,
-    countLine('Recent audit events', summary?.recentAuditEvents || 0),
-    countLine('Retry due', summary?.retryDue || 0),
-    countLine('Exhausted', summary?.exhausted || 0)
+    `Операторских аккаунтов в allowlist: ${operators.operatorTelegramUserIds.length}`,
+    countLine('Недавние события аудита', summary?.recentAuditEvents || 0),
+    countLine('Ждут повтора', summary?.retryDue || 0),
+    countLine('Исчерпано', summary?.exhausted || 0)
   ];
 
   if (!operators.operatorTelegramUserIds.length) {
-    lines.push('No operator Telegram user ids are configured.');
+    lines.push('ID операторов Telegram не настроены.');
   } else {
-    lines.push('', 'Operator Telegram user ids:');
+    lines.push('', 'ID операторов Telegram:');
     lines.push(...operators.operatorTelegramUserIds.map((value) => `• ${value}`));
   }
 
@@ -1460,23 +1496,23 @@ function buildOperatorsText({ summary = null } = {}) {
 
 function buildOperatorsKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '🩺 Health', callback_data: 'adm:health' }],
-    [{ text: '↩️ Back to System', callback_data: 'adm:sys' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '🩺 Здоровье', callback_data: 'adm:health' }],
+    [{ text: '↩️ Назад в Систему', callback_data: 'adm:sys' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
 function buildOperatorOnlyText() {
   return [
-    '⚠️ Operator only',
+    '⚠️ Только для оператора',
     '',
-    'This area is only available to the operator account.'
+    'Эта зона доступна только операторскому аккаунту.'
   ].join('\n');
 }
 
 function buildOperatorOnlyKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
 }
 
@@ -1484,19 +1520,19 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP039' } = {}) {
   return {
     buildAdminHomeSurface: async ({ summary = null } = {}) => ({
       text: buildAdminHomeText({ summary }),
-      reply_markup: buildAdminHomeKeyboard()
+      reply_markup: buildAdminHomeKeyboard({ summary })
     }),
     buildAdminOperationsSurface: async ({ summary = null } = {}) => ({
       text: buildOperationsHubText({ summary }),
-      reply_markup: buildOperationsHubKeyboard()
+      reply_markup: buildOperationsHubKeyboard({ summary })
     }),
     buildAdminCommunicationsSurface: async ({ state = null, notice = null } = {}) => ({
       text: buildCommunicationsHubText({ state, notice }),
-      reply_markup: buildCommunicationsHubKeyboard()
+      reply_markup: buildCommunicationsHubKeyboard({ state })
     }),
     buildAdminSystemSurface: async ({ summary = null } = {}) => ({
       text: buildSystemHubText({ summary }),
-      reply_markup: buildSystemHubKeyboard()
+      reply_markup: buildSystemHubKeyboard({ summary })
     }),
     buildAdminHealthSurface: async () => ({
       text: buildHealthText({ step: currentStep }),
@@ -1559,7 +1595,7 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP039' } = {}) {
       reply_markup: buildAdminNoticeKeyboard({ state })
     }),
     buildAdminNoticeAudienceSurface: async ({ state = null, notice = null } = {}) => buildAdminNoticeAudienceSurface({ state, notice }),
-    buildAdminNoticePreviewSurface: async ({ state = null } = {}) => buildAdminNoticePreviewSurface({ state }),
+    buildAdminNoticePreviewSurface: async ({ state = null } = {}) => buildAdminNoticeПревьюSurface({ state }),
     buildAdminBroadcastSurface: async ({ state = null, notice = null } = {}) => ({
       text: buildAdminBroadcastText({ state, notice }),
       reply_markup: buildAdminBroadcastKeyboard({ state })
@@ -1595,8 +1631,8 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP039' } = {}) {
       reply_markup: buildAdminDirectTemplatePickerKeyboard({ targetUserId: card?.user_id || state?.draft?.targetUserId || 0, segmentKey, page, state })
     }),
     buildAdminDirectPreviewSurface: async ({ card, state = null, segmentKey = 'all', page = 0, notice = null } = {}) => ({
-      text: buildAdminDirectPreviewText({ card, state, notice }),
-      reply_markup: buildAdminDirectPreviewKeyboard({ targetUserId: card?.user_id || state?.draft?.targetUserId || 0, segmentKey, page })
+      text: buildAdminDirectПревьюText({ card, state, notice }),
+      reply_markup: buildAdminDirectПревьюKeyboard({ targetUserId: card?.user_id || state?.draft?.targetUserId || 0, segmentKey, page })
     }),
     buildAdminSearchPromptSurface: async ({ scopeKey = 'users', currentQuery = '', notice = null } = {}) => ({
       text: buildAdminSearchPromptText({ scopeKey, currentQuery, notice }),

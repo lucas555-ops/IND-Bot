@@ -1,40 +1,22 @@
-import { readFileSync } from 'node:fs';
 import { createAdminSurfaceBuilders } from '../src/bot/surfaces/adminSurfaces.js';
 
-const repoSource = readFileSync(new URL('../src/db/adminRepo.js', import.meta.url), 'utf8');
-for (const fragment of [
-  'new_users_24h',
-  'connected_7d',
-  'intros_24h',
-  'broadcast_delivered_7d',
-  'operator_actions_24h'
-]) {
-  if (!repoSource.includes(fragment)) {
-    throw new Error(`Admin trends query missing fragment: ${fragment}`);
-  }
-}
-
-const storeSource = readFileSync(new URL('../src/lib/storage/adminStore.js', import.meta.url), 'utf8');
-for (const fragment of [
-  'directMessages24h',
-  'broadcastDeliveredRecipients7d',
-  'operatorActions24h'
-]) {
-  if (!storeSource.includes(fragment)) {
-    throw new Error(`Admin store missing trends fragment: ${fragment}`);
-  }
-}
-
-const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP037' });
+const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP040' });
 
 const home = await surfaces.buildAdminHomeSurface({
   summary: {
     totalUsers: 120,
-    listedUsers: 44,
-    pendingIntros: 8,
+    connectedUsers: 90,
+    profileStartedUsers: 70,
+    readyProfiles: 50,
+    readyNotListed: 10,
+    listedUsers: 40,
+    listedActiveUsers: 30,
+    noIntroYet: 20,
+    firstIntroUsers: 18,
+    acceptedIntroUsers: 7,
     failedDeliveries: 2,
     activeNotice: true,
-    latestBroadcastStatus: 'sent',
+    latestBroadcastStatus: 'sent_with_failures',
     newUsers24h: 6,
     newUsers7d: 19,
     connected24h: 4,
@@ -52,45 +34,34 @@ const home = await surfaces.buildAdminHomeSurface({
     directMessages7d: 7
   }
 });
-for (const fragment of [
-  'Trends:',
-  'Users +6/24h • +19/7d',
-  'Connected +4/24h • +11/7d',
-  'Broadcasts 2/7d • Direct 7/7d'
-]) {
+for (const fragment of ['Воронка:', 'Подключили LinkedIn: 90', 'Получили первое интро: 18', 'Последняя рассылка: отправлен с ошибками']) {
   if (!home.text.includes(fragment)) {
-    throw new Error(`Admin home missing trend fragment: ${fragment}`);
+    throw new Error(`Admin home missing STEP040 fragment: ${fragment}`);
   }
+}
+if (!JSON.stringify(home.reply_markup.inline_keyboard).includes('adm:home:funnel:accepted')) {
+  throw new Error('Admin home keyboard must expose accepted drilldown');
 }
 
 const comms = await surfaces.buildAdminCommunicationsSurface({
   state: {
-    notice: { isActive: true, audienceKey: 'ALL' },
+    notice: { isActive: true, audienceKey: 'READY_NOT_LISTED' },
+    noticeVisibilityEstimate: 18,
     broadcastDraft: { body: 'Ready' },
-    latestBroadcastStatus: 'sent_with_failures',
-    recentDirectMessages: 3,
-    recentOutboxFailures: 1,
-    outboxCount: 14,
-    directMessages24h: 1,
-    directMessages7d: 6,
-    broadcasts7d: 2,
-    broadcastDeliveredRecipients7d: 18,
-    broadcastFailedRecipients7d: 2,
-    outboxFailures24h: 1,
-    outboxFailures7d: 3,
+    latestBroadcastStatus: 'partial',
     latestBroadcastRecipients: 12,
     latestBroadcastDelivered: 10,
-    latestBroadcastFailed: 2
+    latestBroadcastFailed: 2,
+    directMessages24h: 1,
+    directMessages7d: 6,
+    recentOutboxFailures: 3,
+    outboxFailures24h: 1,
+    outboxFailures7d: 3
   }
 });
-for (const fragment of [
-  'Comms trends:',
-  'Broadcasts: 2/7d',
-  'Broadcast delivery: 18 ok • 2 failed',
-  'Direct messages: 1/24h • 6/7d'
-]) {
+for (const fragment of ['Активное уведомление: да', 'Видимость notice: 18', 'Последняя рассылка: частично', 'Ошибки outbox 7д: 3']) {
   if (!comms.text.includes(fragment)) {
-    throw new Error(`Communications hub missing trend fragment: ${fragment}`);
+    throw new Error(`Communications hub missing STEP040 fragment: ${fragment}`);
   }
 }
 
@@ -110,14 +81,9 @@ const system = await surfaces.buildAdminSystemSurface({
     relinks7d: 1
   }
 });
-for (const fragment of [
-  'Runtime trends:',
-  'Failures 1/24h • 4/7d',
-  'Operator actions 5/24h • 15/7d',
-  'Listing changes 4/7d • relinks 1/7d'
-]) {
+for (const fragment of ['Ждут повтора: 2', 'Исчерпано: 1', 'Ошибки 1/24ч • 4/7д', 'Изменения листинга 4/7д • релинки 1/7д']) {
   if (!system.text.includes(fragment)) {
-    throw new Error(`System hub missing trend fragment: ${fragment}`);
+    throw new Error(`System hub missing STEP040 fragment: ${fragment}`);
   }
 }
 

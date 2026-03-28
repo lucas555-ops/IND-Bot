@@ -2,18 +2,18 @@ import { getProfileSnapshotByUserId, hideProfileListingByUserId, unhideProfileLi
 import { upsertTelegramUser } from './usersRepo.js';
 
 export const ADMIN_USER_SEGMENTS = {
-  all: { key: 'all', label: 'All' },
-  conn: { key: 'conn', label: 'Connected' },
-  noprof: { key: 'noprof', label: 'Connected, no profile' },
-  inc: { key: 'inc', label: 'Incomplete' },
-  noskills: { key: 'noskills', label: 'Ready, no skills' },
-  ready: { key: 'ready', label: 'Ready not listed' },
-  listd: { key: 'listd', label: 'Listed' },
-  listact: { key: 'listact', label: 'Listed active' },
-  listinact: { key: 'listinact', label: 'Listed inactive' },
-  nointro: { key: 'nointro', label: 'No intros yet' },
-  pend: { key: 'pend', label: 'Pending intros' },
-  relink: { key: 'relink', label: 'Recent relinks' }
+  all: { key: 'all', label: 'Все' },
+  conn: { key: 'conn', label: 'Подключили LinkedIn' },
+  noprof: { key: 'noprof', label: 'Подключили, без профиля' },
+  inc: { key: 'inc', label: 'Профиль не завершён' },
+  noskills: { key: 'noskills', label: 'Готовые без навыков' },
+  ready: { key: 'ready', label: 'Готовые, но не опубликованы' },
+  listd: { key: 'listd', label: 'Опубликованы' },
+  listact: { key: 'listact', label: 'Активны в каталоге' },
+  listinact: { key: 'listinact', label: 'Неактивны в каталоге' },
+  nointro: { key: 'nointro', label: 'Без интро' },
+  pend: { key: 'pend', label: 'Есть pending интро' },
+  relink: { key: 'relink', label: 'Недавние relink' }
 };
 
 export function normalizeAdminUserSegment(segmentKey) {
@@ -433,30 +433,30 @@ export async function saveAdminUserNoteFromSession(client, {
 }
 
 export const ADMIN_NOTICE_AUDIENCES = {
-  ALL: { key: 'ALL', label: 'All users' },
-  CONNECTED: { key: 'CONNECTED', label: 'Connected' },
-  NOT_CONNECTED: { key: 'NOT_CONNECTED', label: 'Not connected' },
-  CONNECTED_NO_PROFILE: { key: 'CONNECTED_NO_PROFILE', label: 'Connected, no profile' },
-  PROFILE_INCOMPLETE: { key: 'PROFILE_INCOMPLETE', label: 'Profile incomplete' },
-  COMPLETE_NO_SKILLS: { key: 'COMPLETE_NO_SKILLS', label: 'Ready, no skills' },
-  READY_NOT_LISTED: { key: 'READY_NOT_LISTED', label: 'Ready not listed' },
-  LISTED_ACTIVE: { key: 'LISTED_ACTIVE', label: 'Listed active' },
-  LISTED_INACTIVE: { key: 'LISTED_INACTIVE', label: 'Listed inactive' },
-  LISTED: { key: 'LISTED', label: 'Listed' }
+  ALL: { key: 'ALL', label: 'Все пользователи' },
+  CONNECTED: { key: 'CONNECTED', label: 'Подключили LinkedIn' },
+  NOT_CONNECTED: { key: 'NOT_CONNECTED', label: 'Не подключили LinkedIn' },
+  CONNECTED_NO_PROFILE: { key: 'CONNECTED_NO_PROFILE', label: 'Подключили, без профиля' },
+  PROFILE_INCOMPLETE: { key: 'PROFILE_INCOMPLETE', label: 'Профиль не завершён' },
+  COMPLETE_NO_SKILLS: { key: 'COMPLETE_NO_SKILLS', label: 'Готовые без навыков' },
+  READY_NOT_LISTED: { key: 'READY_NOT_LISTED', label: 'Готовые, но не опубликованы' },
+  LISTED_ACTIVE: { key: 'LISTED_ACTIVE', label: 'Активны в каталоге' },
+  LISTED_INACTIVE: { key: 'LISTED_INACTIVE', label: 'Неактивны в каталоге' },
+  LISTED: { key: 'LISTED', label: 'Опубликованы' }
 };
 
 export const ADMIN_INTRO_SEGMENTS = {
-  all: { key: 'all', label: 'All' },
+  all: { key: 'all', label: 'Все' },
   pend: { key: 'pend', label: 'Pending' },
-  p24: { key: 'p24', label: 'Pending >24h' },
-  p72: { key: 'p72', label: 'Pending >72h' },
-  acc: { key: 'acc', label: 'Accepted' },
-  arec: { key: 'arec', label: 'Accepted recent' },
-  dec: { key: 'dec', label: 'Declined' },
-  drec: { key: 'drec', label: 'Declined recent' },
-  stale: { key: 'stale', label: 'Stale' },
-  fail: { key: 'fail', label: 'Failed notify' },
-  dprob: { key: 'dprob', label: 'Delivery problem' }
+  p24: { key: 'p24', label: 'Pending >24ч' },
+  p72: { key: 'p72', label: 'Pending >72ч' },
+  acc: { key: 'acc', label: 'Принятые' },
+  arec: { key: 'arec', label: 'Принятые 7д' },
+  dec: { key: 'dec', label: 'Отклонённые' },
+  drec: { key: 'drec', label: 'Отклонённые 7д' },
+  stale: { key: 'stale', label: 'Зависшие' },
+  fail: { key: 'fail', label: 'Сбой уведомления' },
+  dprob: { key: 'dprob', label: 'Проблема доставки' }
 };
 
 export function normalizeAdminIntroSegment(segmentKey) {
@@ -465,11 +465,11 @@ export function normalizeAdminIntroSegment(segmentKey) {
 }
 
 export const ADMIN_DELIVERY_SEGMENTS = {
-  all: { key: 'all', label: 'All' },
-  fail: { key: 'fail', label: 'Recent failures' },
-  due: { key: 'due', label: 'Retry due' },
-  exh: { key: 'exh', label: 'Exhausted' },
-  ok: { key: 'ok', label: 'Delivered recent' }
+  all: { key: 'all', label: 'Все' },
+  fail: { key: 'fail', label: 'Ошибки 7д' },
+  due: { key: 'due', label: 'Готово к повтору' },
+  exh: { key: 'exh', label: 'Исчерпано' },
+  ok: { key: 'ok', label: 'Доставлено 7д' }
 };
 
 export function normalizeAdminDeliverySegment(segmentKey) {
@@ -478,11 +478,11 @@ export function normalizeAdminDeliverySegment(segmentKey) {
 }
 
 export const ADMIN_QUALITY_SEGMENTS = {
-  listinc: { key: 'listinc', label: 'Listed incomplete' },
-  ready: { key: 'ready', label: 'Ready not listed' },
-  miss: { key: 'miss', label: 'Missing fields' },
-  dupe: { key: 'dupe', label: 'Duplicates' },
-  relink: { key: 'relink', label: 'Relinks' }
+  listinc: { key: 'listinc', label: 'Опубликованы неполные' },
+  ready: { key: 'ready', label: 'Готовые, но не опубликованы' },
+  miss: { key: 'miss', label: 'Нет обязательных полей' },
+  dupe: { key: 'dupe', label: 'Дубликаты' },
+  relink: { key: 'relink', label: 'Relink' }
 };
 
 export function normalizeAdminQualitySegment(segmentKey) {
@@ -491,11 +491,11 @@ export function normalizeAdminQualitySegment(segmentKey) {
 }
 
 export const ADMIN_AUDIT_SEGMENTS = {
-  all: { key: 'all', label: 'All' },
-  not: { key: 'not', label: 'Notices' },
-  bc: { key: 'bc', label: 'Broadcasts' },
-  user: { key: 'user', label: 'User actions' },
-  relink: { key: 'relink', label: 'Relinks' }
+  all: { key: 'all', label: 'Все' },
+  not: { key: 'not', label: 'Notice' },
+  bc: { key: 'bc', label: 'Broadcast' },
+  user: { key: 'user', label: 'Действия по пользователям' },
+  relink: { key: 'relink', label: 'Relink' }
 };
 
 export function normalizeAdminAuditSegment(segmentKey) {
@@ -593,21 +593,21 @@ function buildIntroBaseCte() {
 }
 
 export const ADMIN_BROADCAST_AUDIENCES = {
-  ALL_CONNECTED: { key: 'ALL_CONNECTED', label: 'All connected' },
-  ALL_LISTED: { key: 'ALL_LISTED', label: 'All listed' },
-  LISTED_ACTIVE: { key: 'LISTED_ACTIVE', label: 'Listed active' },
-  LISTED_INACTIVE: { key: 'LISTED_INACTIVE', label: 'Listed inactive' },
-  NOT_CONNECTED: { key: 'NOT_CONNECTED', label: 'Not connected' },
-  CONNECTED_NO_PROFILE: { key: 'CONNECTED_NO_PROFILE', label: 'Connected, no profile' },
-  PROFILE_INCOMPLETE: { key: 'PROFILE_INCOMPLETE', label: 'Profile incomplete' },
-  COMPLETE_NO_SKILLS: { key: 'COMPLETE_NO_SKILLS', label: 'Ready, no skills' },
-  READY_NOT_LISTED: { key: 'READY_NOT_LISTED', label: 'Ready not listed' },
-  LISTED_NO_INTROS_YET: { key: 'LISTED_NO_INTROS_YET', label: 'Listed, no intros yet' },
-  PENDING_INTROS: { key: 'PENDING_INTROS', label: 'Pending intros' },
-  RECENT_PENDING_INTROS: { key: 'RECENT_PENDING_INTROS', label: 'Recent pending intros' },
-  ACCEPTED_RECENT: { key: 'ACCEPTED_RECENT', label: 'Accepted recent' },
-  DECLINED_RECENT: { key: 'DECLINED_RECENT', label: 'Declined recent' },
-  RECENT_RELINKS: { key: 'RECENT_RELINKS', label: 'Recent relinks' }
+  ALL_CONNECTED: { key: 'ALL_CONNECTED', label: 'Все подключённые' },
+  ALL_LISTED: { key: 'ALL_LISTED', label: 'Все опубликованные' },
+  LISTED_ACTIVE: { key: 'LISTED_ACTIVE', label: 'Активны в каталоге' },
+  LISTED_INACTIVE: { key: 'LISTED_INACTIVE', label: 'Неактивны в каталоге' },
+  NOT_CONNECTED: { key: 'NOT_CONNECTED', label: 'Не подключили LinkedIn' },
+  CONNECTED_NO_PROFILE: { key: 'CONNECTED_NO_PROFILE', label: 'Подключили, без профиля' },
+  PROFILE_INCOMPLETE: { key: 'PROFILE_INCOMPLETE', label: 'Профиль не завершён' },
+  COMPLETE_NO_SKILLS: { key: 'COMPLETE_NO_SKILLS', label: 'Готовые без навыков' },
+  READY_NOT_LISTED: { key: 'READY_NOT_LISTED', label: 'Готовые, но не опубликованы' },
+  LISTED_NO_INTROS_YET: { key: 'LISTED_NO_INTROS_YET', label: 'Опубликованы без интро' },
+  PENDING_INTROS: { key: 'PENDING_INTROS', label: 'Есть pending интро' },
+  RECENT_PENDING_INTROS: { key: 'RECENT_PENDING_INTROS', label: 'Недавние pending интро' },
+  ACCEPTED_RECENT: { key: 'ACCEPTED_RECENT', label: 'Недавно принятые' },
+  DECLINED_RECENT: { key: 'DECLINED_RECENT', label: 'Недавно отклонённые' },
+  RECENT_RELINKS: { key: 'RECENT_RELINKS', label: 'Недавние relink' }
 };
 
 export function normalizeAdminNoticeAudience(value) {
@@ -621,11 +621,11 @@ export function normalizeAdminBroadcastAudience(value) {
 }
 
 export const ADMIN_SEARCH_SCOPES = {
-  users: { key: 'users', label: 'Search users' },
-  intros: { key: 'intros', label: 'Search intros' },
-  delivery: { key: 'delivery', label: 'Search delivery' },
-  outbox: { key: 'outbox', label: 'Search outbox' },
-  audit: { key: 'audit', label: 'Search audit' }
+  users: { key: 'users', label: 'Поиск пользователей' },
+  intros: { key: 'intros', label: 'Поиск интро' },
+  delivery: { key: 'delivery', label: 'Поиск доставки' },
+  outbox: { key: 'outbox', label: 'Поиск outbox' },
+  audit: { key: 'audit', label: 'Поиск аудита' }
 };
 
 export function normalizeAdminSearchScope(value) {
@@ -634,12 +634,12 @@ export function normalizeAdminSearchScope(value) {
 }
 
 export const ADMIN_DIRECT_MESSAGE_TEMPLATES = {
-  connect: { key: 'connect', label: 'Connect LinkedIn', body: 'Quick nudge: connect your LinkedIn in Intro Deck so your identity is verified inside Telegram and your profile can go live.' },
-  complete: { key: 'complete', label: 'Complete profile', body: 'Quick nudge: finish your Intro Deck profile so other members can understand what you do and send higher-quality intros.' },
-  skills: { key: 'skills', label: 'Add skills', body: 'Quick nudge: add a few relevant skills in Intro Deck so your profile is easier to understand and easier to match.' },
-  list: { key: 'list', label: 'List your profile', body: "Your Intro Deck profile looks ready. Put it live in the directory so people can discover you and send intros." },
-  inbox: { key: 'inbox', label: 'Check intro inbox', body: 'You have activity waiting in your Intro Deck inbox. Open the bot and review your latest intro updates.' },
-  blank: { key: 'blank', label: 'Blank message', body: '' }
+  connect: { key: 'connect', label: 'Подключить LinkedIn', body: 'Quick nudge: connect your LinkedIn in Intro Deck so your identity is verified inside Telegram and your profile can go live.' },
+  complete: { key: 'complete', label: 'Заполнить профиль', body: 'Quick nudge: finish your Intro Deck profile so other members can understand what you do and send higher-quality intros.' },
+  skills: { key: 'skills', label: 'Добавить навыки', body: 'Quick nudge: add a few relevant skills in Intro Deck so your profile is easier to understand and easier to match.' },
+  list: { key: 'list', label: 'Опубликовать профиль', body: "Your Intro Deck profile looks ready. Put it live in the directory so people can discover you and send intros." },
+  inbox: { key: 'inbox', label: 'Проверить inbox интро', body: 'You have activity waiting in your Intro Deck inbox. Open the bot and review your latest intro updates.' },
+  blank: { key: 'blank', label: 'Пустое сообщение', body: '' }
 };
 
 export function normalizeAdminDirectMessageTemplate(value) {
@@ -648,21 +648,21 @@ export function normalizeAdminDirectMessageTemplate(value) {
 }
 
 export const ADMIN_NOTICE_TEMPLATES = {
-  connect_profile: { key: 'connect_profile', label: 'Connect + start profile', audienceKey: 'CONNECTED_NO_PROFILE', body: "You're connected in Intro Deck. Add your basic profile details so people can understand what you do and where you fit." },
+  connect_profile: { key: 'connect_profile', label: 'Подключить + начать профиль', audienceKey: 'CONNECTED_NO_PROFILE', body: "You're connected in Intro Deck. Add your basic profile details so people can understand what you do and where you fit." },
   complete_profile: { key: 'complete_profile', label: 'Complete profile', audienceKey: 'PROFILE_INCOMPLETE', body: "Your Intro Deck profile is almost there. Finish the missing fields so your card is easier to trust and easier to match." },
-  add_skills: { key: 'add_skills', label: 'Add skills', audienceKey: 'COMPLETE_NO_SKILLS', body: "Add a few relevant skills in Intro Deck so your profile is easier to scan and easier to match." },
-  list_profile: { key: 'list_profile', label: 'List your profile', audienceKey: 'READY_NOT_LISTED', body: "Your Intro Deck profile looks ready. Put it live in the directory so people can discover you and send intros." },
-  reengage_listed: { key: 'reengage_listed', label: 'Re-engage listed members', audienceKey: 'LISTED_INACTIVE', body: "Your Intro Deck profile is live, but it has been quiet lately. Open the bot, refresh your card, and check whether new intros are waiting." }
+  add_skills: { key: 'add_skills', label: 'Добавить навыки', audienceKey: 'COMPLETE_NO_SKILLS', body: "Add a few relevant skills in Intro Deck so your profile is easier to scan and easier to match." },
+  list_profile: { key: 'list_profile', label: 'Опубликовать профиль', audienceKey: 'READY_NOT_LISTED', body: "Your Intro Deck profile looks ready. Put it live in the directory so people can discover you and send intros." },
+  reengage_listed: { key: 'reengage_listed', label: 'Вернуть неактивных опубликованных', audienceKey: 'LISTED_INACTIVE', body: "Your Intro Deck profile is live, but it has been quiet lately. Open the bot, refresh your card, and check whether new intros are waiting." }
 };
 
 export const ADMIN_BROADCAST_TEMPLATES = {
-  launch_directory: { key: 'launch_directory', label: 'Launch directory', audienceKey: 'ALL_CONNECTED', body: "Intro Deck directory is live. Complete your profile, add skills, and list yourself so the right people can find you." },
+  launch_directory: { key: 'launch_directory', label: 'Запуск каталога', audienceKey: 'ALL_CONNECTED', body: "Intro Deck directory is live. Complete your profile, add skills, and list yourself so the right people can find you." },
   complete_profile: { key: 'complete_profile', label: 'Complete profile', audienceKey: 'PROFILE_INCOMPLETE', body: "Quick nudge from Intro Deck: finish your profile so other members can understand your focus and send better intros." },
-  add_skills: { key: 'add_skills', label: 'Add skills', audienceKey: 'COMPLETE_NO_SKILLS', body: "Profiles with a few clear skills are easier to understand and easier to match. Add your skills in Intro Deck today." },
+  add_skills: { key: 'add_skills', label: 'Добавить навыки', audienceKey: 'COMPLETE_NO_SKILLS', body: "Profiles with a few clear skills are easier to understand and easier to match. Add your skills in Intro Deck today." },
   list_profile: { key: 'list_profile', label: 'List ready profiles', audienceKey: 'READY_NOT_LISTED', body: "Your profile looks ready. List it in the Intro Deck directory so other members can discover you and send intros." },
-  revive_listed: { key: 'revive_listed', label: 'Revive listed inactive', audienceKey: 'LISTED_INACTIVE', body: "Your Intro Deck profile is live, but it has been quiet lately. Open the bot, refresh your card, and check for new activity." },
-  accepted_followup: { key: 'accepted_followup', label: 'Accepted intros follow-up', audienceKey: 'ACCEPTED_RECENT', body: "Accepted intros moved recently in Intro Deck. Open the bot, follow through quickly, and keep your profile current." },
-  recent_relinks: { key: 'recent_relinks', label: 'Recent relinks', audienceKey: 'RECENT_RELINKS', body: "Your Intro Deck identity was recently reconnected. Open the bot to confirm your profile and keep your directory presence accurate." }
+  revive_listed: { key: 'revive_listed', label: 'Вернуть неактивных опубликованных', audienceKey: 'LISTED_INACTIVE', body: "Your Intro Deck profile is live, but it has been quiet lately. Open the bot, refresh your card, and check for new activity." },
+  accepted_followup: { key: 'accepted_followup', label: 'Фоллоу-ап по принятым интро', audienceKey: 'ACCEPTED_RECENT', body: "Accepted intros moved recently in Intro Deck. Open the bot, follow through quickly, and keep your profile current." },
+  recent_relinks: { key: 'recent_relinks', label: 'Недавние relink', audienceKey: 'RECENT_RELINKS', body: "Your Intro Deck identity was recently reconnected. Open the bot to confirm your profile and keep your directory presence accurate." }
 };
 
 export function normalizeAdminNoticeTemplate(value) {
@@ -1724,9 +1724,12 @@ export async function getAdminDashboardSummary(client) {
       `${buildUsersBaseCte()}
        select
          count(*)::int as total_users,
+         count(*) filter (where has_linkedin)::int as connected_users,
+         count(*) filter (where profile_id is not null)::int as profile_started_users,
+         count(*) filter (where profile_state = 'active')::int as ready_profiles,
          count(*) filter (where profile_state = 'active' and visibility_status = 'listed')::int as listed_users,
          count(*) filter (where profile_state = 'active' and coalesce(visibility_status, 'hidden') = 'hidden')::int as ready_not_listed,
-         count(*) filter (where has_linkedin)::int as connected_users
+         count(*) filter (where profile_state = 'active' and visibility_status = 'listed' and last_seen_at >= now() - interval '14 days')::int as listed_active_users
        from user_base`
     ),
     client.query(
@@ -1737,7 +1740,15 @@ export async function getAdminDashboardSummary(client) {
          count(*) filter (where profile_state = 'active' and coalesce(skills_count, 0) = 0)::int as ready_no_skills_count,
          count(*) filter (where profile_state = 'active' and visibility_status = 'listed' and last_seen_at >= now() - interval '14 days')::int as listed_active_count,
          count(*) filter (where profile_state = 'active' and visibility_status = 'listed' and (last_seen_at is null or last_seen_at < now() - interval '14 days'))::int as listed_inactive_count,
-         count(*) filter (where has_linkedin and coalesce(intro_sent_count, 0) = 0 and coalesce(intro_received_count, 0) = 0)::int as no_intro_yet_count
+         count(*) filter (where has_linkedin and coalesce(intro_sent_count, 0) = 0 and coalesce(intro_received_count, 0) = 0)::int as no_intro_yet_count,
+         count(*) filter (where has_linkedin and (coalesce(intro_sent_count, 0) > 0 or coalesce(intro_received_count, 0) > 0))::int as first_intro_user_count,
+         count(*) filter (
+           where user_id in (
+             select distinct requester_user_id from intro_requests where status = 'accepted'
+             union
+             select distinct target_user_id from intro_requests where status = 'accepted'
+           )
+         )::int as accepted_intro_user_count
        from quality_base`
     ),
     client.query(
@@ -1867,15 +1878,26 @@ export async function getAdminDashboardSummary(client) {
   const deliveryTrends = trendDeliveryResult.rows[0] || {};
   const commsTrends = trendCommsResult.rows[0] || {};
   const auditTrends = trendAuditResult.rows[0] || {};
+  const noticeVisibilityEstimate = noticeState?.audienceKey
+    ? await estimateAdminNoticeAudienceCount(client, { audienceKey: noticeState.audienceKey }).catch(() => 0)
+    : 0;
 
   return {
     home: {
       totalUsers: users.total_users || 0,
+      connectedUsers: users.connected_users || 0,
+      profileStartedUsers: users.profile_started_users || 0,
+      readyProfiles: users.ready_profiles || 0,
       listedUsers: users.listed_users || 0,
+      listedActiveUsers: users.listed_active_users || 0,
       pendingIntros: intros.pending_intros || 0,
+      noIntroYet: quality.no_intro_yet_count || 0,
+      firstIntroUsers: quality.first_intro_user_count || 0,
+      acceptedIntroUsers: quality.accepted_intro_user_count || 0,
       failedDeliveries: delivery.failed_deliveries || 0,
       activeNotice: Boolean(noticeState?.isActive),
       latestBroadcastStatus: latestBroadcast?.status || 'none',
+      latestBroadcastId: latestBroadcast?.id || 0,
       newUsers24h: userTrends.new_users_24h || 0,
       newUsers7d: userTrends.new_users_7d || 0,
       connected24h: userTrends.connected_24h || 0,
@@ -1895,9 +1917,15 @@ export async function getAdminDashboardSummary(client) {
     },
     operations: {
       totalUsers: users.total_users || 0,
+      connectedUsers: users.connected_users || 0,
+      profileStartedUsers: users.profile_started_users || 0,
+      readyProfiles: users.ready_profiles || 0,
       readyNotListed: users.ready_not_listed || 0,
       listedIncomplete: quality.listed_incomplete || 0,
       pendingIntros: intros.pending_intros || 0,
+      noIntroYet: quality.no_intro_yet_count || 0,
+      firstIntroUsers: quality.first_intro_user_count || 0,
+      acceptedIntroUsers: quality.accepted_intro_user_count || 0,
       staleIntros: intros.stale_intros || 0,
       deliveryIssues: delivery.delivery_issues || 0,
       connectedNoProfile: totalCountsOr(users.connected_no_profile_count),
@@ -1905,6 +1933,8 @@ export async function getAdminDashboardSummary(client) {
       listedActive: totalCountsOr(quality.listed_active_count),
       listedInactive: totalCountsOr(quality.listed_inactive_count),
       noIntroYet: totalCountsOr(quality.no_intro_yet_count),
+      firstIntroUsers: totalCountsOr(quality.first_intro_user_count),
+      acceptedIntroUsers: totalCountsOr(quality.accepted_intro_user_count),
       recentRelinks7d: auditTrends.relinks_7d || 0,
       newIntros24h: introTrends.intros_24h || 0,
       accepted7d: introTrends.accepted_7d || 0,
@@ -1915,15 +1945,19 @@ export async function getAdminDashboardSummary(client) {
       activeNotice: Boolean(noticeState?.isActive),
       draftBroadcastReady: Boolean(broadcastDraft?.body),
       latestBroadcastStatus: latestBroadcast?.status || 'none',
+      latestBroadcastId: latestBroadcast?.id || 0,
       recentDirectMessages,
       recentOutboxFailures,
+      noticeVisibilityEstimate,
       directMessages24h: commsTrends.direct_24h || 0,
       directMessages7d: commsTrends.direct_7d || 0,
+      noticeVisibilityEstimate: 0,
       broadcasts7d: commsTrends.broadcasts_7d || 0,
       broadcastDeliveredRecipients7d: commsTrends.broadcast_delivered_7d || 0,
       broadcastFailedRecipients7d: commsTrends.broadcast_failed_7d || 0,
       outboxFailures24h: commsTrends.outbox_failures_24h || 0,
       outboxFailures7d: commsTrends.outbox_failures_7d || 0,
+      latestBroadcastAudienceKey: latestBroadcast?.audience_key || null,
       latestBroadcastRecipients: latestBroadcast?.estimated_recipient_count || 0,
       latestBroadcastDelivered: latestBroadcast?.delivered_count || 0,
       latestBroadcastFailed: latestBroadcast?.failed_count || 0

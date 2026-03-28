@@ -79,9 +79,9 @@ export async function loadAdminDashboardSummary() {
     return {
       persistenceEnabled: false,
       summary: {
-        home: { totalUsers: 0, listedUsers: 0, pendingIntros: 0, failedDeliveries: 0, activeNotice: false, latestBroadcastStatus: 'none', newUsers24h: 0, newUsers7d: 0, connected24h: 0, connected7d: 0, listed24h: 0, listed7d: 0, intros24h: 0, intros7d: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0, failures24h: 0, failures7d: 0, exhaustedNow: 0, broadcasts7d: 0, directMessages7d: 0 },
-        operations: { totalUsers: 0, readyNotListed: 0, listedIncomplete: 0, pendingIntros: 0, staleIntros: 0, deliveryIssues: 0, connectedNoProfile: 0, readyNoSkills: 0, listedActive: 0, listedInactive: 0, noIntroYet: 0, recentRelinks7d: 0, newIntros24h: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0 },
-        communications: { activeNotice: false, draftBroadcastReady: false, latestBroadcastStatus: 'none', recentDirectMessages: 0, recentOutboxFailures: 0, directMessages24h: 0, directMessages7d: 0, broadcasts7d: 0, broadcastDeliveredRecipients7d: 0, broadcastFailedRecipients7d: 0, outboxFailures24h: 0, outboxFailures7d: 0, latestBroadcastRecipients: 0, latestBroadcastDelivered: 0, latestBroadcastFailed: 0 },
+        home: { totalUsers: 0, connectedUsers: 0, profileStartedUsers: 0, readyProfiles: 0, listedUsers: 0, listedActiveUsers: 0, pendingIntros: 0, noIntroYet: 0, firstIntroUsers: 0, acceptedIntroUsers: 0, failedDeliveries: 0, activeNotice: false, latestBroadcastStatus: 'none', latestBroadcastId: 0, newUsers24h: 0, newUsers7d: 0, connected24h: 0, connected7d: 0, listed24h: 0, listed7d: 0, intros24h: 0, intros7d: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0, failures24h: 0, failures7d: 0, exhaustedNow: 0, broadcasts7d: 0, directMessages7d: 0 },
+        operations: { totalUsers: 0, connectedUsers: 0, profileStartedUsers: 0, readyProfiles: 0, readyNotListed: 0, listedIncomplete: 0, pendingIntros: 0, staleIntros: 0, deliveryIssues: 0, connectedNoProfile: 0, readyNoSkills: 0, listedActive: 0, listedInactive: 0, noIntroYet: 0, firstIntroUsers: 0, acceptedIntroUsers: 0, recentRelinks7d: 0, newIntros24h: 0, accepted7d: 0, declined7d: 0, pendingOlder24h: 0 },
+        communications: { activeNotice: false, draftBroadcastReady: false, latestBroadcastStatus: 'none', latestBroadcastId: 0, recentDirectMessages: 0, recentOutboxFailures: 0, directMessages24h: 0, directMessages7d: 0, broadcasts7d: 0, broadcastDeliveredRecipients7d: 0, broadcastFailedRecipients7d: 0, outboxFailures24h: 0, outboxFailures7d: 0, noticeVisibilityEstimate: 0, latestBroadcastAudienceKey: null, latestBroadcastRecipients: 0, latestBroadcastDelivered: 0, latestBroadcastFailed: 0 },
         system: { retryDue: 0, exhausted: 0, recentAuditEvents: 0, failedDeliveries: 0, failures24h: 0, failures7d: 0, delivered24h: 0, delivered7d: 0, operatorActions24h: 0, operatorActions7d: 0, listingChanges7d: 0, relinks7d: 0 }
       },
       reason: 'DATABASE_URL is not configured'
@@ -250,6 +250,7 @@ export async function loadAdminCommunicationsState() {
       broadcastDraft: { body: '', audienceKey: 'ALL_CONNECTED' },
       outboxCount: 0,
       latestBroadcastStatus: 'none',
+      latestBroadcastId: 0,
       recentDirectMessages: 0,
       recentOutboxFailures: 0,
       directMessages24h: 0,
@@ -259,6 +260,8 @@ export async function loadAdminCommunicationsState() {
       broadcastFailedRecipients7d: 0,
       outboxFailures24h: 0,
       outboxFailures7d: 0,
+      noticeVisibilityEstimate: 0,
+      latestBroadcastAudienceKey: null,
       latestBroadcastRecipients: 0,
       latestBroadcastDelivered: 0,
       latestBroadcastFailed: 0,
@@ -289,6 +292,9 @@ export async function loadAdminCommunicationsState() {
       broadcastFailedRecipients7d: summary.communications.broadcastFailedRecipients7d,
       outboxFailures24h: summary.communications.outboxFailures24h,
       outboxFailures7d: summary.communications.outboxFailures7d,
+      latestBroadcastId: summary.communications.latestBroadcastId,
+      noticeVisibilityEstimate: summary.communications.noticeVisibilityEstimate,
+      latestBroadcastAudienceKey: summary.communications.latestBroadcastAudienceKey,
       latestBroadcastRecipients: summary.communications.latestBroadcastRecipients,
       latestBroadcastDelivered: summary.communications.latestBroadcastDelivered,
       latestBroadcastFailed: summary.communications.latestBroadcastFailed,
