@@ -1,6 +1,6 @@
 # 78 — GO_NO_GO_VERDICT_TEMPLATE_V1
 
-Use this exact structure after a manual STEP043 pass.
+Use this exact structure after a manual STEP043.1 pass.
 
 ## Source-confirmed
 - ...

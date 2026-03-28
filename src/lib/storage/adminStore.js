@@ -8,6 +8,7 @@ import {
   ADMIN_NOTICE_AUDIENCES,
   ADMIN_NOTICE_TEMPLATES,
   ADMIN_QUALITY_SEGMENTS,
+  ADMIN_USER_SEGMENTS,
   activateAdminNotice,
   applyAdminBroadcastTemplate,
   applyAdminNoticeTemplate,
@@ -93,6 +94,228 @@ export async function loadAdminDashboardSummary() {
     summary: await getAdminDashboardSummary(client),
     reason: 'admin_dashboard_summary_loaded'
   }));
+}
+
+
+const ADMIN_USER_SEGMENT_BULK_PRESETS = {
+  noprof: {
+    notice: { templateKey: 'connect_profile', audienceKey: 'CONNECTED_NO_PROFILE' },
+    broadcast: { templateKey: 'connect_profile', audienceKey: 'CONNECTED_NO_PROFILE' }
+  },
+  inc: {
+    notice: { templateKey: 'complete_profile', audienceKey: 'PROFILE_INCOMPLETE' },
+    broadcast: { templateKey: 'complete_profile', audienceKey: 'PROFILE_INCOMPLETE' }
+  },
+  noskills: {
+    notice: { templateKey: 'add_skills', audienceKey: 'COMPLETE_NO_SKILLS' },
+    broadcast: { templateKey: 'add_skills', audienceKey: 'COMPLETE_NO_SKILLS' }
+  },
+  ready: {
+    notice: { templateKey: 'list_profile', audienceKey: 'READY_NOT_LISTED' },
+    broadcast: { templateKey: 'list_profile', audienceKey: 'READY_NOT_LISTED' }
+  },
+  listinact: {
+    notice: { templateKey: 'reengage_listed', audienceKey: 'LISTED_INACTIVE' },
+    broadcast: { templateKey: 'revive_listed', audienceKey: 'LISTED_INACTIVE' }
+  },
+  nointro: {
+    notice: null,
+    broadcast: { templateKey: 'first_intro', audienceKey: 'LISTED_NO_INTROS_YET' }
+  },
+  relink: {
+    notice: null,
+    broadcast: { templateKey: 'recent_relinks', audienceKey: 'RECENT_RELINKS' }
+  }
+};
+
+function getAdminUserSegmentBulkPreset(segmentKey) {
+  return ADMIN_USER_SEGMENT_BULK_PRESETS[normalizeAdminUserSegment(segmentKey)] || { notice: null, broadcast: null };
+}
+
+function hydrateBulkAction(action = null, type = 'broadcast') {
+  if (!action) {
+    return {
+      supported: false,
+      templateKey: null,
+      templateLabel: null,
+      audienceKey: null,
+      audienceLabel: null,
+      estimate: 0
+    };
+  }
+
+  const templateMap = type === 'notice' ? ADMIN_NOTICE_TEMPLATES : ADMIN_BROADCAST_TEMPLATES;
+  const audienceMap = type === 'notice' ? ADMIN_NOTICE_AUDIENCES : ADMIN_BROADCAST_AUDIENCES;
+  const template = templateMap[action.templateKey] || null;
+  const audience = audienceMap[action.audienceKey] || null;
+  return {
+    supported: Boolean(template && audience),
+    templateKey: action.templateKey,
+    templateLabel: template?.label || null,
+    audienceKey: action.audienceKey,
+    audienceLabel: audience?.label || null,
+    estimate: 0
+  };
+}
+
+export async function loadAdminUserSegmentBulkActions({ segmentKey = 'all' } = {}) {
+  const normalizedSegmentKey = normalizeAdminUserSegment(segmentKey);
+  const preset = getAdminUserSegmentBulkPreset(normalizedSegmentKey);
+
+  if (!isDatabaseConfigured()) {
+    return {
+      persistenceEnabled: false,
+      segmentKey: normalizedSegmentKey,
+      segmentLabel: ADMIN_USER_SEGMENTS[normalizedSegmentKey]?.label || 'Сегмент',
+      noticeAction: hydrateBulkAction(preset.notice, 'notice'),
+      broadcastAction: hydrateBulkAction(preset.broadcast, 'broadcast'),
+      activeNotice: false,
+      reason: 'DATABASE_URL is not configured'
+    };
+  }
+
+  return withDbClient(async (client) => {
+    const noticeState = await getAdminNoticeState(client);
+    const noticeAction = hydrateBulkAction(preset.notice, 'notice');
+    const broadcastAction = hydrateBulkAction(preset.broadcast, 'broadcast');
+
+    if (noticeAction.supported && noticeAction.audienceKey) {
+      noticeAction.estimate = await estimateAdminNoticeAudienceCount(client, { audienceKey: noticeAction.audienceKey });
+    }
+    if (broadcastAction.supported && broadcastAction.audienceKey) {
+      broadcastAction.estimate = await estimateAdminBroadcastAudienceCount(client, { audienceKey: broadcastAction.audienceKey });
+    }
+
+    return {
+      persistenceEnabled: true,
+      segmentKey: normalizedSegmentKey,
+      segmentLabel: ADMIN_USER_SEGMENTS[normalizedSegmentKey]?.label || 'Сегмент',
+      noticeAction,
+      broadcastAction,
+      activeNotice: Boolean(noticeState?.isActive),
+      activeNoticeAudienceKey: noticeState?.audienceKey || null,
+      activeNoticeBody: noticeState?.body || '',
+      reason: 'admin_user_segment_bulk_actions_loaded'
+    };
+  });
+}
+
+export async function prepareAdminUserSegmentBulkNotice({ operatorTelegramUserId, operatorTelegramUsername = null, segmentKey = 'all' } = {}) {
+  const normalizedSegmentKey = normalizeAdminUserSegment(segmentKey);
+  const preset = getAdminUserSegmentBulkPreset(normalizedSegmentKey);
+  if (!preset.notice) {
+    return { persistenceEnabled: isDatabaseConfigured(), prepared: false, blocked: true, reason: 'admin_bulk_notice_not_supported', segmentKey: normalizedSegmentKey };
+  }
+  if (!isDatabaseConfigured()) {
+    return { persistenceEnabled: false, prepared: false, blocked: true, reason: 'DATABASE_URL is not configured', segmentKey: normalizedSegmentKey };
+  }
+
+  return withDbTransaction(async (client) => {
+    const noticeState = await getAdminNoticeState(client);
+    if (noticeState?.isActive) {
+      return {
+        persistenceEnabled: true,
+        prepared: false,
+        blocked: true,
+        segmentKey: normalizedSegmentKey,
+        reason: 'admin_bulk_notice_blocked_active_notice',
+        notice: noticeState
+      };
+    }
+
+    const operatorUser = await upsertTelegramUser(client, {
+      telegramUserId: operatorTelegramUserId,
+      telegramUsername: operatorTelegramUsername || null
+    });
+
+    let notice = await applyAdminNoticeTemplate(client, {
+      operatorUserId: operatorUser.id,
+      templateKey: preset.notice.templateKey
+    });
+
+    if (normalizeAdminNoticeAudience(notice?.audienceKey) !== preset.notice.audienceKey) {
+      notice = await updateAdminNoticeAudience(client, {
+        operatorUserId: operatorUser.id,
+        audienceKey: preset.notice.audienceKey
+      });
+    }
+
+    const estimate = await estimateAdminNoticeAudienceCount(client, { audienceKey: preset.notice.audienceKey });
+    await createAdminAuditEvent(client, {
+      eventType: 'admin_bulk_notice_prepared',
+      actorUserId: operatorUser.id,
+      summary: 'Bulk notice prepared from user segment.',
+      detail: {
+        segmentKey: normalizedSegmentKey,
+        templateKey: preset.notice.templateKey,
+        audienceKey: preset.notice.audienceKey,
+        estimate
+      }
+    });
+
+    return {
+      persistenceEnabled: true,
+      prepared: true,
+      blocked: false,
+      segmentKey: normalizedSegmentKey,
+      notice,
+      estimate,
+      reason: 'admin_bulk_notice_prepared'
+    };
+  });
+}
+
+export async function prepareAdminUserSegmentBulkBroadcast({ operatorTelegramUserId, operatorTelegramUsername = null, segmentKey = 'all' } = {}) {
+  const normalizedSegmentKey = normalizeAdminUserSegment(segmentKey);
+  const preset = getAdminUserSegmentBulkPreset(normalizedSegmentKey);
+  if (!preset.broadcast) {
+    return { persistenceEnabled: isDatabaseConfigured(), prepared: false, blocked: true, reason: 'admin_bulk_broadcast_not_supported', segmentKey: normalizedSegmentKey };
+  }
+  if (!isDatabaseConfigured()) {
+    return { persistenceEnabled: false, prepared: false, blocked: true, reason: 'DATABASE_URL is not configured', segmentKey: normalizedSegmentKey };
+  }
+
+  return withDbTransaction(async (client) => {
+    const operatorUser = await upsertTelegramUser(client, {
+      telegramUserId: operatorTelegramUserId,
+      telegramUsername: operatorTelegramUsername || null
+    });
+
+    let draft = await applyAdminBroadcastTemplate(client, {
+      operatorUserId: operatorUser.id,
+      templateKey: preset.broadcast.templateKey
+    });
+
+    if (normalizeAdminBroadcastAudience(draft?.audienceKey) !== preset.broadcast.audienceKey) {
+      draft = await updateAdminBroadcastDraftAudience(client, {
+        operatorUserId: operatorUser.id,
+        audienceKey: preset.broadcast.audienceKey
+      });
+    }
+
+    const estimate = await estimateAdminBroadcastAudienceCount(client, { audienceKey: preset.broadcast.audienceKey });
+    await createAdminAuditEvent(client, {
+      eventType: 'admin_bulk_broadcast_prepared',
+      actorUserId: operatorUser.id,
+      summary: 'Bulk broadcast prepared from user segment.',
+      detail: {
+        segmentKey: normalizedSegmentKey,
+        templateKey: preset.broadcast.templateKey,
+        audienceKey: preset.broadcast.audienceKey,
+        estimate
+      }
+    });
+
+    return {
+      persistenceEnabled: true,
+      prepared: true,
+      blocked: false,
+      segmentKey: normalizedSegmentKey,
+      draft,
+      estimate,
+      reason: 'admin_bulk_broadcast_prepared'
+    };
+  });
 }
 
 export async function loadAdminUsersPage({ segmentKey = 'all', page = 0 } = {}) {

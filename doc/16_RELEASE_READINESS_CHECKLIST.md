@@ -1,7 +1,7 @@
 # 16_RELEASE_READINESS_CHECKLIST
 
 This project is still not automatically release-ready.
-STEP043 tightens this checklist around launch/runbook/freeze truth plus explicit verification/rehearsal discipline.
+STEP043.1 tightens this checklist around launch/runbook/freeze truth plus explicit verification/rehearsal discipline.
 
 ## Product truth
 

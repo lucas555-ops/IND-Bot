@@ -1,4 +1,4 @@
-# STEP043 — Live verification / launch rehearsal
+# STEP043.1 — Live verification / launch rehearsal
 
 ## Goal
 
@@ -21,7 +21,7 @@ Freeze the current source baseline into an explicit manual verification and rehe
 
 ## Acceptance
 
-- STEP043 is the repo source baseline
+- STEP043.1 is the repo source baseline
 - System hub exposes `adm:verify` and `adm:rehearse`
 - verification/rehearsal docs exist
 - smoke coverage exists

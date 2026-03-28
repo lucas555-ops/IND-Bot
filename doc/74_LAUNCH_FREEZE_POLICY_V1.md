@@ -39,6 +39,6 @@ STEP042 introduces a launch/freeze layer so the project stops widening scope and
 Freeze ends only after live verification pass + honest go/no-go readout.
 
 
-## STEP043 note
+## STEP043.1 note
 
-STEP043 keeps freeze active until the manual verification/rehearsal pass is executed and written down with an honest go/no-go note.
+STEP043.1 keeps freeze active until the manual verification/rehearsal pass is executed and written down with an honest go/no-go note.

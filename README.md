@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP043 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, user-facing Telegram member flow, mature operator/admin control plane, Russian admin analytics drilldowns, guarded bulk actions, launch/ops runbook + freeze discipline, and explicit live-verification / launch-rehearsal guidance.
+STEP043.1 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, user-facing Telegram member flow, mature operator/admin control plane, Russian admin analytics drilldowns, guarded bulk actions, launch/ops runbook + freeze discipline, and explicit live-verification / launch-rehearsal guidance.
 
 ## What this repo is
 
@@ -19,7 +19,7 @@ A Telegram-first professional directory:
 - STEP040 — Russian admin analytics drilldowns + funnel readouts
 - STEP041 — safe bulk actions
 - STEP042 — launch/ops runbook + freeze
-- STEP043 — live verification / launch rehearsal guidance
+- STEP043.1 — live verification / launch rehearsal guidance
 
 ## Core docs
 

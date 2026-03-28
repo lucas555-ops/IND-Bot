@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP043
+- Current STEP: STEP043.1
 - Phase: working product baseline + mature operator/admin layer + launch/ops runbook + freeze + live verification / rehearsal guidance
 - Primary mode: HARDENING / HANDOFF / LAUNCH-READINESS
-- Runtime status: source-clean STEP043 baseline with user-facing member flow, operator control plane, STEP040 analytics drilldowns, STEP041 guarded bulk actions, STEP042 read-only launch/freeze guidance, and STEP043 read-only live-verification / launch-rehearsal guidance; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP043.1 baseline with user-facing member flow, operator control plane, STEP040 analytics drilldowns, STEP041 guarded bulk actions, STEP042 read-only launch/freeze guidance, and STEP043.1 read-only live-verification / launch-rehearsal guidance; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -25,7 +25,7 @@
 - LinkedIn login is identity bootstrap, not full professional import
 - public browse still depends on listed + active truth
 - communications and bulk-prep flows are real in source, but deployment proof is not refreshed here
-- STEP042/STEP043 are operating/verification steps, not new product-domain steps
+- STEP042/STEP043.1 are operating/verification steps, not new product-domain steps
 
 ## What must not break
 
@@ -40,7 +40,7 @@
 
 ## Next recommended step
 
-- execute the manual STEP043 verification + rehearsal pass on the deployed baseline
+- execute the manual STEP043.1 verification + rehearsal pass on the deployed baseline
 - record an honest go / no-go note before any new feature scope
 
 ## STEP039.1 delta
@@ -65,7 +65,7 @@
 - System hub now exposes `Регламент запуска` and `Freeze`
 - release-readiness / handoff / roadmap / start-new-chat prompt aligned to STEP042
 
-## STEP043 delta
+## STEP043.1 delta
 
 - live-verification guidance added
 - launch-rehearsal guidance added
