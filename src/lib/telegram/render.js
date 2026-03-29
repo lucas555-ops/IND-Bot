@@ -78,47 +78,27 @@ function linkedinIdentityImportLine(profileSnapshot) {
     : 'LinkedIn import: basic identity synced';
 }
 
-export function renderPricingText({ pricingState = null } = {}) {
-  const subscription = pricingState?.subscription || null;
-  const pricing = pricingState?.pricing || {};
-  const lines = [
-    '⭐ Intro Deck Pro',
-    '',
-    'A clean contact layer for serious outbound use inside the directory.',
-    ''
-  ];
 
-  if (subscription?.isActive) {
-    lines.push(`Status: Pro active until ${formatDateShort(subscription.expiresAt)}`);
-  } else {
-    lines.push('Status: Free');
+function buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail = false } = {}) {
+  if (!profileSnapshot?.linkedin_sub) {
+    return [];
   }
 
-  lines.push(`Monthly Pro: ${pricing.proMonthlyPriceStars || 0}⭐ / 30d`);
-  lines.push(`Direct contact request: ${pricing.contactUnlockPriceStars || 0}⭐ one-time`);
-  lines.push(`DM request open: ${pricing.dmOpenPriceStars || 0}⭐ one-time`);
-  lines.push('');
-  lines.push('Pro includes:');
-  lines.push('• direct contact requests without per-request Stars fees');
-  lines.push('• DM request opens without per-request Stars fees');
-  lines.push('• same consent rules stay in place');
-  lines.push('');
-  lines.push('Payment gives access to the action, not a guaranteed reply or approval.');
-
-  return lines.join('\n');
+  const lines = [];
+  if (profileSnapshot?.linkedin_name) lines.push(`• Name: ${profileSnapshot.linkedin_name}`);
+  if (profileSnapshot?.linkedin_given_name) lines.push(`• Given name: ${profileSnapshot.linkedin_given_name}`);
+  if (profileSnapshot?.linkedin_family_name) lines.push(`• Family name: ${profileSnapshot.linkedin_family_name}`);
+  if (profileSnapshot?.linkedin_picture_url) lines.push('• Photo: imported');
+  if (profileSnapshot?.linkedin_locale) lines.push(`• Locale: ${profileSnapshot.linkedin_locale}`);
+  if (includeEmail && profileSnapshot?.linkedin_email) lines.push(`• Email: ${profileSnapshot.linkedin_email}`);
+  return lines;
 }
 
-export function renderPricingKeyboard({ pricingState = null } = {}) {
-  const rows = [];
-  if (!pricingState?.subscription?.isActive) {
-    rows.push([{ text: '⭐ Buy Pro monthly', callback_data: 'plans:buy:pro' }]);
-  } else {
-    rows.push([{ text: '✅ Pro active', callback_data: 'plans:root' }]);
-  }
-  rows.push([{ text: '💬 DM inbox', callback_data: 'dm:inbox' }]);
-  rows.push([{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
-  return buildInlineKeyboard(rows);
+function buildBackHomeRow(backText, backCallbackData) {
+  return [
+    { text: backText, callback_data: backCallbackData },
+    { text: '🏠 Home', callback_data: 'home:root' }
+  ];
 }
 
 function buildFieldStatusLines(profileSnapshot) {
@@ -558,7 +538,6 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
   if (persistenceEnabled && profileSnapshot?.linkedin_sub) {
     rows.push([{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }]);
     rows.push([{ text: '💬 DM inbox', callback_data: 'dm:inbox' }]);
-    rows.push([{ text: '⭐ Plans', callback_data: 'plans:root' }]);
   }
 
   rows.push([{ text: '❓ Help', callback_data: 'help:root' }]);
@@ -591,7 +570,6 @@ export function renderHelpKeyboard() {
     [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
     [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
     [{ text: '💬 DM inbox', callback_data: 'dm:inbox' }],
-    [{ text: '⭐ Plans', callback_data: 'plans:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -607,19 +585,30 @@ export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabl
   } else if (!profileSnapshot?.linkedin_sub) {
     lines.push('Connect LinkedIn first, then return here to complete your profile.');
   } else {
-    lines.push(`Connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
+    lines.push('🔗 LinkedIn');
+    lines.push(`• Connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
     const linkedInImportLine = linkedinIdentityImportLine(profileSnapshot);
     if (linkedInImportLine) {
-      lines.push(linkedInImportLine);
+      lines.push(`• ${linkedInImportLine.replace(/^LinkedIn import:\s*/i, '')}`);
     }
-    lines.push(`Card name: ${toDisplayValue(profileSnapshot.display_name)}`);
-    lines.push(`Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
-    lines.push(`Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push(`Profile status: ${profileSnapshot.profile_state || 'draft'}`);
-    lines.push(`Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
-    lines.push(readinessLine(profileSnapshot));
-    lines.push(completionLine(profileSnapshot));
+    lines.push(...buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail: true }));
+    lines.push('• These LinkedIn basics are stored privately. Only your card fields below appear publicly.');
     lines.push('');
+
+    lines.push('🪪 Your card');
+    lines.push(`• Public card name: ${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || '—')}`);
+    lines.push(`• Profile status: ${profileSnapshot.profile_state || 'draft'}`);
+    lines.push(`• Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
+    lines.push(`• ${readinessLine(profileSnapshot)}`);
+    lines.push(`• ${completionLine(profileSnapshot)}`);
+    lines.push('');
+
+    lines.push('🔒 Contact');
+    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
+    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
+    lines.push('');
+
+    lines.push('✍️ Card fields');
     lines.push(...buildFieldStatusLines(profileSnapshot));
   }
 
@@ -685,22 +674,38 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
   } else if (!profileSnapshot?.linkedin_sub) {
     lines.push('Connect LinkedIn first before previewing your profile.');
   } else {
+    lines.push('🪪 Public card');
     lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
     lines.push('');
-    lines.push(`Company: ${toDisplayValue(profileSnapshot.company_user)}`);
-    lines.push(`City: ${toDisplayValue(profileSnapshot.city_user)}`);
-    lines.push(`Industry: ${toDisplayValue(profileSnapshot.industry_user)}`);
-    lines.push(`Skills: ${formatSkillSummary(profileSnapshot)}`);
-    lines.push(`Public LinkedIn URL: ${toDisplayValue(profileSnapshot.linkedin_public_url)}`);
-    lines.push(`Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
-    lines.push(`Visibility: ${toDisplayValue(profileSnapshot.visibility_status)}`);
-    lines.push(`Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push(`State: ${toDisplayValue(profileSnapshot.profile_state)}`);
+    lines.push(`🏢 Company: ${toDisplayValue(profileSnapshot.company_user)}`);
+    lines.push(`📍 City: ${toDisplayValue(profileSnapshot.city_user)}`);
+    lines.push(`🏷 Industry: ${toDisplayValue(profileSnapshot.industry_user)}`);
+    lines.push(`🧠 Skills: ${formatSkillSummary(profileSnapshot)}`);
+    lines.push(`🔗 Public LinkedIn URL: ${toDisplayValue(profileSnapshot.linkedin_public_url)}`);
     lines.push('');
-    lines.push(`About: ${truncate(profileSnapshot.about_user, 320)}`);
+
+    lines.push('🔒 Contact & status');
+    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
+    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
+    lines.push(`• Visibility: ${toDisplayValue(profileSnapshot.visibility_status)}`);
+    lines.push(`• State: ${toDisplayValue(profileSnapshot.profile_state)}`);
     lines.push('');
-    lines.push(readinessLine(profileSnapshot));
+
+    lines.push('📝 About');
+    lines.push(truncate(profileSnapshot.about_user, 320));
+    lines.push('');
+
+    lines.push('📊 Directory readiness');
+    lines.push(`• ${readinessLine(profileSnapshot)}`);
+
+    const identityLines = buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail: true });
+    if (identityLines.length) {
+      lines.push('');
+      lines.push('🔗 LinkedIn basics synced privately');
+      lines.push(...identityLines);
+      lines.push('• These LinkedIn basics are stored privately and do not replace your public card fields automatically, except the initial card name seed.');
+    }
   }
 
   if (notice) {
@@ -713,8 +718,10 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
 
 export function renderProfilePreviewKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '↩️ Back to profile', callback_data: 'p:menu' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ]);
 }
 
@@ -730,8 +737,8 @@ export function renderProfileInputPrompt({ fieldKey, profileSnapshot = null } = 
     '',
     meta.prompt,
     '',
-    `Current value: ${toDisplayValue(currentValue)}`,
-    `Limit: ${meta.maxLength} characters`,
+    `• Current value: ${toDisplayValue(currentValue)}`,
+    `• Limit: ${meta.maxLength} characters`,
     '',
     'Reply with plain text in the chat. Your next text message will update this field.',
     'Use the buttons below to go back or return home.'
@@ -742,8 +749,10 @@ export function renderProfileInputPrompt({ fieldKey, profileSnapshot = null } = 
 
 export function renderProfileInputKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '↩️ Back to profile', callback_data: 'p:menu' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ]);
 }
 
@@ -812,9 +821,11 @@ export function renderProfileSkillsKeyboard({ profileSnapshot = null } = {}) {
   return buildInlineKeyboard([
     ...skillRows,
     [{ text: '🧹 Clear skills', callback_data: 'p:sk:clr' }],
-    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
     [{ text: '👁 Preview card', callback_data: 'p:prev' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '↩️ Back to profile', callback_data: 'p:menu' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ]);
 }
 
@@ -829,9 +840,11 @@ export function renderProfileSavedNotice({ fieldLabel, profileSnapshot }) {
 
 export function renderProfileSavedKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '↩️ Back to profile', callback_data: 'p:menu' }],
     [{ text: '👁 Preview card', callback_data: 'p:prev' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '↩️ Back to profile', callback_data: 'p:menu' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ]);
 }
 

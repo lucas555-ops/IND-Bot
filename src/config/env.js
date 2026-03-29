@@ -12,8 +12,6 @@ const DEFAULT_NOTIFICATION_MAX_ATTEMPTS = 3;
 const DEFAULT_NOTIFICATION_RECEIPT_DIAGNOSTICS_LIMIT = 20;
 const DEFAULT_CONTACT_UNLOCK_PRICE_STARS = 75;
 const DEFAULT_DM_OPEN_PRICE_STARS = 100;
-const DEFAULT_PRO_MONTHLY_PRICE_STARS = 149;
-const DEFAULT_PRO_MONTHLY_DURATION_DAYS = 30;
 
 function readEnv(name, fallback = undefined) {
   const value = process.env[name] ?? fallback;
@@ -80,9 +78,11 @@ export function getAppConfig() {
 }
 
 export function getTelegramConfig() {
+  const botUsername = readEnv('TELEGRAM_BOT_USERNAME') || readEnv('BOT_USERNAME') || 'introdeckbot';
   return {
     botToken: readRequiredEnv('TELEGRAM_BOT_TOKEN'),
-    webhookSecret: readSecretEnv('TELEGRAM_WEBHOOK_SECRET')
+    webhookSecret: readSecretEnv('TELEGRAM_WEBHOOK_SECRET'),
+    botUsername
   };
 }
 
@@ -136,14 +136,7 @@ export function getNotificationOpsConfig() {
 export function getPricingConfig() {
   return {
     contactUnlockPriceStars: readIntegerEnv('CONTACT_UNLOCK_PRICE_STARS', DEFAULT_CONTACT_UNLOCK_PRICE_STARS),
-    dmOpenPriceStars: readIntegerEnv('DM_OPEN_PRICE_STARS', DEFAULT_DM_OPEN_PRICE_STARS),
-    proMonthlyPriceStars: readIntegerEnv('PRO_MONTHLY_PRICE_STARS', DEFAULT_PRO_MONTHLY_PRICE_STARS)
-  };
-}
-
-export function getSubscriptionConfig() {
-  return {
-    proMonthlyDurationDays: readIntegerEnv('PRO_MONTHLY_DURATION_DAYS', DEFAULT_PRO_MONTHLY_DURATION_DAYS)
+    dmOpenPriceStars: readIntegerEnv('DM_OPEN_PRICE_STARS', DEFAULT_DM_OPEN_PRICE_STARS)
   };
 }
 
@@ -215,7 +208,6 @@ export function getPublicFlags() {
     operatorDiagnosticsSurfaceConfigured: dbConfig.configured && Boolean(readEnv('NOTIFICATION_OPS_SECRET')) && getOperatorConfig().operatorTelegramUserIds.length > 0
 ,
     contactUnlockConfigured: dbConfig.configured && Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
-    dmRelayConfigured: dbConfig.configured && Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
-    pricingConfigured: dbConfig.configured && Boolean(readEnv('TELEGRAM_BOT_TOKEN'))
+    dmRelayConfigured: dbConfig.configured && Boolean(readEnv('TELEGRAM_BOT_TOKEN'))
   };
 }

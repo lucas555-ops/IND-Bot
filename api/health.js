@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   const operatorConfig = getOperatorConfig();
   res.status(200).json({
     ok: true,
-    step: 'STEP048.2',
-    docsStep: 'STEP048.2',
+    step: 'STEP048.3',
+    docsStep: 'STEP048.3',
     service: 'linkedin-telegram-directory-bot',
     flags,
     persistence: {
@@ -48,9 +48,6 @@ export default async function handler(req, res) {
     operatorDiagnosticsSurface: {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
-    },
-    pricing: {
-      enabled: flags.pricingConfigured
     }
   });
 }

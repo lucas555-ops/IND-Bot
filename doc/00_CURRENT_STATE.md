@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP048.2
-- Phase: pricing / analytics / ops baseline
+- Current STEP: STEP047
+- Phase: gated member DM relay baseline
 - Primary mode: PRODUCT HARDENING / IDENTITY UPLIFT / MONETIZATION FOUNDATION
-- Runtime status: source-clean STEP048.2 baseline with LinkedIn OIDC identity auto-seed uplift, paid direct-contact unlock, gated member DM relay, Pro pricing surface, receipt persistence, admin monetization counters, and structured LinkedIn transfer/connect copy layered on top of the existing member flow and operator/admin plane; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP047 baseline with LinkedIn OIDC identity auto-seed uplift, paid direct-contact unlock, and gated member DM relay layered on top of the existing member flow and operator/admin plane; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -21,8 +21,6 @@
 - STEP046 hidden Telegram username + paid direct-contact request flow with owner approval
 - STEP047 gated member DM relay with first-message payment + recipient accept/decline/block/report
 - honest user-facing LinkedIn import summary and manual-fields reminder
-- `/plans` + Pro subscription surface with receipt + entitlement layer
-- admin monetization hub with revenue / funnel / abuse counters
 
 ## Current truth
 
@@ -32,8 +30,7 @@
 - public browse still depends on listed + active truth
 - STEP046 ships hidden Telegram handle + paid direct contact requests with owner approval
 - STEP047 now ships the narrow DM request + active thread path
-- STEP048 pricing / analytics / ops now ships in source: Pro subscription invoice path, receipt persistence, entitlement checks, and admin monetization counters
-- STEP048.2 adds structured LinkedIn transfer/connect copy for Telegram and callback confirmation surfaces
+- STEP048 pricing / analytics / ops remains the next follow-up step, not shipped in STEP047
 
 ## What must not break
 
@@ -48,10 +45,8 @@
 
 ## Next recommended step
 
-- run manual live verification for STEP048 monetization flows end-to-end
-- verify LinkedIn transfer/connect copy on both Telegram and callback confirmation surfaces
-- verify production Telegram Stars flows for: Pro monthly, paid direct contact, paid DM, and Pro-covered no-invoice paths
-- keep rollout narrow: verify counters, receipts, and admin monetization truth before any new pricing expansion
+- implement STEP048 — pricing / analytics / ops
+- keep the rollout narrow: entitlement truth, receipts, funnel counters, abuse counters, compact admin funnel
 
 ## STEP039.1 delta
 
@@ -107,16 +102,17 @@
 - `/dm` inbox and DM thread detail surfaces added
 
 
-## STEP048 delta
+## STEP048.1 hotfix
 
-- `/plans` surface and Pro monthly Telegram Stars purchase path added
-- `member_subscriptions` + `purchase_receipts` persistence added
-- active Pro now covers direct-contact and DM outbound action fees while subscription is active
-- compact Russian admin monetization hub added with revenue, funnel, abuse, and recent receipt visibility
+- Added schema-compatible profile/directory reads so legacy databases without `member_profiles.telegram_username_hidden` do not break LinkedIn transfer confirm or home/profile loads.
+- Purpose: keep pre-STEP046 databases operational while migrations are still being applied.
+- Note: paid unlock / DM / pricing features still require STEP046-STEP048 migrations to be applied for full functionality.
 
 
-## STEP048.2 delta
+## STEP048.3 hotfix
 
-- reorganized LinkedIn connection result copy into clear sections for Telegram notifications
-- reorganized callback success page into structured blocks: import, saved state, editable fields, next
-- preserved existing connect/transfer behavior without changing identity or transfer rules
+- Scope: LinkedIn connect/relink copy polish + profile editor/preview readability + profile keyboard consistency.
+- Product truth: LinkedIn OIDC basics are stored privately; only the initial card name is auto-seeded into public card fields by default.
+- UX: profile editor now shows a dedicated LinkedIn block, preview clarifies what is public vs private, and callback success page includes an explicit button back to the bot.
+- Buttons: profile preview/input/profile-saved flows now keep Back + Home on one row for tighter Telegram ergonomics.
+- No schema changes. Live status not confirmed — manual verification required.
