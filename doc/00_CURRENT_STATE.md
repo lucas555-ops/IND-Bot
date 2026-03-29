@@ -116,3 +116,9 @@
 - UX: profile editor now shows a dedicated LinkedIn block, preview clarifies what is public vs private, and callback success page includes an explicit button back to the bot.
 - Buttons: profile preview/input/profile-saved flows now keep Back + Home on one row for tighter Telegram ergonomics.
 - No schema changes. Live status not confirmed — manual verification required.
+
+
+## STEP048.4 hotfix
+- Fix: restore STEP048 pricing env contract exports after STEP048.3 UX hotfix accidentally dropped `getSubscriptionConfig` and Pro pricing fields from `src/config/env.js`.
+- Impact: Vercel runtime no longer fails on `monetizationStore.js` import during startup.
+- Scope: narrow compatibility/hardening only; no product-flow changes.
