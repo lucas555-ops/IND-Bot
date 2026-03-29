@@ -31,6 +31,24 @@ html, body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 body { min-height: 100vh; }
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -44px;
+  z-index: 20;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--card-2);
+  color: var(--text);
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: none; }
 img { max-width: 100%; display: block; }
@@ -79,6 +97,11 @@ img { max-width: 100%; display: block; }
 
 .nav-links a:not(.btn) {
   color: var(--muted);
+  transition: color 0.15s ease;
+}
+
+.nav-links a:not(.btn):hover {
+  color: var(--text);
 }
 
 .small { font-size: 14px; }
@@ -146,6 +169,13 @@ p {
   max-width: 62ch;
   font-size: 18px;
   color: var(--muted-strong);
+}
+
+.hero-note {
+  max-width: 54ch;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 15px;
 }
 
 .cta-row {
@@ -463,6 +493,12 @@ p {
   color: var(--muted);
 }
 
+.footer-copy {
+  display: grid;
+  gap: 6px;
+  max-width: 560px;
+}
+
 .footer-bar {
   display: flex;
   align-items: center;
@@ -476,6 +512,49 @@ p {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
+}
+
+.legal-shell {
+  display: grid;
+  gap: 22px;
+}
+
+.legal-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.legal-head,
+.legal-summary {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.legal-head {
+  padding: 28px;
+}
+
+.legal-summary {
+  padding: 22px;
+  align-self: start;
+}
+
+.summary-kicker {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.legal-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .legal {
@@ -502,7 +581,8 @@ p {
   .hero-grid,
   .split-head,
   .cta-panel,
-  .footer-bar {
+  .footer-bar,
+  .legal-intro {
     grid-template-columns: 1fr;
     display: grid;
   }
@@ -522,6 +602,22 @@ p {
 @media (max-width: 720px) {
   .wrap { padding: 22px 16px 56px; }
   .nav { align-items: flex-start; flex-direction: column; }
+  .nav-links {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .nav-links a:not(.btn) {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+  }
+  .nav-links .nav-cta { grid-column: 1 / -1; }
   .hero-grid { padding: 24px; }
   h1 { max-width: none; }
   .shell-grid,
@@ -534,11 +630,12 @@ p {
   .accordion-card,
   .faq-card,
   .legal,
+  .legal-head,
+  .legal-summary,
   .cta-panel { padding: 20px; }
   .cta-row,
   .trust-row,
-  .footer-links,
-  .nav-links { gap: 10px; }
+  .footer-links { gap: 10px; }
   .btn,
   .nav-cta { width: 100%; }
 }

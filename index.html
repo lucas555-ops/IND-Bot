@@ -38,13 +38,15 @@
     <link rel="stylesheet" href="/site.css" />
   </head>
   <body>
-    <main class="wrap">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <main class="wrap" id="main-content">
       <nav class="nav">
         <a class="brand" href="/" aria-label="Intro Deck home">
           <span class="mark">ID</span>
           <span>Intro Deck</span>
         </a>
         <div class="nav-links small">
+          <a href="#for-whom">For whom</a>
           <a href="#how-it-works">How it works</a>
           <a href="#faq">FAQ</a>
           <a href="/privacy">Privacy</a>
@@ -60,6 +62,9 @@
           <p class="hero-lead">
             Intro Deck helps you discover people, request contact, and continue inside one Telegram-native workflow.
             LinkedIn is used as the identity layer, while visibility and contact access stay controlled inside the product.
+          </p>
+          <p class="hero-note">
+            Private by default. Public fields stay intentional. Contact access stays consent-aware.
           </p>
           <div class="cta-row">
             <a class="btn primary" href="https://t.me/introdeckbot">Open @introdeckbot</a>
@@ -316,12 +321,16 @@
         </div>
         <div class="cta-stack">
           <a class="btn primary" href="https://t.me/introdeckbot">Open @introdeckbot</a>
+          <a class="btn" href="#faq">Read the FAQ first</a>
           <span class="small subtle">Official bot: @introdeckbot</span>
         </div>
       </section>
 
       <footer class="footer footer-bar">
-        <span>Intro Deck — private professional directory in Telegram</span>
+        <div class="footer-copy">
+          <span>Intro Deck — private professional directory in Telegram</span>
+          <span class="small subtle">LinkedIn is used as the identity layer. Public contact is not open by default.</span>
+        </div>
         <div class="footer-links small">
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>

@@ -3,9 +3,9 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP049C
+- Current baseline: STEP049D
 - Current mode: PRODUCT HARDENING / CONTACT + DM MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Current focus: keep the STEP048.4 runtime/product layer stable while upgrading the public landing into a production-grade entry page with a branded OG/share-preview layer
+- Current focus: keep the STEP048.4 runtime/product layer stable while finishing landing polish, mobile readability, and legal-surface consistency on top of the production-grade entry page and OG/share-preview layer
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
@@ -28,11 +28,11 @@
 
 - syntax/smoke can be run from repo
 - docs canon exists
-- source-level STEP049B checks pass locally
+- source-level STEP049D checks pass locally
 
 ## Inference
 
-- the next safe landing step after deploy is a narrow manual verification pass for STEP049C metadata/share-preview behavior, not another broad landing rewrite
+- the next safe landing step after deploy is a narrow manual verification pass for STEP049D homepage/mobile/legal behavior and share-preview sanity, not another broad landing rewrite
 - the strongest product/runtime rails remain paid direct-contact requests plus gated DM initiation beneath the landing uplift
 
 ## Blocked / unconfirmed
@@ -42,6 +42,7 @@
 - real deployed Telegram Stars direct-contact request flow is not closed here
 - real deployed Telegram Stars DM flow is not closed here
 - deployed OG/share preview cache refresh is not confirmed yet
+- deployed homepage mobile pass and legal-page polish are not confirmed yet
 
 ## Required wording
 
@@ -59,6 +60,7 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP047_MEMBER_DM_RELAY_V1.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
 - `doc/spec/STEP049C_OG_SOCIAL_METADATA_UPLIFT.md`
+- `doc/spec/STEP049D_FINAL_POLISH_MOBILE_LEGAL_CONSISTENCY.md`
 - `doc/process/07_WORK_HISTORY_STEP045.md`
 - `doc/process/07_WORK_HISTORY_STEP046.md`
 - `doc/process/07_WORK_HISTORY_STEP047.md`
@@ -100,3 +102,10 @@ When contract certainty is missing, say exactly:
 - Added a branded OG/share-preview card plus full homepage Open Graph + Twitter metadata.
 - Added favicon and apple-touch icon consistency across landing/legal surfaces.
 - Added `robots.txt`, `sitemap.xml`, and a dedicated OG/social smoke test.
+
+## STEP049D delta
+
+- Added homepage/mobile polish with skip-link support, cleaner hero/footer microcopy, and tighter CTA hierarchy.
+- Improved mobile nav layout so section links and the bot CTA remain readable instead of collapsing into a loose wrap.
+- Rebuilt privacy and terms pages into one consistent legal shell with quick summary blocks and aligned action buttons.
+- Added legal-page OG/Twitter metadata and a dedicated landing-polish smoke check.

@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP049C
+- Current STEP: STEP049D
 - Phase: landing production uplift with OG / social / metadata polish on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP049C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, branded OG/share-preview assets, and metadata/legal-page alignment; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP049D baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, branded OG/share-preview assets, improved mobile navigation, and legal-surface polish/consistency; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -49,7 +49,7 @@
 
 ## Next recommended step
 
-- execute a narrow STEP049C manual verification pass: homepage metadata, Telegram share preview, favicon, and legal-page canonical tags
+- execute a narrow STEP049D manual verification pass: homepage mobile layout, CTA hierarchy, footer/legal consistency, and share-preview sanity after deploy
 
 ## STEP039.1 delta
 
@@ -142,4 +142,11 @@
 - favicon + apple-touch icon layer added for landing/legal consistency
 - `robots.txt` and `sitemap.xml` added for production metadata hygiene
 - privacy and terms pages now include aligned canonical + favicon metadata
+
+## STEP049D delta
+
+- homepage polished with skip-link support, cleaner hero/footer microcopy, and tighter CTA hierarchy
+- mobile nav layout upgraded so section links and the bot CTA remain readable and intentional
+- privacy and terms pages rebuilt into one consistent legal-shell layout with quick summary blocks and aligned actions
+- legal pages now include OG/Twitter metadata and landing polish has its own smoke check
 
