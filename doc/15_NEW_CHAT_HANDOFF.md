@@ -3,9 +3,9 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP049B
+- Current baseline: STEP049C
 - Current mode: PRODUCT HARDENING / CONTACT + DM MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Current focus: keep the STEP048.4 runtime/product layer stable while upgrading the public landing into a production-grade entry page
+- Current focus: keep the STEP048.4 runtime/product layer stable while upgrading the public landing into a production-grade entry page with a branded OG/share-preview layer
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
@@ -22,6 +22,7 @@
 - profile draft seeding now preserves existing manual display name values on reconnect
 - profile-level hidden Telegram username and direct-contact approval flow now exist in source
 - rebuilt public landing now exists in source with stronger section architecture and CTA hierarchy
+- branded homepage OG/social preview layer now exists in source
 
 ## Live-confirmed
 
@@ -31,7 +32,7 @@
 
 ## Inference
 
-- the next safe landing step is STEP049C OG / social / metadata uplift, not a broad website rewrite
+- the next safe landing step after deploy is a narrow manual verification pass for STEP049C metadata/share-preview behavior, not another broad landing rewrite
 - the strongest product/runtime rails remain paid direct-contact requests plus gated DM initiation beneath the landing uplift
 
 ## Blocked / unconfirmed
@@ -40,7 +41,7 @@
 - real deployed LinkedIn callback verification for STEP045 copy/seed behavior is not closed here
 - real deployed Telegram Stars direct-contact request flow is not closed here
 - real deployed Telegram Stars DM flow is not closed here
-- branded OG/social preview layer is not implemented yet
+- deployed OG/share preview cache refresh is not confirmed yet
 
 ## Required wording
 
@@ -57,6 +58,7 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP046_PRIVATE_TELEGRAM_HANDLE_AND_PAID_CONTACT_UNLOCK_V1.md`
 - `doc/spec/STEP047_MEMBER_DM_RELAY_V1.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
+- `doc/spec/STEP049C_OG_SOCIAL_METADATA_UPLIFT.md`
 - `doc/process/07_WORK_HISTORY_STEP045.md`
 - `doc/process/07_WORK_HISTORY_STEP046.md`
 - `doc/process/07_WORK_HISTORY_STEP047.md`
@@ -91,3 +93,10 @@ When contract certainty is missing, say exactly:
 - Rebuilt the public landing into a stronger one-page product entry page with hero, audience, workflow, product surfaces, FAQ, and final CTA sections.
 - Cleaned up CTA hierarchy so legal links no longer compete with the main product action.
 - Upgraded `site.css` and aligned `privacy` / `terms` pages to the same navigation and footer standard.
+
+
+## STEP049C delta
+
+- Added a branded OG/share-preview card plus full homepage Open Graph + Twitter metadata.
+- Added favicon and apple-touch icon consistency across landing/legal surfaces.
+- Added `robots.txt`, `sitemap.xml`, and a dedicated OG/social smoke test.

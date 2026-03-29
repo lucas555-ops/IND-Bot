@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP049B
-- Phase: landing production uplift on top of the STEP048.4 product baseline
+- Current STEP: STEP049C
+- Phase: landing production uplift with OG / social / metadata polish on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP049B baseline with the STEP048.4 product/runtime layer intact plus a rebuilt public landing and upgraded legal-page presentation; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP049C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, branded OG/share-preview assets, and metadata/legal-page alignment; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -22,6 +22,7 @@
 - STEP047 gated member DM relay with first-message payment + recipient accept/decline/block/report
 - honest user-facing LinkedIn import summary and manual-fields reminder
 - upgraded one-page public landing with stronger CTA hierarchy, product sections, FAQ, and final CTA
+- branded OG/share-preview asset, favicon layer, and full homepage social metadata
 
 ## Current truth
 
@@ -48,8 +49,7 @@
 
 ## Next recommended step
 
-- implement STEP049C — OG / social / metadata uplift
-- keep the rollout narrow: branded OG asset, full og/twitter tags, title/description polish, and share-preview verification
+- execute a narrow STEP049C manual verification pass: homepage metadata, Telegram share preview, favicon, and legal-page canonical tags
 
 ## STEP039.1 delta
 
@@ -134,3 +134,12 @@
 - added sections for audience, workflow, product surfaces, FAQ, and final CTA
 - `site.css` upgraded to a stronger dark premium layout system with better mobile behavior
 - `privacy` and `terms` pages aligned to the same navigation and footer standard
+
+## STEP049C delta
+
+- homepage now ships full Open Graph and Twitter-card metadata with canonical/title/description polish
+- branded OG card added at `assets/social/intro-deck-og-1200x630-v1.png`
+- favicon + apple-touch icon layer added for landing/legal consistency
+- `robots.txt` and `sitemap.xml` added for production metadata hygiene
+- privacy and terms pages now include aligned canonical + favicon metadata
+
