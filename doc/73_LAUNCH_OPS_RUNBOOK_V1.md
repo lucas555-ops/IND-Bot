@@ -7,7 +7,7 @@ It is operational, not aspirational.
 
 ## Source truth
 
-- Current source baseline: **STEP043.1**
+- Current source baseline: **STEP043.2**
 - Required wording without deployment proof: **live status not confirmed — manual verification required**
 
 ## Daily operator rhythm
@@ -41,7 +41,7 @@ It is operational, not aspirational.
 - clean quality before pushing traffic
 
 
-## STEP043.1 companion docs
+## STEP043.2 companion docs
 
 - `76_LIVE_VERIFICATION_PLAYBOOK_V1.md`
 - `77_LAUNCH_REHEARSAL_CHECKLIST_V1.md`

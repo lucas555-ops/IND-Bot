@@ -3,7 +3,7 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP043.1
+- Current baseline: STEP043.2
 - Current mode: HARDENING / HANDOFF / LAUNCH-READINESS
 - Current focus: execute manual live verification + launch rehearsal on the deployed baseline without widening scope
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
@@ -14,7 +14,7 @@
 - STEP040 Russian admin analytics drilldowns exist in source
 - STEP041 safe bulk actions exist in source
 - STEP042 launch runbook and freeze policy exist in source
-- STEP043.1 live-verification and rehearsal guidance now exist in source
+- STEP043.2 live-verification and rehearsal guidance now exist in source
 - System hub exposes read-only `adm:runbook`, `adm:freeze`, `adm:verify`, and `adm:rehearse`
 
 ## Live-confirmed

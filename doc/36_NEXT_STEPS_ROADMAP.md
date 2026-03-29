@@ -1,6 +1,6 @@
 # 36_NEXT_STEPS_ROADMAP
 
-## Current corridor after STEP043.1
+## Current corridor after STEP043.2
 
 The project now has:
 - user-facing member flow
@@ -12,7 +12,7 @@ The project now has:
 - freeze policy
 - explicit live-verification / rehearsal guidance
 
-## STEP043.1 — completed in source
+## STEP043.2 — completed in source
 
 Result:
 - System hub now exposes read-only `Live verification` and `Репетиция запуска` guidance
@@ -21,7 +21,7 @@ Result:
 
 ## Next move
 
-**Execute the manual STEP043.1 pass on the deployed baseline**
+**Execute the manual STEP043.2 pass on the deployed baseline**
 
 Required manual outputs:
 - `/api/health` and `/api/health?full=1` readout

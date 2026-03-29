@@ -32,7 +32,7 @@ Source baseline already includes the corridor through:
 - STEP040 Russian admin analytics drilldowns + funnel readouts
 - STEP041 safe bulk actions for segment-based Notice/Broadcast prep
 - STEP042 launch/operator runbook + freeze discipline
-- STEP043.1 live-verification + launch-rehearsal guidance
+- STEP043.2 live-verification + launch-rehearsal guidance
 
 ## What must not break
 
@@ -50,7 +50,7 @@ Source baseline already includes the corridor through:
 The project is now in a **launch-readiness / verification** layer.
 Do not jump into broad new product scope.
 The immediate move is not a new feature STEP.
-The immediate move is to execute the manual STEP043.1 verification/rehearsal pass and record an honest go/no-go.
+The immediate move is to execute the manual STEP043.2 verification/rehearsal pass and record an honest go/no-go.
 
 ## First useful reply format
 

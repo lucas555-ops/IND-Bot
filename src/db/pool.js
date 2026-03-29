@@ -1,5 +1,7 @@
 import { getDbConfig } from '../config/env.js';
 
+const SSL_CONNECTION_STRING_KEYS = ['sslmode', 'sslcert', 'sslkey', 'sslrootcert'];
+
 let poolPromise = null;
 
 function buildSslOption(sslMode) {
@@ -10,6 +12,22 @@ function buildSslOption(sslMode) {
   return {
     rejectUnauthorized: sslMode === 'verify-full'
   };
+}
+
+export function sanitizeConnectionString(databaseUrl) {
+  if (!databaseUrl) {
+    return databaseUrl;
+  }
+
+  try {
+    const parsed = new URL(databaseUrl);
+    for (const key of SSL_CONNECTION_STRING_KEYS) {
+      parsed.searchParams.delete(key);
+    }
+    return parsed.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 export function isDatabaseConfigured() {
@@ -24,7 +42,7 @@ export async function getPool() {
 
   if (!poolPromise) {
     poolPromise = import('pg').then(({ Pool }) => new Pool({
-      connectionString: dbConfig.databaseUrl,
+      connectionString: sanitizeConnectionString(dbConfig.databaseUrl),
       ssl: buildSslOption(dbConfig.sslMode),
       max: 5,
       idleTimeoutMillis: 10000,
