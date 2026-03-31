@@ -511,6 +511,23 @@ p {
   align-items: stretch;
 }
 
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.workflow-card,
+.proof-card,
+.audience-card {
+  min-height: 100%;
+}
+
+.steps-grid-five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .preview-card {
   min-height: 100%;
   background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.018));
@@ -1087,9 +1104,11 @@ p {
   }
 
   .cta-stack { align-items: flex-start; }
-  .steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .steps-grid,
+  .steps-grid-five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .three-up,
-  .preview-grid { grid-template-columns: 1fr; }
+  .preview-grid,
+  .workflow-grid { grid-template-columns: 1fr; }
   .hero-stage { min-height: auto; padding: 8px 0 0; }
   .hero-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -1131,7 +1150,9 @@ p {
   .screen-actions { grid-template-columns: 1fr; }
   .shell-grid,
   .two-up,
-  .steps-grid { grid-template-columns: 1fr; }
+  .steps-grid,
+  .steps-grid-five,
+  .workflow-grid { grid-template-columns: 1fr; }
   .surface-card,
   .card,
   .step-card,

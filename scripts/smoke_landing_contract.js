@@ -11,9 +11,10 @@ const termsHtml = fs.readFileSync(path.join(repoRoot, 'terms', 'index.html'), 'u
 const requiredIndexSnippets = [
   'Trusted intros and direct contact',
   'id="how-it-works"',
-  'Built for people who want warm access without scattered handoffs.',
-  'The core surfaces stay narrow and readable.',
-  'What people usually want to know first.',
+  'Built for people who rely on warm access.',
+  'Five moments that define the product.',
+  'A more deliberate system for professional access.',
+  'What people usually want to know.',
   'Open @introdeckbot'
 ];
 
@@ -26,8 +27,8 @@ for (const snippet of requiredIndexSnippets) {
 const requiredCssSnippets = [
   '.hero-grid',
   '.steps-grid',
-  '.accordion-grid',
-  '.preview-grid',
+  '.steps-grid-five',
+  '.workflow-grid',
   '.cta-panel'
 ];
 

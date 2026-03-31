@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050A
-- Phase: landing production uplift with hero prime reframe on top of the STEP048.4 product baseline
+- Current STEP: STEP050B
+- Phase: landing production uplift with hero prime reframe + narrative compression on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050A baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, and a product-first hero prime reframe; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050B baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, and compressed post-hero landing narrative; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -24,6 +24,7 @@
 - upgraded one-page public landing with stronger CTA hierarchy, product sections, FAQ, and final CTA
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
 - hero now uses a product-first Telegram-native sculpture with workflow rail and stronger CTA framing
+- post-hero landing narrative is now compressed into clearer audience, workflow, proof, and FAQ sections with less duplication
 
 ## Current truth
 
@@ -35,6 +36,7 @@
 - STEP047 now ships the narrow DM request + active thread path
 - landing is now structured as a real product entry page instead of a minimal placeholder
 - STEP050A shifts the homepage hero from policy-first explanation toward a stronger access/trust/workflow framing
+- STEP050B compresses the rest of the landing so the page reads as one product story instead of separate explanatory blocks
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 
@@ -51,7 +53,7 @@
 
 ## Next recommended step
 
-- execute STEP050B as a narrow narrative-compression pass: align section copy and reduce repeated landing explanation after the new hero baseline
+- execute STEP050C as a narrow workflow-visual polish pass: deepen the `See the workflow` section with stronger screen-art treatment and interaction polish without touching runtime
 
 ## STEP039.1 delta
 
@@ -175,3 +177,12 @@
 - hero copy now frames Intro Deck around warm access inside Telegram while keeping LinkedIn as the identity/trust layer
 - added a compact five-step workflow rail so the value path reads immediately from identity to continuation
 - kept runtime, legal pages, and product contracts untouched; scope is front-end-only `index.html` + `site.css` plus docs state alignment
+
+
+## STEP050B delta
+
+- landing narrative after the hero was compressed into a tighter sequence: audience → how it works → see the workflow → why this works better → FAQ
+- removed the duplicated `What's inside` / `Product preview` split and replaced it with one unified workflow section
+- how-it-works upgraded from four broad steps to a clearer five-step path that matches the product framing introduced in STEP050A
+- FAQ shortened and tightened so the landing explains less repeatedly while preserving trust / privacy / LinkedIn truth
+- smoke contracts were aligned to the new post-hero landing canon; runtime and legal surfaces remain untouched

@@ -11,7 +11,7 @@ const requiredIndexSnippets = [
   'Skip to content',
   'href="#for-whom"',
   'Private by default. Public fields stay intentional. Contact access stays consent-aware.',
-  'Read the FAQ first',
+  'See the workflow',
   'LinkedIn is used as the identity layer. Public contact is not open by default.'
 ];
 
