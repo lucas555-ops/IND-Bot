@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050L
+- Current STEP: STEP050M
 - Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050L baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with single-asset gallery scenes, a responsive spacing pass, a simplified single-master visual integrated into the hero, a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA, and a mobile-specific navigation/workflow bridge/gallery fix pass; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050M baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with single-asset gallery scenes, a responsive spacing pass, a simplified single-master visual integrated into the hero, a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA, a mobile-specific navigation/workflow bridge/gallery fix pass, and a narrow root meta-copy refresh for the public landing preview plus OG social smoke alignment to the current root asset path; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -29,6 +29,8 @@
 - the workflow gallery now defaults to `05 · Continuation`, so the section opens on the most concrete first-message outcome instead of the more abstract identity state
 - STEP050H widens the workflow intro, strengthens active thumb emphasis, tightens the active-copy-to-stage rhythm, and raises the visual quality of `Why this works better`, `Who it's for`, and the final CTA without touching runtime/legal layers
 - STEP050L replaces the heavy 2-column mobile nav wall with a calmer horizontal chip rail plus separate CTA, collapses the `How it works` bridge into a one-card-per-row mobile stack, and stabilizes workflow thumbnails as a true horizontal strip without overlap/clipping
+- STEP050M narrows the public landing meta copy so root `<title>`, standard description, Open Graph, and Twitter preview text all use one cleaner canon: trusted intros and direct contact in Telegram, with LinkedIn as the identity layer
+- STEP050M also realigns `scripts/smoke_og_social_contract.js` to the current `assets/social/intro-deck-og-1200x630.png` asset path so OG/social source checks match the repo state
 
 ## Current truth
 
@@ -60,7 +62,7 @@
 
 ## Next recommended step
 
-- deploy STEP050L and verify the live mobile navigation / bridge / workflow strip behavior on the real domain before any further polish work
+- deploy STEP050M and verify both the live mobile navigation/workflow behavior and the updated root social/meta preview text on the real domain before any further polish work
 
 ## STEP039.1 delta
 
@@ -240,3 +242,7 @@
 - upgraded `Why this works better` into a more product-grade proof grid with clearer value labeling and stronger card hierarchy
 - upgraded `Who it's for` with tighter audience copy, clearer micro-positioning, and calmer premium card styling
 - rebuilt the final CTA into a cleaner action stage with a more compact message and a stronger right-side action stack
+
+## STEP050M delta
+- root landing meta copy updated so `<title>`, `meta name="description"`, `og:title`, `og:description`, `twitter:title`, and `twitter:description` all share the new trusted-intros/direct-contact wording
+- no runtime, layout, OG-image, or legal-surface changes
