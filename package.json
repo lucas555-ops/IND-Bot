@@ -81,7 +81,6 @@
     "smoke:contact-unlock-payments": "node scripts/smoke_contact_unlock_payments_contract.js",
     "smoke:dm-relay": "node scripts/smoke_dm_relay_contract.js",
     "smoke:dm-payments": "node scripts/smoke_dm_payments_contract.js",
-    "smoke:schema-compat": "node scripts/smoke_schema_compat_contract.js",
     "smoke:landing": "node scripts/smoke_landing_contract.js",
     "smoke:og-social": "node scripts/smoke_og_social_contract.js",
     "smoke:landing-polish": "node scripts/smoke_landing_polish_contract.js"

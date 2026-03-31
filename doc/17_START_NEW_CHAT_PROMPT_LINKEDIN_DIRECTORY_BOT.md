@@ -36,8 +36,9 @@ Source baseline already includes the corridor through:
 - STEP045 LinkedIn identity auto-seed uplift
 - STEP046 hidden Telegram handle + paid direct contact unlock
 - STEP047 gated member DM relay
-- STEP045 LinkedIn identity auto-seed uplift
-- STEP046 private handle + paid contact unlock
+- STEP048 pricing / analytics / ops
+- STEP050H landing production uplift on top of the STEP048.4 runtime/product layer
+- STEP050I repo consistency cleanup for smoke/doc/root hygiene
 
 ## What must not break
 
@@ -52,11 +53,9 @@ Source baseline already includes the corridor through:
 
 ## Current layer
 
-The project is now in a **product hardening / identity uplift / monetization foundation** layer.
+The project is now in a **product hardening / identity uplift / monetization foundation / landing production uplift** layer.
 Do not jump into broad new product scope.
-The immediate move after STEP046 is to keep shipping narrowly:
-- STEP047 gated DM relay
-- STEP048 pricing / analytics / ops
+The current safe move is narrow verification and cleanup on top of the shipped STEP048.4 runtime/product layer plus the rebuilt landing.
 
 Do not introduce broad LinkedIn scraping.
 Keep LinkedIn as identity bootstrap and keep manual profile fields Telegram-managed unless a new contract says otherwise.

@@ -14,7 +14,7 @@ const requiredIndexSnippets = [
   'name="twitter:card"',
   'rel="canonical" href="https://intro-deck.vercel.app/"',
   'href="/favicon.svg"',
-  'assets/social/intro-deck-og-1200x630-v1.png'
+  'assets/social/intro-deck-og-1200x630.png'
 ];
 
 for (const snippet of requiredIndexSnippets) {
@@ -36,7 +36,7 @@ for (const [name, html, canonical] of [
 }
 
 for (const relPath of [
-  'assets/social/intro-deck-og-1200x630-v1.png',
+  'assets/social/intro-deck-og-1200x630.png',
   'favicon.svg',
   'favicon-32x32.png',
   'apple-touch-icon.png',

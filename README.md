@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP047 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, user-facing Telegram member flow, mature operator/admin control plane, Russian admin analytics drilldowns, guarded bulk actions, launch/ops runbook + freeze discipline, and explicit live-verification / launch-rehearsal guidance.
+STEP050I source baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, mature operator/admin control plane, pricing + DM monetization foundation, and a rebuilt production-grade public landing.
 
 ## What this repo is
 
@@ -12,7 +12,7 @@ A Telegram-first professional directory:
 - gated member DM relay with first-message approval and paid request opening
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
-- runbook/freeze launch discipline
+- rebuilt public landing, OG/share layer, workflow gallery, and legal surfaces
 
 ## Current STEP corridor
 
@@ -24,6 +24,9 @@ A Telegram-first professional directory:
 - STEP045 — LinkedIn identity auto-seed uplift
 - STEP046 — private handle + paid direct contact unlock
 - STEP047 — gated member DM relay
+- STEP048 — pricing / analytics / ops
+- STEP049B–STEP050H — landing production uplift
+- STEP050I — repo consistency cleanup + smoke/doc alignment
 
 ## Core docs
 
@@ -37,9 +40,12 @@ A Telegram-first professional directory:
 - `doc/77_LAUNCH_REHEARSAL_CHECKLIST_V1.md`
 - `doc/78_GO_NO_GO_VERDICT_TEMPLATE_V1.md`
 
-## Smoke
+## Recommended source-level checks
 
 - `npm run check`
+- `npm run smoke:landing`
+- `npm run smoke:landing-polish`
+- `npm run smoke:og-social`
 - `npm run smoke:admin-shell`
 - `npm run smoke:admin-russian-layer`
 - `npm run smoke:admin-bulk-actions`
