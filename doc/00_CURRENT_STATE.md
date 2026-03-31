@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050G-C
+- Current STEP: STEP050H
 - Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050G-C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with screen-state cards, a responsive spacing pass, and a simplified single-master visual integrated into the hero; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050H baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with screen-state cards, a responsive spacing pass, a simplified single-master visual integrated into the hero, and a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -27,6 +27,7 @@
 - post-hero landing narrative is now compressed into clearer workflow, proof, audience, and FAQ layers with less duplication
 - `See the workflow` now uses one cleaner gallery system: left-aligned section header, active step copy above the stage, and one active scene swapped by the thumbnail row
 - the workflow gallery now defaults to `05 · Continuation`, so the section opens on the most concrete first-message outcome instead of the more abstract identity state
+- STEP050H widens the workflow intro, strengthens active thumb emphasis, tightens the active-copy-to-stage rhythm, and raises the visual quality of `Why this works better`, `Who it's for`, and the final CTA without touching runtime/legal layers
 
 ## Current truth
 
@@ -58,7 +59,7 @@
 
 ## Next recommended step
 
-- deploy STEP050F and verify that the new hero → workflow bridge → workflow proof rhythm feels cleaner on the live domain before any further asset-specific visual passes
+- deploy STEP050H and verify the live rhythm of the rebuilt hero/workflow/lower-page stack before any further copy or asset experiments
 
 ## STEP039.1 delta
 
@@ -230,3 +231,11 @@
 - each workflow step now uses one shared master scene asset for both mini preview and expanded stage so the gallery stays visually consistent and easier to maintain
 - added optimized workflow assets under `assets/workflow/` and wired lightweight thumb switching directly in `index.html` so the section behaves like a product gallery rather than a content wall
 - kept scope front-end-only on `index.html` + `site.css` + workflow assets + docs/smoke alignment; runtime and legal surfaces remain untouched
+
+
+## STEP050H delta
+
+- widened the workflow intro note, strengthened the active thumbnail state, and tightened the reading rhythm between active step copy and the large stage
+- upgraded `Why this works better` into a more product-grade proof grid with clearer value labeling and stronger card hierarchy
+- upgraded `Who it's for` with tighter audience copy, clearer micro-positioning, and calmer premium card styling
+- rebuilt the final CTA into a cleaner action stage with a more compact message and a stronger right-side action stack
