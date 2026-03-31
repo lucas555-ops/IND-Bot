@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP049J
+- Current STEP: STEP049K
 - Phase: landing production uplift with OG / social / metadata polish on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP049J baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG master v7 social preview assets, improved mobile navigation, and legal-surface consistency; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP049K baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, and legal-surface consistency; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -49,7 +49,7 @@
 
 ## Next recommended step
 
-- execute a narrow STEP049J manual verification pass: homepage mobile layout, share-preview refresh, OG cache busting, and footer/legal consistency after deploy
+- execute a narrow STEP049K manual verification pass: homepage mobile layout, share-preview refresh, OG cache refresh, and footer/legal consistency after deploy
 
 ## STEP039.1 delta
 
@@ -157,3 +157,11 @@
 - Replaced the homepage/legal social preview asset with a new premium OG master `intro-deck-og-1200x630.png` plus WEBP companion.
 - Updated homepage, privacy, and terms metadata to the new versioned OG path for cache-safe share refresh.
 - This step is an asset/meta refresh only; no schema or bot runtime behavior changed.
+
+
+## STEP049K delta
+
+- Landing copy, spacing, and section alignment were tightened for a cleaner production presentation.
+- Brand marks on homepage and legal pages now use the real Intro Deck asset instead of text-only placeholders.
+- Product preview section now uses three balanced cards so desktop layout no longer leaves an empty column.
+- Legal-page intro copy and action shells were cleaned up for better readability and consistency.
