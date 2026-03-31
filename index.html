@@ -111,37 +111,35 @@
       </section>
 
       <section class="section workflow-section workflow-gallery-section" id="workflow">
-        <div class="section-head split-head workflow-gallery-head">
-          <div>
-            <div class="eyebrow">See the workflow</div>
-            <h2>Five moments. One controlled path.</h2>
-          </div>
+        <div class="section-head workflow-gallery-head workflow-gallery-head--stacked">
+          <div class="eyebrow">See the workflow</div>
+          <h2>Five moments. One controlled path.</h2>
           <p class="head-note">From verified identity to first private continuation, the product stays inside one narrow Telegram-native flow.</p>
         </div>
 
         <div class="workflow-gallery-stage">
+          <div class="workflow-gallery-stage__copy">
+            <p id="workflow-stage-label" class="workflow-gallery-stage__label">05 · Continuation</p>
+            <h3 id="workflow-stage-title">The first real exchange stays attached.</h3>
+            <p id="workflow-stage-description">Private continuation keeps the conversation inside one product flow instead of scattering context.</p>
+          </div>
           <button class="workflow-gallery-stage__media" type="button" aria-label="Open active workflow screen preview">
             <img
               id="workflow-stage-image"
-              src="/assets/workflow/intro-deck-workflow-01-identity-16x9.webp"
-              alt="Intro Deck workflow step: identity"
+              src="/assets/workflow/intro-deck-workflow-05-continuation-16x9.webp"
+              alt="Intro Deck workflow step: continuation"
               loading="lazy"
               decoding="async"
             />
           </button>
-          <div class="workflow-gallery-stage__copy">
-            <p id="workflow-stage-label" class="workflow-gallery-stage__label">01 · Identity</p>
-            <h3 id="workflow-stage-title">Trust starts before discovery.</h3>
-            <p id="workflow-stage-description">LinkedIn establishes the trust layer before the browse flow begins.</p>
-          </div>
         </div>
 
         <div class="workflow-gallery-thumbs" role="tablist" aria-label="Workflow steps">
           <button
-            class="workflow-thumb is-active"
+            class="workflow-thumb"
             type="button"
             role="tab"
-            aria-selected="true"
+            aria-selected="false"
             data-image="/assets/workflow/intro-deck-workflow-01-identity-16x9.webp"
             data-alt="Intro Deck workflow step: identity"
             data-label="01 · Identity"
@@ -210,10 +208,10 @@
           </button>
 
           <button
-            class="workflow-thumb"
+            class="workflow-thumb is-active"
             type="button"
             role="tab"
-            aria-selected="false"
+            aria-selected="true"
             data-image="/assets/workflow/intro-deck-workflow-05-continuation-16x9.webp"
             data-alt="Intro Deck workflow step: continuation"
             data-label="05 · Continuation"

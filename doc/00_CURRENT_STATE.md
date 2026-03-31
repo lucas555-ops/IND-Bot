@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050F
+- Current STEP: STEP050G-C
 - Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050F baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with screen-state cards, a responsive spacing pass, and a simplified single-master visual integrated into the hero; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050G-C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with screen-state cards, a responsive spacing pass, and a simplified single-master visual integrated into the hero; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -25,7 +25,8 @@
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
 - hero now uses a simplified single-master visual with shorter copy, calmer CTA framing, and one trust line instead of the prior rail / plaque density
 - post-hero landing narrative is now compressed into clearer workflow, proof, audience, and FAQ layers with less duplication
-- `See the workflow` now presents a stronger screen-art showcase with a central master screen, side fragments, richer mini-state cards, and tighter tablet/mobile rhythm
+- `See the workflow` now uses one cleaner gallery system: left-aligned section header, active step copy above the stage, and one active scene swapped by the thumbnail row
+- the workflow gallery now defaults to `05 · Continuation`, so the section opens on the most concrete first-message outcome instead of the more abstract identity state
 
 ## Current truth
 

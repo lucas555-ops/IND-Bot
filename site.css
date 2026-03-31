@@ -1942,11 +1942,24 @@ p {
 }
 
 .workflow-gallery-head {
-  align-items: end;
+  align-items: start;
 }
 
-.workflow-gallery-head .head-note {
-  max-width: 38ch;
+.workflow-gallery-head--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.workflow-gallery-head--stacked .head-note {
+  max-width: 42ch;
+  margin: 0;
+}
+
+.workflow-gallery-head--stacked h2 {
+  margin: 0;
+  max-width: 16ch;
 }
 
 .workflow-gallery-stage {
@@ -1978,6 +1991,7 @@ p {
 
 .workflow-gallery-stage__copy {
   max-width: 720px;
+  order: -1;
 }
 
 .workflow-gallery-stage__label {
@@ -2081,10 +2095,6 @@ p {
 }
 
 @media (max-width: 860px) {
-  .workflow-gallery-head {
-    grid-template-columns: 1fr;
-  }
-
   .workflow-gallery-thumbs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
