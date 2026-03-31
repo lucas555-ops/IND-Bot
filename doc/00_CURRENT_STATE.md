@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP049K
-- Phase: landing production uplift with OG / social / metadata polish on top of the STEP048.4 product baseline
+- Current STEP: STEP050A
+- Phase: landing production uplift with hero prime reframe on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP049K baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, and legal-surface consistency; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050A baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, and a product-first hero prime reframe; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -23,6 +23,7 @@
 - honest user-facing LinkedIn import summary and manual-fields reminder
 - upgraded one-page public landing with stronger CTA hierarchy, product sections, FAQ, and final CTA
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
+- hero now uses a product-first Telegram-native sculpture with workflow rail and stronger CTA framing
 
 ## Current truth
 
@@ -33,6 +34,7 @@
 - STEP046 ships hidden Telegram handle + paid direct contact requests with owner approval
 - STEP047 now ships the narrow DM request + active thread path
 - landing is now structured as a real product entry page instead of a minimal placeholder
+- STEP050A shifts the homepage hero from policy-first explanation toward a stronger access/trust/workflow framing
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 
@@ -49,7 +51,7 @@
 
 ## Next recommended step
 
-- execute a narrow STEP049K manual verification pass: homepage mobile layout, share-preview refresh, OG cache refresh, and footer/legal consistency after deploy
+- execute STEP050B as a narrow narrative-compression pass: align section copy and reduce repeated landing explanation after the new hero baseline
 
 ## STEP039.1 delta
 
@@ -165,3 +167,11 @@
 - Brand marks on homepage and legal pages now use the real Intro Deck asset instead of text-only placeholders.
 - Product preview section now uses three balanced cards so desktop layout no longer leaves an empty column.
 - Legal-page intro copy and action shells were cleaned up for better readability and consistency.
+
+
+## STEP050A delta
+
+- homepage hero rebuilt into a stronger product-first composition with one focal phone sculpture instead of the prior equal-weight feature grid
+- hero copy now frames Intro Deck around warm access inside Telegram while keeping LinkedIn as the identity/trust layer
+- added a compact five-step workflow rail so the value path reads immediately from identity to continuation
+- kept runtime, legal pages, and product contracts untouched; scope is front-end-only `index.html` + `site.css` plus docs state alignment
