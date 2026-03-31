@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050D
+- Current STEP: STEP050E
 - Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050D baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, compressed post-hero landing narrative, a stronger workflow showcase with screen-state cards, and a responsive spacing pass across hero/workflow/card rhythm; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050E baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, compressed post-hero landing narrative, a stronger workflow showcase with screen-state cards, a responsive spacing pass, and a simplified single-master visual integrated into the hero; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -23,7 +23,7 @@
 - honest user-facing LinkedIn import summary and manual-fields reminder
 - upgraded one-page public landing with stronger CTA hierarchy, product sections, FAQ, and final CTA
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
-- hero now uses a product-first Telegram-native sculpture with workflow rail and stronger CTA framing
+- hero now uses a simplified single-master visual with shorter copy, calmer CTA framing, and one trust line instead of the prior rail / plaque density
 - post-hero landing narrative is now compressed into clearer audience, workflow, proof, and FAQ sections with less duplication
 - `See the workflow` now presents a stronger screen-art showcase with a central master screen, side fragments, richer mini-state cards, and tighter tablet/mobile rhythm
 
@@ -40,6 +40,7 @@
 - STEP050B compresses the rest of the landing so the page reads as one product story instead of separate explanatory blocks
 - STEP050C upgrades the workflow section from text-led cards into a more premium product gallery with clearer visual authority
 - STEP050D tightens section rhythm, card heights, FAQ distribution, and hero/workflow responsive behavior for cleaner tablet/mobile presentation
+- STEP050E de-densifies the hero by removing the workflow rail and explanatory plaque, shortening the hero copy, and integrating a cleaner rendered device visual as the main right-side anchor
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 
@@ -56,7 +57,7 @@
 
 ## Next recommended step
 
-- execute STEP050E as a narrow live-verification/polish pass only if visual drift appears after deploy; otherwise hold the landing and avoid unnecessary churn
+- deploy the STEP050E hero simplification and verify the live domain on desktop/mobile before deciding whether a narrower STEP050F section-order / polish pass is still needed
 
 ## STEP039.1 delta
 
@@ -205,3 +206,11 @@
 - audience/workflow/FAQ grids now keep stronger tablet distribution before collapsing to one column, reducing unnecessary vertical sprawl
 - kept scope front-end-only on `site.css` plus docs state alignment; runtime, routing, and legal surfaces remain untouched
 
+
+
+## STEP050E delta
+
+- hero was rebuilt around one integrated rendered device visual instead of the prior HTML phone + float-card composition
+- removed the hero workflow rail, explanatory plaque, and extra trust chips so the first screen reads shorter and cleaner
+- headline/subhead/CTA stack now emphasizes warm professional access inside Telegram with one lighter trust line beneath the actions
+- scope stays front-end-only on `index.html` + `site.css` + landing smoke alignment; runtime and legal surfaces remain untouched

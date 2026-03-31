@@ -22,7 +22,7 @@ const terms = fs.readFileSync(path.join(root, 'terms', 'index.html'), 'utf8');
 
 const homeChecks = [
   'Intro Deck',
-  'Trusted intros and direct contact — without manual chaos.',
+  'Warm professional access inside Telegram.',
   'https://t.me/introdeckbot',
   '/privacy',
   '/terms'

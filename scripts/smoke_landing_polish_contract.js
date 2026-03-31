@@ -10,7 +10,7 @@ const termsHtml = fs.readFileSync(path.join(root, 'terms', 'index.html'), 'utf8'
 const requiredIndexSnippets = [
   'Skip to content',
   'href="#for-whom"',
-  'Private by default. Public fields stay intentional. Contact access stays consent-aware.',
+  'Warm professional access inside Telegram.',
   'See the workflow',
   'LinkedIn is used as the identity layer. Public contact is not open by default.'
 ];
@@ -23,8 +23,9 @@ for (const snippet of requiredIndexSnippets) {
 
 const requiredCssSnippets = [
   '.skip-link',
-  '.hero-note',
+  '.hero-trustline',
   '.legal-intro',
+  '.hero-prime-device',
   '.legal-summary',
   '.footer-copy'
 ];
