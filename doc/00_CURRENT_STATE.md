@@ -240,3 +240,10 @@
 - upgraded `Why this works better` into a more product-grade proof grid with clearer value labeling and stronger card hierarchy
 - upgraded `Who it's for` with tighter audience copy, clearer micro-positioning, and calmer premium card styling
 - rebuilt the final CTA into a cleaner action stage with a more compact message and a stronger right-side action stack
+
+## STEP050K delta
+
+- rebuilt the mobile nav into a calmer horizontal chip rail with the primary Telegram CTA separated below so the top of the page no longer opens with a tall two-column button wall
+- changed the post-hero `How it works` bridge to a single-column mobile stack so the four cards read one after another instead of collapsing into narrow text columns
+- hardened the mobile workflow gallery so the active copy stays cleaner above the large stage and the thumbnail row scrolls as a stable horizontal strip without overlap/clipping artifacts
+- scope stays front-end-only on `index.html` + `site.css` + docs alignment; runtime, legal, and data-layer surfaces remain untouched

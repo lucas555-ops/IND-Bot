@@ -116,16 +116,26 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nav-links__scroll {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
   flex-wrap: wrap;
+  min-width: 0;
   color: var(--muted);
 }
 
-.nav-links a:not(.btn) {
+.nav-links__scroll a {
   color: var(--muted);
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.nav-links a:not(.btn):hover {
+.nav-links__scroll a:hover {
   color: var(--text);
 }
 
@@ -1815,20 +1825,35 @@ p {
   .brand { font-size: 18px; }
   .nav-links {
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
-  .nav-links a:not(.btn) {
-    min-height: 42px;
+  .nav-links__scroll {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .nav-links__scroll::-webkit-scrollbar { display: none; }
+  .nav-links__scroll a {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--line);
-    border-radius: 12px;
-    background: rgba(255,255,255,0.02);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.022);
   }
-  .nav-links .nav-cta { grid-column: 1 / -1; }
   .nav { margin-bottom: 24px; }
   .hero-grid { padding: 22px 18px; gap: 24px; }
   .hero-lead { font-size: 17px; }
@@ -1873,6 +1898,7 @@ p {
   .faq-list,
   .workflow-column,
   .showcase-actions { grid-template-columns: 1fr; }
+  .bridge-grid { grid-template-columns: 1fr; gap: 14px; }
   .workflow-stage-panel { gap: 16px; }
   .workflow-sequence,
   .workflow-showcase { padding: 18px; border-radius: 24px; }
@@ -2216,6 +2242,24 @@ p {
 }
 
 @media (max-width: 720px) {
+  .workflow-gallery-head--stacked {
+    gap: 8px;
+  }
+
+  .workflow-gallery-head--stacked .head-note {
+    max-width: none;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .workflow-gallery-stage {
+    gap: 10px;
+  }
+
+  .workflow-gallery-stage__copy {
+    max-width: none;
+  }
+
   .workflow-gallery-stage__media {
     border-radius: 22px;
   }
@@ -2224,18 +2268,27 @@ p {
     font-size: clamp(24px, 7vw, 30px);
   }
 
-  .workflow-gallery-thumbs {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(220px, 78vw);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    padding-bottom: 4px;
-    scrollbar-width: thin;
+  .workflow-gallery-stage__copy p:last-child {
+    max-width: none;
   }
 
+  .workflow-gallery-thumbs {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    padding: 2px 2px 6px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .workflow-gallery-thumbs::-webkit-scrollbar { display: none; }
+
   .workflow-thumb {
+    flex: 0 0 min(236px, 78vw);
     min-width: 0;
+    scroll-snap-align: start;
   }
 }
 
