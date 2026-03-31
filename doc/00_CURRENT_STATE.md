@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050J
+- Current STEP: STEP050L
 - Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050J baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with screen-state cards, a responsive spacing pass, a simplified single-master visual integrated into the hero, and a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050L baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with single-asset gallery scenes, a responsive spacing pass, a simplified single-master visual integrated into the hero, a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA, and a mobile-specific navigation/workflow bridge/gallery fix pass; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -28,7 +28,7 @@
 - `See the workflow` now uses one cleaner gallery system: left-aligned section header, active step copy above the stage, and one active scene swapped by the thumbnail row
 - the workflow gallery now defaults to `05 · Continuation`, so the section opens on the most concrete first-message outcome instead of the more abstract identity state
 - STEP050H widens the workflow intro, strengthens active thumb emphasis, tightens the active-copy-to-stage rhythm, and raises the visual quality of `Why this works better`, `Who it's for`, and the final CTA without touching runtime/legal layers
-- STEP050J restores schema-compatible profile/directory reads through a real helper layer, gracefully blocks hidden Telegram username writes and direct-contact unlock flows when STEP046 migration `019_contact_unlock_requests.sql` is missing, and makes the migration requirement explicit in code/docs instead of relying on stale assumptions.
+- STEP050L replaces the heavy 2-column mobile nav wall with a calmer horizontal chip rail plus separate CTA, collapses the `How it works` bridge into a one-card-per-row mobile stack, and stabilizes workflow thumbnails as a true horizontal strip without overlap/clipping
 
 ## Current truth
 
@@ -60,7 +60,7 @@
 
 ## Next recommended step
 
-- deploy STEP050H and verify the live rhythm of the rebuilt hero/workflow/lower-page stack before any further copy or asset experiments
+- deploy STEP050L and verify the live mobile navigation / bridge / workflow strip behavior on the real domain before any further polish work
 
 ## STEP039.1 delta
 
@@ -118,9 +118,9 @@
 
 ## STEP048.1 hotfix
 
-- Historical intent: keep pre-STEP046 databases operational while migrations were still being applied.
-- Current reality after STEP050J: schema-compatible reads are restored through `src/db/schemaCompat.js`, but hidden Telegram username writes and direct-contact unlock flows now explicitly require STEP046 migration `019_contact_unlock_requests.sql`.
-- Truth boundary: do not claim full STEP046 backward-compat without that migration present.
+- Added schema-compatible profile/directory reads so legacy databases without `member_profiles.telegram_username_hidden` do not break LinkedIn transfer confirm or home/profile loads.
+- Purpose: keep pre-STEP046 databases operational while migrations are still being applied.
+- Note: paid unlock / DM / pricing features still require STEP046-STEP048 migrations to be applied for full functionality.
 
 
 ## STEP048.3 hotfix
@@ -240,10 +240,3 @@
 - upgraded `Why this works better` into a more product-grade proof grid with clearer value labeling and stronger card hierarchy
 - upgraded `Who it's for` with tighter audience copy, clearer micro-positioning, and calmer premium card styling
 - rebuilt the final CTA into a cleaner action stage with a more compact message and a stronger right-side action stack
-
-## STEP050K delta
-
-- rebuilt the mobile nav into a calmer horizontal chip rail with the primary Telegram CTA separated below so the top of the page no longer opens with a tall two-column button wall
-- changed the post-hero `How it works` bridge to a single-column mobile stack so the four cards read one after another instead of collapsing into narrow text columns
-- hardened the mobile workflow gallery so the active copy stays cleaner above the large stage and the thumbnail row scrolls as a stable horizontal strip without overlap/clipping artifacts
-- scope stays front-end-only on `index.html` + `site.css` + docs alignment; runtime, legal, and data-layer surfaces remain untouched
