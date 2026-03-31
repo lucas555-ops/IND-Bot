@@ -221,3 +221,11 @@
 - moved `Who it's for` below workflow proof + mechanism advantages so the landing no longer drops into audience explanation immediately after the hero
 - replaced the prior five-step post-hero explainer with a shorter four-card workflow bridge focused on identity, card, access path, and private continuation
 - retuned nav order and hero secondary CTA so the page flows from hero into mechanism before visual proof, then audience/FAQ
+
+
+## STEP050G-B delta
+
+- `See the workflow` was rebuilt as one cleaner gallery system with a single active stage, short active copy, and five thumbnail switches instead of the prior triple-duplicated explainer layout
+- each workflow step now uses one shared master scene asset for both mini preview and expanded stage so the gallery stays visually consistent and easier to maintain
+- added optimized workflow assets under `assets/workflow/` and wired lightweight thumb switching directly in `index.html` so the section behaves like a product gallery rather than a content wall
+- kept scope front-end-only on `index.html` + `site.css` + workflow assets + docs/smoke alignment; runtime and legal surfaces remain untouched

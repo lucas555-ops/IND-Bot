@@ -12,7 +12,7 @@ const requiredIndexSnippets = [
   'Trusted intros and direct contact',
   'id="how-it-works"',
   'A simple path from identity to conversation.',
-  'Five moments that define the product.',
+  'Five moments. One controlled path.',
   'A more deliberate system for professional access.',
   'What people usually want to know.',
   'Open @introdeckbot'
@@ -29,6 +29,8 @@ const requiredCssSnippets = [
   '.bridge-grid',
   '.steps-grid-five',
   '.workflow-grid',
+  '.workflow-gallery-stage',
+  '.workflow-thumb',
   '.cta-panel'
 ];
 
