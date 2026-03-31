@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050B
-- Phase: landing production uplift with hero prime reframe + narrative compression on top of the STEP048.4 product baseline
+- Current STEP: STEP050C
+- Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050B baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, and compressed post-hero landing narrative; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, compressed post-hero landing narrative, and a stronger workflow showcase with screen-state cards; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -25,6 +25,7 @@
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
 - hero now uses a product-first Telegram-native sculpture with workflow rail and stronger CTA framing
 - post-hero landing narrative is now compressed into clearer audience, workflow, proof, and FAQ sections with less duplication
+- `See the workflow` now presents a stronger screen-art showcase with a central master screen, side fragments, and richer mini-state cards
 
 ## Current truth
 
@@ -37,6 +38,7 @@
 - landing is now structured as a real product entry page instead of a minimal placeholder
 - STEP050A shifts the homepage hero from policy-first explanation toward a stronger access/trust/workflow framing
 - STEP050B compresses the rest of the landing so the page reads as one product story instead of separate explanatory blocks
+- STEP050C upgrades the workflow section from text-led cards into a more premium product gallery with clearer visual authority
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 
@@ -53,7 +55,7 @@
 
 ## Next recommended step
 
-- execute STEP050C as a narrow workflow-visual polish pass: deepen the `See the workflow` section with stronger screen-art treatment and interaction polish without touching runtime
+- execute STEP050D as a narrow mobile/spacing verification pass: tune responsive behavior, card heights, and section rhythm after the hero/workflow uplift without touching runtime
 
 ## STEP039.1 delta
 
@@ -186,3 +188,11 @@
 - how-it-works upgraded from four broad steps to a clearer five-step path that matches the product framing introduced in STEP050A
 - FAQ shortened and tightened so the landing explains less repeatedly while preserving trust / privacy / LinkedIn truth
 - smoke contracts were aligned to the new post-hero landing canon; runtime and legal surfaces remain untouched
+
+
+## STEP050C delta
+
+- `See the workflow` is now anchored by a larger product-stage showcase instead of a flat row of equally weighted text cards
+- workflow section now uses a central master screen plus supporting fragments to express identity, discovery, contact, and continuation as one visual system
+- each of the five workflow cards now includes a mini screen-state visual so the section feels product-led rather than copy-led
+- kept scope front-end-only on `index.html` + `site.css` plus docs state alignment; runtime and legal layers remain untouched

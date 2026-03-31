@@ -223,7 +223,7 @@
         </div>
       </section>
 
-      <section class="section" id="workflow">
+      <section class="section workflow-section" id="workflow">
         <div class="section-head split-head">
           <div>
             <div class="eyebrow">See the workflow</div>
@@ -231,9 +231,118 @@
           </div>
           <p class="head-note">Identity, card, discovery, request, and continuation work as one product story instead of scattered tools.</p>
         </div>
-        <div class="workflow-grid">
+        <div class="workflow-stage-panel" aria-label="Workflow master screen overview">
+          <div class="workflow-sequence">
+            <div class="workflow-sequence-topline">Five-screen product story</div>
+            <ol class="workflow-sequence-list">
+              <li class="sequence-item is-active">
+                <span class="sequence-index">01</span>
+                <div>
+                  <strong>Identity bootstrap</strong>
+                  <p>LinkedIn connection establishes trust before the card and browse flow begins.</p>
+                </div>
+              </li>
+              <li class="sequence-item">
+                <span class="sequence-index">02</span>
+                <div>
+                  <strong>Profile card</strong>
+                  <p>A compact professional card turns identity into something people can evaluate quickly.</p>
+                </div>
+              </li>
+              <li class="sequence-item">
+                <span class="sequence-index">03</span>
+                <div>
+                  <strong>Directory discovery</strong>
+                  <p>Browse listed, active people through a quieter Telegram-native directory surface.</p>
+                </div>
+              </li>
+              <li class="sequence-item">
+                <span class="sequence-index">04</span>
+                <div>
+                  <strong>Contact decision</strong>
+                  <p>Choose intro or direct contact deliberately instead of dumping raw contact details.</p>
+                </div>
+              </li>
+              <li class="sequence-item">
+                <span class="sequence-index">05</span>
+                <div>
+                  <strong>Private continuation</strong>
+                  <p>The first exchange stays inside Telegram so context and control stay attached.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+          <div class="workflow-showcase">
+            <div class="workflow-column workflow-column-left">
+              <article class="showcase-fragment fragment-identity">
+                <div class="fragment-kicker">Identity</div>
+                <strong>LinkedIn connected</strong>
+                <p>Verified seed copied into the Telegram profile flow.</p>
+                <span class="fragment-pill">Trust layer active</span>
+              </article>
+              <article class="showcase-fragment fragment-discovery">
+                <div class="fragment-kicker">Discovery</div>
+                <strong>Listed and active</strong>
+                <p>Readable profile fragments make browsing feel sharp instead of noisy.</p>
+              </article>
+            </div>
+            <div class="showcase-phone-shell">
+              <div class="showcase-phone">
+                <div class="showcase-topbar">
+                  <span class="showcase-dot"></span>
+                  <span class="showcase-title">Workflow master</span>
+                  <span class="showcase-badge">Focused</span>
+                </div>
+                <section class="showcase-card showcase-card-primary">
+                  <div class="showcase-avatar">ID</div>
+                  <div class="showcase-copy">
+                    <strong>Warm access profile</strong>
+                    <span>Founder · Operator · Advisor</span>
+                    <span>Identity verified · Contact deliberate</span>
+                  </div>
+                </section>
+                <section class="showcase-card showcase-card-secondary">
+                  <div class="showcase-label">Contact path</div>
+                  <div class="showcase-actions">
+                    <span class="showcase-action showcase-action-primary">Request intro</span>
+                    <span class="showcase-action">Direct contact</span>
+                  </div>
+                </section>
+                <section class="showcase-card showcase-card-tertiary">
+                  <div class="showcase-label">Private continuation</div>
+                  <div class="showcase-bubble showcase-bubble-out">First message stays gated.</div>
+                  <div class="showcase-bubble">Conversation continues inside Telegram after approval.</div>
+                </section>
+              </div>
+            </div>
+            <div class="workflow-column workflow-column-right">
+              <article class="showcase-fragment fragment-contact">
+                <div class="fragment-kicker">Decision</div>
+                <strong>Intro or direct contact</strong>
+                <p>One clear fork instead of public contact leakage.</p>
+                <span class="fragment-pill">Consent-aware access</span>
+              </article>
+              <article class="showcase-fragment fragment-relay">
+                <div class="fragment-kicker">Continuation</div>
+                <strong>Telegram-native relay</strong>
+                <p>The first real exchange stays inside the product rather than jumping into a tool maze.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+        <div class="workflow-grid workflow-grid-polish">
           <article class="preview-card workflow-card">
             <div class="preview-topline">01 · Identity</div>
+            <div class="workflow-visual workflow-visual-identity" aria-hidden="true">
+              <div class="workflow-visual-bar"><span></span><span></span><span></span></div>
+              <div class="workflow-visual-pill">LinkedIn connected</div>
+              <div class="workflow-visual-title">Identity ready</div>
+              <div class="workflow-line-group">
+                <span class="workflow-line workflow-line-strong"></span>
+                <span class="workflow-line workflow-line-mid"></span>
+                <span class="workflow-line workflow-line-short"></span>
+              </div>
+            </div>
             <h3>Connect with trust first</h3>
             <p>Start with a verified identity layer instead of anonymous profile noise.</p>
             <ul class="mini-list dense">
@@ -244,6 +353,23 @@
           </article>
           <article class="preview-card workflow-card">
             <div class="preview-topline">02 · Profile card</div>
+            <div class="workflow-visual workflow-visual-card" aria-hidden="true">
+              <div class="workflow-profile-head">
+                <span class="workflow-avatar">ID</span>
+                <div class="workflow-profile-copy">
+                  <span class="workflow-line workflow-line-mid"></span>
+                  <span class="workflow-line workflow-line-short"></span>
+                </div>
+              </div>
+              <div class="workflow-tag-row">
+                <span class="workflow-tag">Listed</span>
+                <span class="workflow-tag">Verified</span>
+              </div>
+              <div class="workflow-line-group compact">
+                <span class="workflow-line workflow-line-strong"></span>
+                <span class="workflow-line workflow-line-mid"></span>
+              </div>
+            </div>
             <h3>Build a clear professional card</h3>
             <p>Turn identity into a compact card that works inside Telegram and stays readable at a glance.</p>
             <ul class="mini-list dense">
@@ -254,6 +380,24 @@
           </article>
           <article class="preview-card workflow-card">
             <div class="preview-topline">03 · Discovery</div>
+            <div class="workflow-visual workflow-visual-discovery" aria-hidden="true">
+              <div class="workflow-list-row">
+                <span class="workflow-avatar small">AL</span>
+                <div class="workflow-list-copy">
+                  <span class="workflow-line workflow-line-mid"></span>
+                  <span class="workflow-line workflow-line-short"></span>
+                </div>
+                <span class="workflow-chip">Fit</span>
+              </div>
+              <div class="workflow-list-row muted-row">
+                <span class="workflow-avatar small">MK</span>
+                <div class="workflow-list-copy">
+                  <span class="workflow-line workflow-line-mid"></span>
+                  <span class="workflow-line workflow-line-short"></span>
+                </div>
+                <span class="workflow-chip">Active</span>
+              </div>
+            </div>
             <h3>Browse the right people</h3>
             <p>Use a focused directory flow designed for warm access instead of a noisy social surface.</p>
             <ul class="mini-list dense">
@@ -264,6 +408,16 @@
           </article>
           <article class="preview-card workflow-card">
             <div class="preview-topline">04 · Contact decision</div>
+            <div class="workflow-visual workflow-visual-contact" aria-hidden="true">
+              <div class="workflow-dual-actions">
+                <span class="workflow-action-primary">Request intro</span>
+                <span class="workflow-action-secondary">Direct contact</span>
+              </div>
+              <div class="workflow-line-group compact">
+                <span class="workflow-line workflow-line-mid"></span>
+                <span class="workflow-line workflow-line-short"></span>
+              </div>
+            </div>
             <h3>Pick the right next step</h3>
             <p>Choose intro request or direct contact request based on the profile contract and access rules.</p>
             <ul class="mini-list dense">
@@ -274,6 +428,10 @@
           </article>
           <article class="preview-card workflow-card">
             <div class="preview-topline">05 · Continuation</div>
+            <div class="workflow-visual workflow-visual-relay" aria-hidden="true">
+              <div class="workflow-bubble workflow-bubble-out">First message routed</div>
+              <div class="workflow-bubble">Private relay keeps the conversation attached to the product flow.</div>
+            </div>
             <h3>Continue inside Telegram</h3>
             <p>Move from access to first message without sending the conversation into a separate maze of tools.</p>
             <ul class="mini-list dense">
