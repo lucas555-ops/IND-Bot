@@ -17,6 +17,9 @@
   --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 16px;
+  --section-gap: 88px;
+  --section-gap-tablet: 76px;
+  --section-gap-mobile: 64px;
 }
 
 * { box-sizing: border-box; }
@@ -380,14 +383,14 @@ p {
 .mini-list.dense { gap: 8px; }
 
 .section {
-  margin-top: 88px;
+  margin-top: var(--section-gap);
 }
 
 .section-head {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 .section-head p {
@@ -416,6 +419,7 @@ p {
 .card-grid {
   display: grid;
   gap: 18px;
+  align-items: stretch;
 }
 
 .three-up { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -427,6 +431,8 @@ p {
 .step-card {
   padding: 24px;
   border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
 }
 
 .card-label {
@@ -446,6 +452,7 @@ p {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
+  align-items: stretch;
 }
 
 .step-number {
@@ -465,6 +472,15 @@ p {
 .faq-list {
   display: grid;
   gap: 14px;
+}
+
+.faq-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.faq-list .faq-card:last-child {
+  grid-column: 1 / -1;
 }
 
 .accordion-card,
@@ -541,7 +557,7 @@ p {
   display: grid;
   grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr);
   gap: 20px;
-  margin-bottom: 22px;
+  margin-bottom: 26px;
 }
 
 .workflow-sequence,
@@ -870,6 +886,7 @@ p {
 
 .workflow-grid-polish {
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .workflow-card {
@@ -1570,6 +1587,18 @@ p {
   }
 }
 
+
+@media (max-width: 1120px) {
+  .steps-grid-five,
+  .workflow-grid-polish {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .workflow-stage-panel {
+    gap: 18px;
+  }
+}
+
 @media (max-width: 980px) {
   .hero-grid,
   .split-head,
@@ -1592,27 +1621,36 @@ p {
   }
 
   .cta-stack { align-items: flex-start; }
+  .section { margin-top: var(--section-gap-tablet); }
   .steps-grid,
   .steps-grid-five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .three-up,
   .preview-grid,
   .workflow-grid,
-  .workflow-grid-polish { grid-template-columns: 1fr; }
+  .workflow-grid-polish,
+  .faq-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .faq-list .faq-card:last-child { grid-column: 1 / -1; }
   .workflow-showcase {
     grid-template-columns: 1fr;
-    padding: 20px;
+    padding: 22px;
   }
   .workflow-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-content: stretch;
   }
-  .showcase-phone-shell { order: -1; }
-  .hero-stage { min-height: auto; padding: 8px 0 0; }
+  .showcase-phone-shell { order: -1; margin-bottom: 2px; }
+  .showcase-phone { width: min(100%, 308px); }
+  .hero-product { align-items: flex-start; }
+  .hero-stage { min-height: auto; padding: 8px 0 0; gap: 14px; }
+  .phone-frame { width: min(100%, 332px); }
+  .phone-screen { min-height: 540px; }
   .hero-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
   .wrap { padding: 22px 16px 56px; }
+  .section { margin-top: var(--section-gap-mobile); }
+  .section-head { margin-bottom: 24px; }
   .nav { align-items: flex-start; flex-direction: column; }
   .brand { font-size: 18px; }
   .nav-links {
@@ -1631,32 +1669,65 @@ p {
     background: rgba(255,255,255,0.02);
   }
   .nav-links .nav-cta { grid-column: 1 / -1; }
-  .hero-grid { padding: 24px; gap: 28px; }
+  .nav { margin-bottom: 24px; }
+  .hero-grid { padding: 22px 18px; gap: 24px; }
   .hero-lead { font-size: 17px; }
   .hero-mechanism,
   .hero-note { font-size: 14px; }
   h1 { max-width: none; }
-  .hero-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-copy h1 { max-width: 12ch; }
+  .cta-row,
+  .trust-row { width: 100%; }
+  .trust-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .trust-pill {
+    justify-content: center;
+    min-height: 36px;
+  }
+  .hero-rail { grid-template-columns: 1fr; gap: 8px; }
+  .rail-step { min-height: 74px; padding: 13px 14px; }
   .hero-stage { display: grid; justify-items: center; gap: 12px; }
   .orb { display: none; }
   .float-card { position: relative; inset: auto; width: min(100%, 320px); }
   .identity-chip { order: 1; }
-  .phone-frame { order: 2; width: min(100%, 320px); animation: none; }
+  .phone-frame { order: 2; width: min(100%, 306px); padding: 12px; animation: none; }
   .action-chip { order: 3; }
   .relay-chip { order: 4; width: min(100%, 320px); }
-  .phone-screen { min-height: 520px; }
+  .phone-notch { top: 10px; width: 104px; height: 24px; }
+  .phone-screen { min-height: 486px; padding: 20px 14px 14px; }
+  .profile-hero-card,
+  .screen-section,
+  .relay-panel { border-radius: 22px; }
   .screen-actions { grid-template-columns: 1fr; }
   .shell-grid,
   .two-up,
+  .three-up,
   .steps-grid,
   .steps-grid-five,
   .workflow-grid,
   .workflow-grid-polish,
+  .preview-grid,
+  .faq-list,
   .workflow-column,
   .showcase-actions { grid-template-columns: 1fr; }
+  .workflow-stage-panel { gap: 16px; }
   .workflow-sequence,
-  .workflow-showcase { padding: 20px; }
-  .workflow-showcase { gap: 14px; }
+  .workflow-showcase { padding: 18px; border-radius: 24px; }
+  .workflow-sequence-list { gap: 10px; }
+  .sequence-item { padding: 13px; gap: 12px; }
+  .workflow-showcase { gap: 16px; }
+  .showcase-phone { width: min(100%, 296px); padding: 12px; border-radius: 28px; }
+  .showcase-card-primary { gap: 12px; padding: 15px; }
+  .showcase-card-secondary,
+  .showcase-card-tertiary,
+  .showcase-fragment { padding: 14px; }
+  .workflow-card { gap: 14px; }
+  .workflow-visual { min-height: 156px; }
+  .workflow-bubble,
+  .showcase-bubble { max-width: 100%; }
   .surface-card,
   .card,
   .step-card,

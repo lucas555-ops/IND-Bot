@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050C
-- Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish on top of the STEP048.4 product baseline
+- Current STEP: STEP050D
+- Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050C baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, compressed post-hero landing narrative, and a stronger workflow showcase with screen-state cards; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP050D baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, improved mobile navigation, cleaner brand alignment, a product-first hero prime reframe, compressed post-hero landing narrative, a stronger workflow showcase with screen-state cards, and a responsive spacing pass across hero/workflow/card rhythm; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -25,7 +25,7 @@
 - branded OG/share-preview asset, favicon layer, and full homepage social metadata
 - hero now uses a product-first Telegram-native sculpture with workflow rail and stronger CTA framing
 - post-hero landing narrative is now compressed into clearer audience, workflow, proof, and FAQ sections with less duplication
-- `See the workflow` now presents a stronger screen-art showcase with a central master screen, side fragments, and richer mini-state cards
+- `See the workflow` now presents a stronger screen-art showcase with a central master screen, side fragments, richer mini-state cards, and tighter tablet/mobile rhythm
 
 ## Current truth
 
@@ -39,6 +39,7 @@
 - STEP050A shifts the homepage hero from policy-first explanation toward a stronger access/trust/workflow framing
 - STEP050B compresses the rest of the landing so the page reads as one product story instead of separate explanatory blocks
 - STEP050C upgrades the workflow section from text-led cards into a more premium product gallery with clearer visual authority
+- STEP050D tightens section rhythm, card heights, FAQ distribution, and hero/workflow responsive behavior for cleaner tablet/mobile presentation
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 
@@ -55,7 +56,7 @@
 
 ## Next recommended step
 
-- execute STEP050D as a narrow mobile/spacing verification pass: tune responsive behavior, card heights, and section rhythm after the hero/workflow uplift without touching runtime
+- execute STEP050E as a narrow live-verification/polish pass only if visual drift appears after deploy; otherwise hold the landing and avoid unnecessary churn
 
 ## STEP039.1 delta
 
@@ -196,3 +197,11 @@
 - workflow section now uses a central master screen plus supporting fragments to express identity, discovery, contact, and continuation as one visual system
 - each of the five workflow cards now includes a mini screen-state visual so the section feels product-led rather than copy-led
 - kept scope front-end-only on `index.html` + `site.css` plus docs state alignment; runtime and legal layers remain untouched
+
+## STEP050D delta
+
+- responsive layout rhythm tightened after STEP050A-STEP050C so hero, workflow showcase, cards, FAQ, and CTA feel more balanced on tablet/mobile
+- hero rail now stacks more cleanly on small screens, trust chips no longer crowd the first screen, and the phone/workflow stage uses calmer mobile heights
+- audience/workflow/FAQ grids now keep stronger tablet distribution before collapsing to one column, reducing unnecessary vertical sprawl
+- kept scope front-end-only on `site.css` plus docs state alignment; runtime, routing, and legal surfaces remain untouched
+
