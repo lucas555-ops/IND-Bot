@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.3
-- Phase: paired menu layout polish on top of the STEP051.2 home/help organization pass, the STEP051.1 invite photo-card uplift, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.4
+- Phase: command parity hotfix on top of the STEP051.3 paired menu polish, the STEP051.1 invite photo-card uplift, and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.3 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, and the Telegram home/help surfaces now organized into compact paired rows for cleaner mobile scanning: profile+browse, inboxes, plans+invite, then help, with admin still pinned last for founder/operator accounts; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.4 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` now routed through a single handler, and `/inbox` hardened with a product-safe fallback path instead of failing silently; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -35,6 +35,7 @@
 - STEP051.1 upgrades the primary inline invite result from article/text into a photo-card built from the shipped OG preview asset, with caption polish and cached-photo readiness
 - STEP051.2 reorganizes the user-facing home/help menu surfaces so the core flow reads more cleanly: profile/browse first, inboxes next, plans before invite, help near the bottom, and founder/operator admin pinned last
 - STEP051.3 keeps the STEP051.2 order but compresses the home/help keyboards into cleaner two-button rows where it improves mobile scanning, without changing invite, DM, intro, or LinkedIn contracts
+- STEP051.4 fixes command parity: `/start` now has one runtime owner, `/menu` stays the visible home fallback, `/inbox` gets a product-safe fallback path, and the accidental home-surface extra-notice leak is removed
 
 ## Current truth
 
@@ -56,6 +57,7 @@
 - STEP051.1 keeps the STEP051 invite surface contract intact and only upgrades the primary share result to a richer photo-card path
 - STEP051.2 keeps the invite/runtime contracts intact and only reorganizes menu entrypoint order plus help-surface discovery, including a first-class `Plans` entry on the home/help surfaces
 - STEP051.3 keeps the same menu order but makes the keyboards more compact and organic on mobile by pairing the most related actions into shared rows
+- STEP051.4 keeps the paired menu layout intact and only hardens slash-command behavior so `/start`, `/menu`, and `/inbox` behave like honest entrypoints instead of partially diverging from the button flow
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -71,7 +73,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.3 and do a short live menu smoke on the real bot: /start or /menu, confirm the paired home/help rows feel more compact on mobile, and verify the `⭐ Plans` + `📨 Invite contacts` row still leaves invite/photo-card behavior untouched
+- deploy STEP051.4 and do a short live command smoke on the real bot: verify `/start` produces one home render, `/menu` opens the same home surface, `/inbox` always responds with either the inbox or a product-safe fallback, and invite deep links still attribute correctly
 
 ## STEP039.1 delta
 
@@ -290,3 +292,11 @@
 - help keyboard mirrors the same paired navigation structure so home/help feel like one coherent surface instead of two different layouts
 - `❓ Help` and founder/operator `👑 Админка` remain single-row actions so the bottom of the menu still reads clearly
 - scope is layout polish only; no command routing, schema, invite attribution, DM, intro, or LinkedIn auth contracts changed
+
+## STEP051.4 delta
+
+- removed the duplicate `/start` runtime ownership so start/deep-link handling now lives in one place instead of rendering home twice
+- `/menu` remains the explicit visible home fallback, separate from the hidden system `/start` entrypoint
+- hardened `/inbox` with a product-safe fallback render and text clamping so the slash-command path no longer fails silently when the inbox surface cannot be rendered cleanly
+- removed the accidental extra-notice leak on home renders where `appBaseUrl` could be passed into the home surface as if it were a notice
+- updated command/router smoke coverage to assert one `/start` handler and the `/inbox` fallback path

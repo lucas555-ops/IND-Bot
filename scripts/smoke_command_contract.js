@@ -14,7 +14,7 @@ const inviteComposerSource = readFileSync(new URL('../src/bot/composers/inviteCo
 const operatorComposerSource = readFileSync(new URL('../src/bot/composers/operatorComposer.js', import.meta.url), 'utf8');
 
 for (const [command, source] of [
-  ['start', homeComposerSource],
+  ['start', inviteComposerSource],
   ['menu', homeComposerSource],
   ['help', homeComposerSource],
   ['profile', profileComposerSource],
@@ -63,3 +63,12 @@ if (!deniedOpsText.includes('only available to the operator account')) {
 }
 
 console.log('OK: command contract cleanup baseline');
+
+const startHandlerCount = [homeComposerSource, inviteComposerSource].reduce((count, source) => count + (source.match(/composer\.command\('start'/g) || []).length, 0);
+if (startHandlerCount !== 1) {
+  throw new Error(`Expected exactly 1 /start handler, found ${startHandlerCount}`);
+}
+
+if (!introComposerSource.includes('Could not open intro inbox right now.')) {
+  throw new Error('/inbox command must have a product-safe fallback path');
+}

@@ -2,7 +2,17 @@ import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import { decideIntroRequestForTelegramUser } from '../../lib/storage/introRequestStore.js';
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
+import { renderIntroInboxKeyboard, renderIntroInboxText } from '../../lib/telegram/render.js';
 import { formatUserFacingError } from '../utils/notices.js';
+
+function fitTelegramText(text, limit = 3900) {
+  const value = String(text || '').trim();
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit - 2).trimEnd()}…`;
+}
 
 export function createIntroComposer({
   clearAllPendingInputs,
@@ -14,13 +24,32 @@ export function createIntroComposer({
   const composer = new Composer();
 
   const renderIntroInbox = async (ctx, method = 'edit', notice = null) => {
-    await clearAllPendingInputs(ctx.from.id);
-    const surface = await buildIntroInboxSurface(ctx, notice);
-    if (method === 'reply') {
-      await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+    try {
+      await clearAllPendingInputs(ctx.from.id);
+      const surface = await buildIntroInboxSurface(ctx, notice);
+      const options = { reply_markup: surface.reply_markup };
+      const text = fitTelegramText(surface.text);
+      if (method === 'reply') {
+        await ctx.reply(text, options);
+        return;
+      }
+      await safeEditOrReply(ctx, text, options);
       return;
+    } catch (error) {
+      const fallbackNotice = `⚠️ ${formatUserFacingError(String(error?.message || error), 'Could not open intro inbox right now.')}`;
+      const fallbackText = renderIntroInboxText({
+        persistenceEnabled: false,
+        inboxState: null,
+        contactUnlockInbox: null,
+        notice: fallbackNotice
+      });
+      const fallbackKeyboard = renderIntroInboxKeyboard({ inboxState: null, contactUnlockInbox: null });
+      if (method === 'reply') {
+        await ctx.reply(fitTelegramText(fallbackText), { reply_markup: fallbackKeyboard });
+        return;
+      }
+      await safeEditOrReply(ctx, fitTelegramText(fallbackText), { reply_markup: fallbackKeyboard });
     }
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
   };
 
   composer.command('inbox', async (ctx) => {

@@ -31,7 +31,7 @@ export async function createBot() {
   const bot = new Bot(botToken);
 
   const surfaces = createSurfaceBuilders({ appBaseUrl, invitePhotoFileId });
-  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP051.1' });
+  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP051.4' });
 
 
   bot.use(createInviteComposer({
@@ -43,7 +43,6 @@ export async function createBot() {
   }));
 
   bot.use(createHomeComposer({
-    appBaseUrl,
     clearAllPendingInputs,
     buildHomeSurface: surfaces.buildHomeSurface,
     buildHelpSurface: surfaces.buildHelpSurface
