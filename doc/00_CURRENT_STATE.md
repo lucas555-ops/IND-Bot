@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP050M
-- Phase: landing production uplift with hero prime reframe + narrative compression + workflow visual polish + responsive spacing verification on top of the STEP048.4 product baseline
-- Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Runtime status: source-clean STEP050M baseline with the STEP048.4 product/runtime layer intact plus the rebuilt public landing, refreshed OG social preview assets, cleaner brand alignment, a product-first hero, a tighter post-hero workflow bridge, a stronger workflow showcase with single-asset gallery scenes, a responsive spacing pass, a simplified single-master visual integrated into the hero, a lower-page polish pass across workflow rhythm, benefits, audience fit, and final CTA, a mobile-specific navigation/workflow bridge/gallery fix pass, and a narrow root meta-copy refresh for the public landing preview plus OG social smoke alignment to the current root asset path; live status not confirmed — manual verification required
+- Current STEP: STEP051
+- Phase: invite contacts / Telegram-native inline share layer on top of the STEP050M landing + STEP048.4 product baseline
+- Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
+- Runtime status: source-clean STEP051 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, and a new Telegram invite surface with inline share, raw-link/card fallbacks, first-start attribution truth, and invite counters; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -31,6 +31,7 @@
 - STEP050L replaces the heavy 2-column mobile nav wall with a calmer horizontal chip rail plus separate CTA, collapses the `How it works` bridge into a one-card-per-row mobile stack, and stabilizes workflow thumbnails as a true horizontal strip without overlap/clipping
 - STEP050M narrows the public landing meta copy so root `<title>`, standard description, Open Graph, and Twitter preview text all use one cleaner canon: trusted intros and direct contact in Telegram, with LinkedIn as the identity layer
 - STEP050M also realigns `scripts/smoke_og_social_contract.js` to the current `assets/social/intro-deck-og-1200x630.png` asset path so OG/social source checks match the repo state
+- STEP051 invite contacts / Telegram-native inline share layer with primary inline share CTA, raw-link/card fallbacks, deep-link attribution truth, and honest invited/activated counters
 
 ## Current truth
 
@@ -48,6 +49,8 @@
 - STEP050E de-densifies the hero by removing the workflow rail and explanatory plaque, shortening the hero copy, and integrating a cleaner rendered device visual as the main right-side anchor
 - privacy and terms pages now share the same visual/navigation standard as the landing
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
+- STEP051 keeps LinkedIn as the trust/identity bootstrap and adds invite sharing as a narrow Telegram-native growth layer without reward mechanics
+- invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
 
@@ -62,7 +65,7 @@
 
 ## Next recommended step
 
-- deploy STEP050M and verify both the live mobile navigation/workflow behavior and the updated root social/meta preview text on the real domain before any further polish work
+- deploy STEP051, enable/confirm BotFather inline mode, and verify live inline share + raw-link/card fallbacks + first-start invite attribution on the real bot before any reward or growth-expansion ideas
 
 ## STEP039.1 delta
 
@@ -246,3 +249,13 @@
 ## STEP050M delta
 - root landing meta copy updated so `<title>`, `meta name="description"`, `og:title`, `og:description`, `twitter:title`, and `twitter:description` all share the new trusted-intros/direct-contact wording
 - no runtime, layout, OG-image, or legal-surface changes
+
+
+## STEP051 delta
+
+- `/invite` command and `📨 Invite contacts` user surface added
+- primary share path now uses Telegram inline mode with raw-link and invite-card fallbacks
+- `member_invites` stores first-start invite attribution truth
+- home/help surfaces now expose invite entrypoints for connected members
+- invite counters stay honest: `Friends invited` and `Activated`
+- no reward mechanics, no quota bonuses, no leaderboard layer

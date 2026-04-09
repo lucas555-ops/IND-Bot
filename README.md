@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP050I source baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, mature operator/admin control plane, pricing + DM monetization foundation, and a rebuilt production-grade public landing.
+STEP051 baseline for a Telegram-native professional directory with LinkedIn OIDC identity bootstrap, user-facing Telegram member flow, landing/meta production uplift, and a narrow invite contacts / inline-share layer on top of the mature operator/admin control plane.
 
 ## What this repo is
 
@@ -10,9 +10,10 @@ A Telegram-first professional directory:
 - listed/active directory browse
 - persisted intro requests and decisions
 - gated member DM relay with first-message approval and paid request opening
+- Telegram-native invite contacts surface with inline share + raw-link/card fallbacks
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
-- rebuilt public landing, OG/share layer, workflow gallery, and legal surfaces
+- runbook/freeze launch discipline
 
 ## Current STEP corridor
 
@@ -24,9 +25,7 @@ A Telegram-first professional directory:
 - STEP045 — LinkedIn identity auto-seed uplift
 - STEP046 — private handle + paid direct contact unlock
 - STEP047 — gated member DM relay
-- STEP048 — pricing / analytics / ops
-- STEP049B–STEP050H — landing production uplift
-- STEP050I — repo consistency cleanup + smoke/doc alignment
+- STEP051 — invite contacts / Telegram-native inline share layer
 
 ## Core docs
 
@@ -40,12 +39,9 @@ A Telegram-first professional directory:
 - `doc/77_LAUNCH_REHEARSAL_CHECKLIST_V1.md`
 - `doc/78_GO_NO_GO_VERDICT_TEMPLATE_V1.md`
 
-## Recommended source-level checks
+## Smoke
 
 - `npm run check`
-- `npm run smoke:landing`
-- `npm run smoke:landing-polish`
-- `npm run smoke:og-social`
 - `npm run smoke:admin-shell`
 - `npm run smoke:admin-russian-layer`
 - `npm run smoke:admin-bulk-actions`
@@ -53,3 +49,4 @@ A Telegram-first professional directory:
 - `npm run smoke:admin-live-verification`
 - `npm run smoke:dm-relay`
 - `npm run smoke:dm-payments`
+- `npm run smoke:invite`

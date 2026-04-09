@@ -10,6 +10,7 @@ const homeComposerSource = readFileSync(new URL('../src/bot/composers/homeCompos
 const profileComposerSource = readFileSync(new URL('../src/bot/composers/profileComposer.js', import.meta.url), 'utf8');
 const directoryComposerSource = readFileSync(new URL('../src/bot/composers/directoryComposer.js', import.meta.url), 'utf8');
 const introComposerSource = readFileSync(new URL('../src/bot/composers/introComposer.js', import.meta.url), 'utf8');
+const inviteComposerSource = readFileSync(new URL('../src/bot/composers/inviteComposer.js', import.meta.url), 'utf8');
 const operatorComposerSource = readFileSync(new URL('../src/bot/composers/operatorComposer.js', import.meta.url), 'utf8');
 
 for (const [command, source] of [
@@ -19,6 +20,7 @@ for (const [command, source] of [
   ['profile', profileComposerSource],
   ['browse', directoryComposerSource],
   ['inbox', introComposerSource],
+  ['invite', inviteComposerSource],
   ['ops', operatorComposerSource]
 ]) {
   if (!source.includes(`composer.command('${command}'`)) {

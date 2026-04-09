@@ -7,7 +7,7 @@ export async function upsertTelegramUser(client, { telegramUserId, telegramUsern
       do update set
         telegram_username = excluded.telegram_username,
         last_seen_at = now()
-      returning id, telegram_user_id, telegram_username, first_seen_at, last_seen_at
+      returning id, telegram_user_id, telegram_username, first_seen_at, last_seen_at, (xmax = 0) as inserted
     `,
     [telegramUserId, telegramUsername]
   );

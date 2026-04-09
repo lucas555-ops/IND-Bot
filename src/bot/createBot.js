@@ -4,6 +4,7 @@ import { createContactUnlockComposer } from './composers/contactUnlockComposer.j
 import { createDirectoryComposer } from './composers/directoryComposer.js';
 import { createDmComposer } from './composers/dmComposer.js';
 import { createHomeComposer } from './composers/homeComposer.js';
+import { createInviteComposer } from './composers/inviteComposer.js';
 import { createIntroComposer } from './composers/introComposer.js';
 import { createMonetizationComposer } from './composers/monetizationComposer.js';
 import { createOperatorComposer } from './composers/operatorComposer.js';
@@ -31,6 +32,15 @@ export async function createBot() {
 
   const surfaces = createSurfaceBuilders({ appBaseUrl });
   const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP048.2' });
+
+
+  bot.use(createInviteComposer({
+    clearAllPendingInputs,
+    buildHomeSurface: surfaces.buildHomeSurface,
+    buildInviteSurface: surfaces.buildInviteSurface,
+    buildInviteLinkSurface: surfaces.buildInviteLinkSurface,
+    buildInviteCardMessage: surfaces.buildInviteCardMessage
+  }));
 
   bot.use(createHomeComposer({
     appBaseUrl,

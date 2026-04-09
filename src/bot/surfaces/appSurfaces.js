@@ -7,6 +7,7 @@ import { loadDmInboxState, loadDmThreadDetailForTelegramUser } from '../../lib/s
 import { touchTelegramUserAndLoadProfile } from '../../lib/storage/profileStore.js';
 import { loadNotificationOperatorSurface } from '../../lib/storage/notificationStore.js';
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
+import { loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
 import { isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
@@ -23,6 +24,7 @@ function fallbackRenderHelpText() {
     '• /browse — browse the directory',
     '• /inbox — open your intro inbox',
     '• /dm — open your DM inbox',
+    '• /invite — share your invite',
     '• /plans — open pricing and Pro status',
     '• /menu — return home'
   ].join('\n');
@@ -35,6 +37,7 @@ function fallbackRenderHelpKeyboard() {
       [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
       [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
       [{ text: '💬 DM inbox', callback_data: 'dm:inbox' }],
+      [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
       [{ text: '⭐ Plans', callback_data: 'plans:root' }],
       [{ text: '🏠 Home', callback_data: 'home:root' }]
     ]
@@ -71,6 +74,13 @@ const renderProfileSkillsKeyboard = render.renderProfileSkillsKeyboard;
 const renderProfileSkillsText = render.renderProfileSkillsText;
 const renderPricingText = render.renderPricingText;
 const renderPricingKeyboard = render.renderPricingKeyboard;
+const renderInviteText = render.renderInviteText;
+const renderInviteKeyboard = render.renderInviteKeyboard;
+const renderInviteLinkText = render.renderInviteLinkText;
+const renderInviteLinkKeyboard = render.renderInviteLinkKeyboard;
+const renderInviteCardText = render.renderInviteCardText;
+const renderInviteCardKeyboard = render.renderInviteCardKeyboard;
+const renderInlineInviteShareText = render.renderInlineInviteShareText;
 
 
 function noticeMatchesProfile(notice, profileSnapshot) {
@@ -115,7 +125,7 @@ function noticeMatchesProfile(notice, profileSnapshot) {
 }
 
 export function createSurfaceBuilders({ appBaseUrl }) {
-  async function buildHomeSurface(ctx) {
+  async function buildHomeSurface(ctx, homeExtraNotice = null) {
     const storeResult = await touchTelegramUserAndLoadProfile({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null
@@ -154,6 +164,7 @@ export function createSurfaceBuilders({ appBaseUrl }) {
       ? await loadActiveAdminNotice().catch(() => ({ persistenceEnabled: true, notice: null }))
       : { persistenceEnabled: false, notice: null };
     const activeNotice = noticeMatchesProfile(adminNoticeResult.notice, storeResult.profile);
+    const combinedNotice = [activeNotice, homeExtraNotice].filter(Boolean).join('\n\n') || null;
 
     return {
       text: renderHomeText({
@@ -162,7 +173,7 @@ export function createSurfaceBuilders({ appBaseUrl }) {
         directoryStats: directoryResult ? { totalCount: directoryResult.totalCount || 0 } : null,
         introInboxStats: introInboxResult?.inbox?.counts || null,
         isOperator: isOperatorTelegramUser(ctx.from.id),
-        notice: activeNotice
+        notice: combinedNotice
       }),
       reply_markup: renderHomeKeyboard({
         appBaseUrl,
@@ -431,6 +442,80 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
   }
 
 
+  async function buildInviteSurface(ctx, notice = null) {
+    const state = await loadInviteSurfaceState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      inviteCode: null,
+      inviteLink: null,
+      inlineInviteLink: null,
+      inviteCardLink: null,
+      shareInlineQuery: 'invite',
+      invitedCount: 0,
+      activatedCount: 0,
+      invitedBy: null,
+      invited: [],
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInviteText({ inviteState: state, notice }),
+      reply_markup: renderInviteKeyboard({ inviteState: state }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildInviteLinkSurface(ctx) {
+    const state = await loadInviteSurfaceState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      inviteCode: null,
+      inviteLink: null,
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInviteLinkText({ inviteState: state }),
+      reply_markup: renderInviteLinkKeyboard(),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildInviteCardMessage(ctx) {
+    const state = await loadInviteSurfaceState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      inviteCode: null,
+      inviteLink: null,
+      inlineInviteLink: null,
+      inviteCardLink: null,
+      invitedCount: 0,
+      activatedCount: 0,
+      invited: [],
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInviteCardText({ inviteState: state }),
+      reply_markup: renderInviteCardKeyboard({ inviteState: state }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      snapshot: {
+        ...state,
+        inlineShareText: renderInlineInviteShareText({ inviteState: state })
+      }
+    };
+  }
+
+
   async function buildDmInboxSurface(ctx, notice = null) {
     const state = await loadDmInboxState({
       telegramUserId: ctx.from.id,
@@ -567,6 +652,9 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
   return {
     buildHomeSurface,
     buildHelpSurface,
+    buildInviteSurface,
+    buildInviteLinkSurface,
+    buildInviteCardMessage,
     buildPricingSurface,
     buildProfileMenuSurface,
     buildProfilePreviewSurface,

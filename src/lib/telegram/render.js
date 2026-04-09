@@ -12,6 +12,34 @@ function buildInlineKeyboard(rows) {
   };
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function inviteSourceLabel(source) {
+  if (source === 'inline_share') {
+    return 'inline';
+  }
+  if (source === 'invite_card') {
+    return 'card';
+  }
+  return 'link';
+}
+
+function renderInviteFriendLine(item, index) {
+  const name = toDisplayValue(item?.displayName, 'New contact');
+  const headline = item?.headlineUser ? ` — ${truncate(item.headlineUser, 34)}` : '';
+  return `${index + 1}. ${name}${headline} • ${item?.status === 'activated' ? 'activated' : 'joined'} • ${inviteSourceLabel(item?.source)} • ${formatDateShort(item?.joinedAt)}`;
+}
+
+function buildJoinIntroDeckAnchor(inviteUrl) {
+  return inviteUrl ? `<a href="${escapeHtml(inviteUrl)}">Join Intro Deck</a>` : 'Join Intro Deck';
+}
+
 function toDisplayValue(value, fallback = '—') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
@@ -538,6 +566,7 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
   if (persistenceEnabled && profileSnapshot?.linkedin_sub) {
     rows.push([{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }]);
     rows.push([{ text: '💬 DM inbox', callback_data: 'dm:inbox' }]);
+    rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
   }
 
   rows.push([{ text: '❓ Help', callback_data: 'help:root' }]);
@@ -560,7 +589,8 @@ export function renderHelpText() {
     '• complete your profile',
     '• browse the directory',
     '• check your intro inbox',
-    '• review your DM inbox'
+    '• review your DM inbox',
+    '• invite trusted contacts'
   ].join('\n');
 }
 
@@ -570,6 +600,7 @@ export function renderHelpKeyboard() {
     [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
     [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
     [{ text: '💬 DM inbox', callback_data: 'dm:inbox' }],
+    [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -1458,6 +1489,110 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
   return buildInlineKeyboard(rows);
 }
 
+
+
+export function renderInviteText({ inviteState = null, notice = null } = {}) {
+  const lines = [
+    '📨 Invite contacts',
+    '',
+    'Share your personal Intro Deck invite straight into any chat.',
+    'Use Share invite for the fastest Telegram-native flow.'
+  ];
+
+  if (!inviteState?.persistenceEnabled) {
+    lines.push('');
+    lines.push('Invite tracking is unavailable right now.');
+  } else {
+    lines.push('');
+    lines.push('<b>Your invite link</b>');
+    lines.push(`<code>${escapeHtml(inviteState.inviteLink || '—')}</code>`);
+    lines.push('');
+    lines.push('<b>Three ready message ideas</b>');
+    lines.push(`1) I found a clean Telegram directory for discovering people, requesting intros, and unlocking direct contact. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
+    lines.push(`2) Useful bot for finding relevant people and continuing in Telegram. You can request an intro or direct contact. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
+    lines.push(`3) If you want a cleaner way to find people and get warm intros in Telegram, try this. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
+    lines.push('');
+    lines.push(`<b>Your invite code:</b> <code>${escapeHtml(inviteState.inviteCode || '—')}</code>`);
+    lines.push(`<b>Friends invited:</b> ${Number(inviteState.invitedCount || 0)}`);
+    lines.push(`<b>Activated:</b> ${Number(inviteState.activatedCount || 0)}`);
+    if (inviteState.invitedBy?.displayName) {
+      lines.push(`<b>Joined from:</b> ${escapeHtml(inviteState.invitedBy.displayName)}`);
+    }
+
+    if (Array.isArray(inviteState.invited) && inviteState.invited.length) {
+      lines.push('');
+      lines.push('<b>Recent invited contacts</b>');
+      for (const [index, item] of inviteState.invited.entries()) {
+        lines.push(escapeHtml(renderInviteFriendLine(item, index)));
+      }
+    } else {
+      lines.push('');
+      lines.push('No invited contacts yet. Use Share invite for the fastest path, Show link for a raw link, or Get invite card for a forwardable bot card.');
+    }
+  }
+
+  if (notice) {
+    lines.push('');
+    lines.push(escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderInviteKeyboard({ inviteState = null } = {}) {
+  const rows = [];
+  if (inviteState?.persistenceEnabled && inviteState?.inviteLink) {
+    rows.push([{ text: '📨 Share invite', switch_inline_query: inviteState.shareInlineQuery || 'invite' }]);
+    rows.push([
+      { text: '🔗 Show link', callback_data: 'invite:show_link' },
+      { text: '🧾 Get invite card', callback_data: 'invite:send_card' }
+    ]);
+    rows.push([{ text: '🔄 Refresh', callback_data: 'invite:root' }]);
+  }
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderInviteLinkText({ inviteState = null } = {}) {
+  return [
+    '🔗 <b>Your invite link</b>',
+    '',
+    'Copy this link and drop it into any chat if you prefer a raw link over inline share.',
+    '',
+    `<code>${escapeHtml(inviteState?.inviteLink || '—')}</code>`
+  ].join('\n');
+}
+
+export function renderInviteLinkKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
+    [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ]);
+}
+
+export function renderInviteCardText({ inviteState = null } = {}) {
+  return [
+    '🤝 <b>Join me on Intro Deck</b>',
+    '',
+    'Discover people, request intros, or unlock direct contact in Telegram.',
+    '',
+    buildJoinIntroDeckAnchor(inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink)
+  ].join('\n');
+}
+
+export function renderInviteCardKeyboard({ inviteState = null } = {}) {
+  const inviteUrl = inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink;
+  const rows = inviteUrl ? [[{ text: 'Open Intro Deck', url: inviteUrl }]] : [];
+  return buildInlineKeyboard(rows);
+}
+
+export function renderInlineInviteShareText({ inviteState = null } = {}) {
+  return [
+    'I found a clean Telegram directory for discovering people, requesting intros, and unlocking direct contact.',
+    '',
+    buildJoinIntroDeckAnchor(inviteState?.inlineInviteLink || inviteState?.inviteLink)
+  ].join('\n');
+}
 
 export function renderOperatorDiagnosticsText({
   persistenceEnabled = false,
