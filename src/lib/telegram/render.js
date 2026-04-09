@@ -625,6 +625,90 @@ export function renderHelpKeyboard() {
   ]);
 }
 
+function pricingReceiptLabel(receipt) {
+  if (receipt?.receiptType === 'subscription') {
+    return 'Pro';
+  }
+  if (receipt?.receiptType === 'contact_unlock') {
+    return 'Direct contact';
+  }
+  if (receipt?.receiptType === 'dm_open') {
+    return 'DM open';
+  }
+  return toDisplayValue(receipt?.receiptType, 'Receipt');
+}
+
+export function renderPricingText({ pricingState = null } = {}) {
+  const state = pricingState || {};
+  const pricing = state.pricing || {};
+  const subscriptionConfig = state.subscriptionConfig || {};
+  const subscription = state.subscription || null;
+  const recentReceipts = Array.isArray(state.recentReceipts) ? state.recentReceipts.slice(0, 5) : [];
+  const lines = [
+    '⭐ Intro Deck Pro',
+    '',
+    'Use Pro when you want direct-contact requests and DM request opens included during your active subscription.',
+    ''
+  ];
+
+  if (!state.persistenceEnabled) {
+    lines.push('Pricing and purchase history are unavailable right now.');
+  } else if (subscription?.isActive) {
+    lines.push(`Status: Pro active until ${formatDateShort(subscription.expiresAt)}`);
+  } else if (subscription?.expiresAt) {
+    lines.push(`Status: Pro inactive • last expired ${formatDateShort(subscription.expiresAt)}`);
+  } else {
+    lines.push('Status: Pro not active yet');
+  }
+
+  lines.push('');
+  lines.push(`Pro monthly: ${pricing.proMonthlyPriceStars || 0}⭐ • ${subscriptionConfig.proMonthlyDurationDays || 30} days`);
+  lines.push(`Direct contact request: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
+  lines.push(`DM request open: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
+  lines.push('');
+  lines.push('Included with active Pro:');
+  lines.push('• direct-contact request opens');
+  lines.push('• DM request opens');
+
+  if (recentReceipts.length) {
+    lines.push('');
+    lines.push('Recent purchases:');
+    for (const receipt of recentReceipts) {
+      lines.push(`• ${pricingReceiptLabel(receipt)} • ${receipt?.amountStars || 0}⭐ • ${formatDateShort(receipt?.confirmedAt || receipt?.purchasedAt)}`);
+    }
+  }
+
+  if (state.reason && !state.persistenceEnabled) {
+    lines.push('');
+    lines.push(`Reason: ${state.reason}`);
+  }
+
+  return lines.join('\n');
+}
+
+export function renderPricingKeyboard({ pricingState = null } = {}) {
+  const state = pricingState || {};
+  const pricing = state.pricing || {};
+  const subscription = state.subscription || null;
+  const rows = [];
+
+  if (state.persistenceEnabled) {
+    if (subscription?.isActive) {
+      rows.push([{ text: `✅ Pro active • until ${formatDateShort(subscription.expiresAt)}`, callback_data: 'plans:root' }]);
+    } else {
+      rows.push([{ text: `⭐ Buy Pro • ${pricing.proMonthlyPriceStars || 0}⭐`, callback_data: 'plans:buy:pro' }]);
+    }
+    rows.push([
+      { text: '🔄 Refresh', callback_data: 'plans:root' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]);
+    return buildInlineKeyboard(rows);
+  }
+
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
 export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
   const lines = [
     '🧩 Profile editor',
