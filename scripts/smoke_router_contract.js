@@ -73,11 +73,36 @@ const serialized = JSON.stringify(keyboard.inline_keyboard);
 if (!serialized.includes('Edit profile')) {
   throw new Error('home keyboard missing profile entrypoint');
 }
+if (!serialized.includes('plans:root')) {
+  throw new Error('home keyboard missing plans entrypoint');
+}
 if (!serialized.includes('help:root')) {
   throw new Error('home keyboard missing help callback');
 }
 if (serialized.includes('home:root')) {
   throw new Error('home keyboard must not include a home callback on the home surface');
+}
+
+const homeRows = keyboard.inline_keyboard.map((row) => row[0]?.callback_data || row[0]?.url || '');
+const expectedHomeOrder = ['p:menu', 'dir:list:0', 'intro:inbox', 'dm:inbox', 'plans:root', 'invite:root', 'help:root'];
+if (JSON.stringify(homeRows.slice(0, expectedHomeOrder.length)) !== JSON.stringify(expectedHomeOrder)) {
+  throw new Error(`home keyboard order mismatch: ${homeRows.join(' | ')}`);
+}
+
+
+const disconnectedKeyboard = renderHomeKeyboard({
+  appBaseUrl: 'https://example.com',
+  telegramUserId: 42,
+  profileSnapshot: null,
+  persistenceEnabled: true
+}).inline_keyboard;
+const disconnectedRows = disconnectedKeyboard.map((row) => row[0]?.callback_data || row[0]?.url || '');
+if (!disconnectedRows[0].includes('/api/oauth/start/linkedin')) {
+  throw new Error('disconnected home keyboard must keep Connect LinkedIn first');
+}
+const expectedDisconnectedTail = ['dir:list:0', 'plans:root', 'help:root'];
+if (JSON.stringify(disconnectedRows.slice(1)) !== JSON.stringify(expectedDisconnectedTail)) {
+  throw new Error(`disconnected home keyboard order mismatch: ${disconnectedRows.join(' | ')}`);
 }
 
 const menuText = renderProfileMenuText({
@@ -147,7 +172,13 @@ const helpText = renderHelpText();
 if (!helpText.includes('Use Intro Deck to connect your LinkedIn identity')) {
   throw new Error('help text missing product summary');
 }
-const helpKeyboard = JSON.stringify(renderHelpKeyboard().inline_keyboard);
-if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('intro:inbox')) {
+const helpKeyboardInline = renderHelpKeyboard().inline_keyboard;
+const helpKeyboard = JSON.stringify(helpKeyboardInline);
+if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('intro:inbox') || !helpKeyboard.includes('plans:root')) {
   throw new Error('help keyboard missing key entrypoints');
+}
+const expectedHelpOrder = ['p:menu', 'dir:list:0', 'intro:inbox', 'dm:inbox', 'plans:root', 'invite:root', 'home:root'];
+const helpRows = helpKeyboardInline.map((row) => row[0]?.callback_data || '');
+if (JSON.stringify(helpRows) != JSON.stringify(expectedHelpOrder)) {
+  throw new Error(`help keyboard order mismatch: ${helpRows.join(' | ')}`);
 }

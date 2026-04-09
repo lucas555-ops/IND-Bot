@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.1
-- Phase: invite photo-card uplift on top of the STEP051 invite layer and STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.2
+- Phase: home/help menu organization polish on top of the STEP051.1 invite photo-card uplift and STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.1 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, and the Telegram invite surface upgraded so primary inline share now ships a photo-card from the OG asset, with cached-photo readiness, caption polish, raw-link/text fallbacks, first-start attribution truth, and invite counters; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.2 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, and the Telegram home/help surfaces reorganized into a cleaner user-first menu order: profile/browse → inboxes → plans → invite → help, with admin still pinned last for founder/operator accounts; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -33,6 +33,7 @@
 - STEP050M also realigns `scripts/smoke_og_social_contract.js` to the current `assets/social/intro-deck-og-1200x630.png` asset path so OG/social source checks match the repo state
 - STEP051 invite contacts / Telegram-native inline share layer with primary inline share CTA, raw-link/card fallbacks, deep-link attribution truth, and honest invited/activated counters
 - STEP051.1 upgrades the primary inline invite result from article/text into a photo-card built from the shipped OG preview asset, with caption polish and cached-photo readiness
+- STEP051.2 reorganizes the user-facing home/help menu surfaces so the core flow reads more cleanly: profile/browse first, inboxes next, plans before invite, help near the bottom, and founder/operator admin pinned last
 
 ## Current truth
 
@@ -52,6 +53,7 @@
 - STEP048 pricing / analytics / ops remains the last shipped product/runtime layer beneath the landing uplift
 - STEP051 keeps LinkedIn as the trust/identity bootstrap and adds invite sharing as a narrow Telegram-native growth layer without reward mechanics
 - STEP051.1 keeps the STEP051 invite surface contract intact and only upgrades the primary share result to a richer photo-card path
+- STEP051.2 keeps the invite/runtime contracts intact and only reorganizes menu entrypoint order plus help-surface discovery, including a first-class `Plans` entry on the home/help surfaces
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -67,7 +69,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.1, verify that inline share now sends the OG photo-card on the real bot, and optionally capture/store `INVITE_PHOTO_FILE_ID` for the cached-photo path after one live Telegram upload
+- deploy STEP051.2 and do a short live menu smoke on the real bot: /start or /menu, confirm the new home/help order feels cleaner on mobile, and verify the `⭐ Plans` entry now sits in the main user navigation without disturbing invite/photo-card behavior
 
 ## STEP039.1 delta
 
@@ -269,3 +271,11 @@
 - inline invite caption now uses the tighter landing canon: trusted intros and direct contact in Telegram
 - cached-photo readiness added via optional `INVITE_PHOTO_FILE_ID` env; when absent, the bot falls back to the public JPEG asset URL
 - `Show link` and `Get invite card` remain unchanged as fallback paths
+
+
+## STEP051.2 delta
+
+- home surface buttons are now ordered more intentionally for member flow: profile/edit first, browse second, inboxes next, `Plans` before growth/share, help near the bottom, and admin still last
+- help surface text now mentions plans / Pro status explicitly and the help keyboard mirrors the same core navigation order
+- `⭐ Plans` is now promoted from a hidden shortcut/fallback path into the main home/help navigation so monetization entry is easier to discover without cluttering the invite flow
+- scope is UI-order polish only; no schema, invite attribution, DM, intro, or LinkedIn auth contracts changed

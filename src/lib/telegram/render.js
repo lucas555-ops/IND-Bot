@@ -551,8 +551,9 @@ export function renderHomeText({ profileSnapshot = null, persistenceEnabled = fa
 
 export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot = null, persistenceEnabled = false, isOperator = false }) {
   const rows = [];
+  const isLinkedInConnected = Boolean(profileSnapshot?.linkedin_sub);
 
-  if (!profileSnapshot?.linkedin_sub) {
+  if (!isLinkedInConnected) {
     rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
   } else if (persistenceEnabled) {
     const profileLabel = profileSnapshot?.completion?.isReady ? '🧩 Edit profile' : '🧩 Complete profile';
@@ -563,9 +564,16 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
     rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
   }
 
-  if (persistenceEnabled && profileSnapshot?.linkedin_sub) {
+  if (persistenceEnabled && isLinkedInConnected) {
     rows.push([{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }]);
     rows.push([{ text: '💬 DM inbox', callback_data: 'dm:inbox' }]);
+  }
+
+  if (persistenceEnabled) {
+    rows.push([{ text: '⭐ Plans', callback_data: 'plans:root' }]);
+  }
+
+  if (persistenceEnabled && isLinkedInConnected) {
     rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
   }
 
@@ -582,7 +590,7 @@ export function renderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse trusted professionals, send warm intros, and open gated DM requests.',
+    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse trusted professionals, send warm intros, open gated DM requests, and manage Pro access when you need direct contact.',
     '',
     'Start here:',
     '• connect LinkedIn',
@@ -590,6 +598,7 @@ export function renderHelpText() {
     '• browse the directory',
     '• check your intro inbox',
     '• review your DM inbox',
+    '• open plans / Pro status',
     '• invite trusted contacts'
   ].join('\n');
 }
@@ -600,6 +609,7 @@ export function renderHelpKeyboard() {
     [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
     [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
     [{ text: '💬 DM inbox', callback_data: 'dm:inbox' }],
+    [{ text: '⭐ Plans', callback_data: 'plans:root' }],
     [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);

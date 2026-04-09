@@ -17,15 +17,15 @@ function fallbackRenderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse listed professionals, manage your intro inbox, and review gated DM requests.',
+    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse listed professionals, manage your intro inbox, review gated DM requests, and open plans when you need direct contact.',
     '',
     'Shortcuts:',
     '• /profile — open your profile',
     '• /browse — browse the directory',
     '• /inbox — open your intro inbox',
     '• /dm — open your DM inbox',
-    '• /invite — share your invite',
     '• /plans — open pricing and Pro status',
+    '• /invite — share your invite',
     '• /menu — return home'
   ].join('\n');
 }
@@ -37,8 +37,8 @@ function fallbackRenderHelpKeyboard() {
       [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
       [{ text: '📥 Intro inbox', callback_data: 'intro:inbox' }],
       [{ text: '💬 DM inbox', callback_data: 'dm:inbox' }],
-      [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
       [{ text: '⭐ Plans', callback_data: 'plans:root' }],
+      [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
       [{ text: '🏠 Home', callback_data: 'home:root' }]
     ]
   };

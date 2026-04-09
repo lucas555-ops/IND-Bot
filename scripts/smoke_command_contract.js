@@ -38,7 +38,7 @@ if (!helpText.includes('Use Intro Deck to connect your LinkedIn identity')) {
 }
 
 const helpKeyboard = JSON.stringify(renderHelpKeyboard().inline_keyboard);
-for (const callback of ['p:menu', 'dir:list:0', 'intro:inbox', 'home:root']) {
+for (const callback of ['p:menu', 'dir:list:0', 'intro:inbox', 'plans:root', 'home:root']) {
   if (!helpKeyboard.includes(callback)) {
     throw new Error(`Help keyboard missing ${callback}`);
   }
