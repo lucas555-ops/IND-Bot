@@ -5,6 +5,24 @@ function buildInlineKeyboard(rows = []) {
   return { inline_keyboard: rows.filter((row) => Array.isArray(row) && row.length > 0) };
 }
 
+function buildBackHomeRow(backText = '↩️ Назад', backCallback = 'adm:home') {
+  return [
+    { text: backText, callback_data: backCallback },
+    { text: '🏠 Главная', callback_data: 'home:root' }
+  ];
+}
+
+function chunkButtons(buttons = [], size = 2) {
+  const rows = [];
+  for (let index = 0; index < buttons.length; index += size) {
+    const row = buttons.slice(index, index + size);
+    if (row.length) {
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
 function toDisplayValue(value, fallback = '—') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
@@ -130,10 +148,14 @@ function buildAdminHomeText({ summary = null } = {}) {
 
 function buildAdminHomeKeyboard({ summary = null } = {}) {
   return buildInlineKeyboard([
-    [{ text: '🧰 Операции', callback_data: 'adm:ops' }],
-    [{ text: '💬 Коммуникации', callback_data: 'adm:comms' }],
-    [{ text: '💳 Монетизация', callback_data: 'adm:money' }],
-    [{ text: '⚙️ Система', callback_data: 'adm:sys' }],
+    [
+      { text: '🧰 Операции', callback_data: 'adm:ops' },
+      { text: '💬 Коммуникации', callback_data: 'adm:comms' }
+    ],
+    [
+      { text: '💳 Монетизация', callback_data: 'adm:money' },
+      { text: '⚙️ Система', callback_data: 'adm:sys' }
+    ],
     [
       { text: `🔗 LinkedIn: ${summary?.connectedUsers || 0}`, callback_data: 'adm:home:funnel:connected' },
       { text: `🧩 Без профиля: ${summary?.profileStartedUsers != null ? Math.max(0, (summary?.connectedUsers || 0) - (summary?.profileStartedUsers || 0)) : 0}`, callback_data: 'adm:home:funnel:noprofile' }
@@ -219,8 +241,7 @@ function buildAdminMonetizationKeyboard({ state = null } = {}) {
       { text: `⛔ DM blocks: ${summary.dmBlocked7d || 0}`, callback_data: 'adm:money' },
       { text: `🚩 DM reports: ${summary.dmReported7d || 0}`, callback_data: 'adm:money' }
     ],
-    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
 }
 
@@ -276,8 +297,7 @@ function buildOperationsHubKeyboard({ summary = null } = {}) {
       { text: '📨 Интро', callback_data: 'adm:intro:list' },
       { text: '🧾 Доставка', callback_data: 'adm:dlv' }
     ],
-    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
 }
 
@@ -312,12 +332,15 @@ function buildCommunicationsHubKeyboard({ state = null } = {}) {
       { text: `❌ Ошибки исходящих: ${state?.recentOutboxFailures || 0}`, callback_data: 'adm:comms:funnel:outbox_fail' },
       { text: `✉️ ЛС 24ч: ${state?.directMessages24h || 0}`, callback_data: 'adm:comms:funnel:direct_recent' }
     ],
-    [{ text: '📣 Уведомление', callback_data: 'adm:not' }],
-    [{ text: '📬 Рассылка', callback_data: 'adm:bc' }],
-    [{ text: '📌 Шаблоны', callback_data: 'adm:tpl' }],
-    [{ text: '📤 Исходящие', callback_data: 'adm:outbox' }],
-    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    [
+      { text: '📣 Уведомление', callback_data: 'adm:not' },
+      { text: '📬 Рассылка', callback_data: 'adm:bc' }
+    ],
+    [
+      { text: '📌 Шаблоны', callback_data: 'adm:tpl' },
+      { text: '📤 Исходящие', callback_data: 'adm:outbox' }
+    ],
+    buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
 }
 
@@ -350,15 +373,20 @@ function buildSystemHubKeyboard({ summary = null } = {}) {
       { text: `📝 Изменения листинга: ${summary?.listingChanges7d || 0}`, callback_data: 'adm:sys:funnel:listing_changes' }
     ],
     [{ text: `🔄 Релинки 7д: ${summary?.relinks7d || 0}`, callback_data: 'adm:sys:funnel:relinks' }],
-    [{ text: '🧭 Регламент запуска', callback_data: 'adm:runbook' }],
-    [{ text: '🧊 Freeze', callback_data: 'adm:freeze' }],
-    [{ text: '✅ Live verification', callback_data: 'adm:verify' }],
-    [{ text: '🎭 Репетиция запуска', callback_data: 'adm:rehearse' }],
-    [{ text: '🩺 Здоровье', callback_data: 'adm:health' }],
-    [{ text: '📜 Аудит', callback_data: 'adm:audit' }],
+    [
+      { text: '🧭 Регламент запуска', callback_data: 'adm:runbook' },
+      { text: '🧊 Freeze', callback_data: 'adm:freeze' }
+    ],
+    [
+      { text: '✅ Live verification', callback_data: 'adm:verify' },
+      { text: '🎭 Репетиция запуска', callback_data: 'adm:rehearse' }
+    ],
+    [
+      { text: '🩺 Здоровье', callback_data: 'adm:health' },
+      { text: '📜 Аудит', callback_data: 'adm:audit' }
+    ],
     [{ text: '👮 Операторы', callback_data: 'adm:opscope' }],
-    [{ text: '↩️ Назад в Админку', callback_data: 'adm:home' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
 }
 
@@ -372,8 +400,7 @@ function buildPlaceholderText({ title, description, nextStep }) {
 
 function buildDetailFooter(backCallback) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Назад', callback_data: backCallback }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад', backCallback)
   ]);
 }
 
@@ -522,8 +549,7 @@ function buildAdminIntrosKeyboard({ state = null } = {}) {
   }
 
   rows.push([{ text: '🔎 Поиск интро', callback_data: 'adm:search:intros' }]);
-  rows.push([{ text: targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Операции', callback_data: targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow(targetUserId ? '↩️ Назад в карточку пользователя' : '↩️ Назад в Операции', targetUserId ? `adm:usr:open:${targetUserId}:all:0` : 'adm:ops'));
   return buildInlineKeyboard(rows);
 }
 
@@ -568,8 +594,7 @@ function buildAdminIntroDetailKeyboard({ intro = null, backCallback = 'adm:intro
     rows.push([{ text: '👤 Получатель', callback_data: `adm:usr:open:${intro.target_user_id}:all:0` }]);
   }
   rows.push([{ text: '🧾 Доставка', callback_data: `adm:intro:dlv:${intro?.intro_request_id || 0}` }]);
-  rows.push([{ text: '↩️ Назад к интро', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к интро', backCallback));
   return buildInlineKeyboard(rows);
 }
 
@@ -635,8 +660,7 @@ function buildAdminDeliveryKeyboard({ state = null } = {}) {
   }
 
   rows.push([{ text: '🔎 Поиск доставки', callback_data: 'adm:search:delivery' }]);
-  rows.push([{ text: introRequestId ? '↩️ Back to Intro Detail' : '↩️ Назад в Операции', callback_data: introRequestId ? `adm:intro:open:${introRequestId}:all:0` : 'adm:ops' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow(introRequestId ? '↩️ Back to Intro Detail' : '↩️ Назад в Операции', introRequestId ? `adm:intro:open:${introRequestId}:all:0` : 'adm:ops'));
   return buildInlineKeyboard(rows);
 }
 
@@ -674,8 +698,7 @@ function buildAdminDeliveryRecordKeyboard({ record = null, backCallback = 'adm:d
   if (record?.intro_request_id) {
     rows.push([{ text: '📄 Открыть интро', callback_data: `adm:intro:open:${record.intro_request_id}:all:0` }]);
   }
-  rows.push([{ text: '↩️ Назад к доставке', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к доставке', backCallback));
   return buildInlineKeyboard(rows);
 }
 
@@ -802,8 +825,7 @@ function buildAdminUserCardKeyboard({ card = null, segmentKey = 'all', page = 0 
     { text: '📨 Интро', callback_data: `adm:card:intros:${card?.user_id || 0}` },
     { text: '📜 Аудит', callback_data: `adm:card:audit:${card?.user_id || 0}` }
   ]);
-  rows.push([{ text: '↩️ Назад к пользователям', callback_data: `adm:usr:page:${segmentKey}:${page}` }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к пользователям', `adm:usr:page:${segmentKey}:${page}`));
   return buildInlineKeyboard(rows);
 }
 
@@ -838,8 +860,7 @@ function buildAdminUserPublicCardText({ card = null, notice = null } = {}) {
 
 function buildAdminUserPublicCardKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Назад в карточку пользователя', callback_data: `adm:usr:open:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в карточку пользователя', `adm:usr:open:${targetUserId}:${segmentKey}:${page}`)
   ]);
 }
 
@@ -905,8 +926,7 @@ function buildAdminDirectTemplatePickerText({ card = null, state = null, notice 
 function buildAdminDirectTemplatePickerKeyboard({ targetUserId, segmentKey = 'all', page = 0, state = null } = {}) {
   const current = state?.draft?.templateKey || 'blank';
   const rows = Object.values(ADMIN_DIRECT_MESSAGE_TEMPLATES).map((item) => ([{ text: `${current === item.key ? '✅' : '▫️'} ${item.label}`, callback_data: `adm:msg:tplset:${targetUserId}:${segmentKey}:${page}:${item.key}` }]));
-  rows.push([{ text: '↩️ Назад к сообщению', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к сообщению', `adm:card:msg:${targetUserId}:${segmentKey}:${page}`));
   return buildInlineKeyboard(rows);
 }
 
@@ -928,8 +948,7 @@ function buildAdminDirectПревьюText({ card = null, state = null, notice = 
 function buildAdminDirectПревьюKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
     [{ text: '✅ Подтвердить отправку', callback_data: `adm:msg:confirm:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '↩️ Назад к сообщению', callback_data: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад к сообщению', `adm:card:msg:${targetUserId}:${segmentKey}:${page}`)
   ]);
 }
 
@@ -946,8 +965,7 @@ function buildAdminUserNotePromptText({ card = null } = {}) {
 
 function buildAdminUserNotePromptKeyboard({ targetUserId, segmentKey = 'all', page = 0 } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Отмена', callback_data: `adm:card:cancelnote:${targetUserId}:${segmentKey}:${page}` }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Отмена', `adm:card:cancelnote:${targetUserId}:${segmentKey}:${page}`)
   ]);
 }
 
@@ -1080,8 +1098,7 @@ function buildAdminAuditRecordKeyboard({ record = null, backCallback = 'adm:audi
   if (record?.detail?.outboxId) {
     rows.push([{ text: '📤 Открыть outbox', callback_data: `adm:outbox:open:${record.detail.outboxId}` }]);
   }
-  rows.push([{ text: '↩️ Назад к аудиту', callback_data: backCallback }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к аудиту', backCallback));
   return buildInlineKeyboard(rows);
 }
 
@@ -1114,13 +1131,16 @@ function buildAdminNoticeText({ state = null, notice = null } = {}) {
 function buildAdminNoticeKeyboard({ state = null } = {}) {
   const current = state?.notice || { isActive: false };
   return buildInlineKeyboard([
-    [{ text: '✏️ Изменить текст', callback_data: 'adm:not:edit' }],
-    [{ text: '📌 Шаблоны', callback_data: 'adm:not:tpl' }],
-    [{ text: '🎯 Аудитория', callback_data: 'adm:not:aud' }],
-    [{ text: '👁 Превью', callback_data: 'adm:not:preview' }],
+    [
+      { text: '✏️ Изменить текст', callback_data: 'adm:not:edit' },
+      { text: '📌 Шаблоны', callback_data: 'adm:not:tpl' }
+    ],
+    [
+      { text: '🎯 Аудитория', callback_data: 'adm:not:aud' },
+      { text: '👁 Превью', callback_data: 'adm:not:preview' }
+    ],
     [{ text: current.isActive ? '⛔ Выключить' : '✅ Включить', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
-    [{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Коммуникации', 'adm:comms')
   ]);
 }
 
@@ -1130,8 +1150,7 @@ function buildAdminNoticeAudienceSurface({ state = null, notice = null } = {}) {
     text: `${normalizeAdminNoticeAudience(current.audienceKey) === item.key ? '✅' : '▫️'} ${item.label}`,
     callback_data: `adm:not:aud:${item.key}`
   }]));
-  rows.push([{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к уведомлению', 'adm:not'));
   const lines = ['🎯 Аудитория notice', '', `Текущее: ${adminNoticeAudienceLabel(current.audienceKey)}`];
   if (notice) {
     lines.push('', notice);
@@ -1155,8 +1174,7 @@ function buildAdminNoticeПревьюSurface({ state = null, notice = null } = {
     text: lines.join('\n'),
     reply_markup: buildInlineKeyboard([
       [{ text: current.isActive ? '⛔ Выключить' : '✅ Включить', callback_data: current.isActive ? 'adm:not:off' : 'adm:not:on' }],
-      [{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }],
-      [{ text: '🏠 Главная', callback_data: 'home:root' }]
+      buildBackHomeRow('↩️ Назад к уведомлению', 'adm:not')
     ])
   };
 }
@@ -1191,20 +1209,32 @@ function buildAdminBroadcastText({ state = null, notice = null } = {}) {
 function buildAdminBroadcastKeyboard({ state = null } = {}) {
   const latest = state?.latestRecord || null;
   const rows = [
-    [{ text: '✏️ Изменить текст', callback_data: 'adm:bc:edit' }],
-    [{ text: '📌 Шаблоны', callback_data: 'adm:bc:tpl' }],
-    [{ text: '🎯 Аудитория', callback_data: 'adm:bc:aud' }],
-    [{ text: '👁 Превью', callback_data: 'adm:bc:preview' }],
-    [{ text: '📨 Отправить', callback_data: 'adm:bc:send' }],
-    [{ text: '🔄 Обновить', callback_data: 'adm:bc:refresh' }]
+    [
+      { text: '✏️ Изменить текст', callback_data: 'adm:bc:edit' },
+      { text: '📌 Шаблоны', callback_data: 'adm:bc:tpl' }
+    ],
+    [
+      { text: '🎯 Аудитория', callback_data: 'adm:bc:aud' },
+      { text: '👁 Превью', callback_data: 'adm:bc:preview' }
+    ],
+    [
+      { text: '📨 Отправить', callback_data: 'adm:bc:send' },
+      { text: '🔄 Обновить', callback_data: 'adm:bc:refresh' }
+    ]
   ];
   if (latest?.failed_count > 0 || latest?.retry_due_count > 0 || latest?.exhausted_count > 0) {
-    rows.push([{ text: '🧾 Ошибки', callback_data: `adm:bc:fail:${latest.id}:0` }]);
+    rows.push([
+      { text: '🧾 Ошибки', callback_data: `adm:bc:fail:${latest.id}:0` },
+      { text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' }
+    ]);
+    rows.push([{ text: '🗑 Очистить черновик', callback_data: 'adm:bc:clear' }]);
+  } else {
+    rows.push([
+      { text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' },
+      { text: '🗑 Очистить черновик', callback_data: 'adm:bc:clear' }
+    ]);
   }
-  rows.push([{ text: '🗑 Очистить черновик', callback_data: 'adm:bc:clear' }]);
-  rows.push([{ text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' }]);
-  rows.push([{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад в Коммуникации', 'adm:comms'));
   return buildInlineKeyboard(rows);
 }
 
@@ -1214,8 +1244,7 @@ function buildAdminBroadcastAudienceSurface({ state = null, notice = null } = {}
     text: `${normalizeAdminBroadcastAudience(draft.audienceKey) === item.key ? '✅' : '▫️'} ${item.label}`,
     callback_data: `adm:bc:aud:${item.key}`
   }]));
-  rows.push([{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к рассылке', 'adm:bc'));
   const lines = ['🎯 Аудитория рассылки', '', `Текущее: ${adminBroadcastAudienceLabel(draft.audienceKey)}`];
   if (notice) {
     lines.push('', notice);
@@ -1240,8 +1269,7 @@ function buildAdminBroadcastPreviewSurface({ state = null, notice = null } = {})
     text: lines.join('\n'),
     reply_markup: buildInlineKeyboard([
       [{ text: '✅ Подтвердить отправку', callback_data: 'adm:bc:confirm' }],
-      [{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }],
-      [{ text: '🏠 Главная', callback_data: 'home:root' }]
+      buildBackHomeRow('↩️ Назад к рассылке', 'adm:bc')
     ])
   };
 }
@@ -1265,11 +1293,12 @@ function buildAdminTemplatesText({ state = null, notice = null } = {}) {
 
 function buildAdminTemplatesKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '📣 Шаблоны уведомлений', callback_data: 'adm:tpl:not' }],
-    [{ text: '📬 Шаблоны рассылки', callback_data: 'adm:tpl:bc' }],
+    [
+      { text: '📣 Шаблоны уведомлений', callback_data: 'adm:tpl:not' },
+      { text: '📬 Шаблоны рассылки', callback_data: 'adm:tpl:bc' }
+    ],
     [{ text: '✉️ Шаблоны личных сообщений', callback_data: 'adm:tpl:direct' }],
-    [{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Коммуникации', 'adm:comms')
   ]);
 }
 
@@ -1292,8 +1321,7 @@ function buildAdminNoticeTemplatePickerText({ state = null, templates = [], noti
 
 function buildAdminNoticeTemplatePickerKeyboard({ templates = [] } = {}) {
   const rows = templates.map((item) => ([{ text: `📌 ${item.label}`, callback_data: `adm:not:tpl:${item.key}` }]));
-  rows.push([{ text: '↩️ Назад к уведомлению', callback_data: 'adm:not' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к уведомлению', 'adm:not'));
   return buildInlineKeyboard(rows);
 }
 
@@ -1316,8 +1344,7 @@ function buildAdminBroadcastTemplatePickerText({ state = null, templates = [], n
 
 function buildAdminBroadcastTemplatePickerKeyboard({ templates = [] } = {}) {
   const rows = templates.map((item) => ([{ text: `📌 ${item.label}`, callback_data: `adm:bc:tpl:${item.key}` }]));
-  rows.push([{ text: '↩️ Назад к рассылке', callback_data: 'adm:bc' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к рассылке', 'adm:bc'));
   return buildInlineKeyboard(rows);
 }
 
@@ -1339,8 +1366,7 @@ function buildAdminOutboxText({ records = [], notice = null } = {}) {
 function buildAdminOutboxKeyboard({ records = [] } = {}) {
   const rows = records.map((item) => ([{ text: `📄 ${item.event_type} • #${item.id}`, callback_data: `adm:outbox:open:${item.id}` }]));
   rows.push([{ text: '🔎 Поиск исходящих', callback_data: 'adm:search:outbox' }]);
-  rows.push([{ text: '↩️ Назад в Коммуникации', callback_data: 'adm:comms' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад в Коммуникации', 'adm:comms'));
   return buildInlineKeyboard(rows);
 }
 
@@ -1385,8 +1411,7 @@ function buildAdminOutboxRecordKeyboard({ record = null } = {}) {
   if (record?.event_type === 'broadcast' && ((record?.failed_count || 0) > 0 || (record?.retry_due_count || 0) > 0 || (record?.exhausted_count || 0) > 0)) {
     rows.push([{ text: '🧾 Открыть ошибки', callback_data: `adm:bc:fail:${record.id}:0` }]);
   }
-  rows.push([{ text: '↩️ Назад к исходящим', callback_data: 'adm:outbox' }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к исходящим', 'adm:outbox'));
   return buildInlineKeyboard(rows);
 }
 
@@ -1420,8 +1445,7 @@ function buildAdminBroadcastFailuresKeyboard({ state = null } = {}) {
   if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: `adm:bc:fail:${state.outboxId}:${Math.max(0, (state.page || 0) - 1)}` });
   if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:bc:fail:${state.outboxId}:${(state.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
-  rows.push([{ text: '↩️ Назад к записи исходящих', callback_data: `adm:outbox:open:${state?.outboxId || 0}` }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к записи исходящих', `adm:outbox:open:${state?.outboxId || 0}`));
   return buildInlineKeyboard(rows);
 }
 
@@ -1429,8 +1453,7 @@ function buildAdminCommsEditPromptSurface({ title, currentValue, cancelCallback 
   return {
     text: [title, '', 'Отправь новый текст следующим сообщением.', '', `Текущее значение: ${truncate(currentValue, 280)}`].join('\n'),
     reply_markup: buildInlineKeyboard([
-      [{ text: '↩️ Отмена', callback_data: cancelCallback }],
-      [{ text: '🏠 Главная', callback_data: 'home:root' }]
+      buildBackHomeRow('↩️ Отмена', cancelCallback)
     ])
   };
 }
@@ -1470,8 +1493,7 @@ function buildAdminSearchPromptText({ scopeKey, currentQuery = '', notice = null
 
 function buildAdminSearchPromptKeyboard({ scopeKey } = {}) {
   return buildInlineKeyboard([
-    [{ text: '↩️ Отмена', callback_data: adminSearchBackCallback(scopeKey) }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Отмена', adminSearchBackCallback(scopeKey))
   ]);
 }
 
@@ -1520,8 +1542,7 @@ function buildAdminSearchResultsKeyboard({ scopeKey, state = null } = {}) {
   if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:search:${scopeKey}:page:${(state?.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
   rows.push([{ text: `🔎 Искать снова`, callback_data: `adm:search:${scopeKey}` }]);
-  rows.push([{ text: '↩️ Назад', callback_data: adminSearchBackCallback(scopeKey) }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад', adminSearchBackCallback(scopeKey)));
   return buildInlineKeyboard(rows);
 }
 
@@ -1550,10 +1571,11 @@ function buildHealthText({ step = 'STEP039' } = {}) {
 
 function buildHealthKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '🔁 Диагностика повторов', callback_data: 'adm:retry' }],
-    [{ text: '👮 Операторы', callback_data: 'adm:opscope' }],
-    [{ text: '↩️ Назад в Систему', callback_data: 'adm:sys' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    [
+      { text: '🔁 Диагностика повторов', callback_data: 'adm:retry' },
+      { text: '👮 Операторы', callback_data: 'adm:opscope' }
+    ],
+    buildBackHomeRow('↩️ Назад в Систему', 'adm:sys')
   ]);
 }
 
@@ -1581,8 +1603,7 @@ function buildOperatorsText({ summary = null } = {}) {
 function buildOperatorsKeyboard() {
   return buildInlineKeyboard([
     [{ text: '🩺 Здоровье', callback_data: 'adm:health' }],
-    [{ text: '↩️ Назад в Систему', callback_data: 'adm:sys' }],
-    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+    buildBackHomeRow('↩️ Назад в Систему', 'adm:sys')
   ]);
 }
 
@@ -1808,8 +1829,7 @@ function buildAdminBulkActionsKeyboard({ state = null, page = 0 } = {}) {
   }
 
   rows.push([{ text: '💬 Коммуникации', callback_data: 'adm:comms' }]);
-  rows.push([{ text: '↩️ Назад к пользователям', callback_data: `adm:usr:page:${segmentKey}:${page}` }]);
-  rows.push([{ text: '🏠 Главная', callback_data: 'home:root' }]);
+  rows.push(buildBackHomeRow('↩️ Назад к пользователям', `adm:usr:page:${segmentKey}:${page}`));
   return buildInlineKeyboard(rows);
 }
 

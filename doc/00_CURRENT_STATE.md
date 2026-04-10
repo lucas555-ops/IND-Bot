@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.5
-- Phase: pricing surface hotfix on top of the STEP051.4 command parity fix, the STEP051.3 paired menu polish, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.6
+- Phase: admin navigation/menu polish on top of the STEP051.5 pricing hotfix, the STEP051.4 command parity fix, and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.5 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, and the `Plans` surface restored with a real member pricing text/keyboard instead of the broken undefined render path; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.6 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, and the admin communications/broadcast/system menus tightened into more compact paired rows with back/home navigation kept consistent; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -37,6 +37,7 @@
 - STEP051.3 keeps the STEP051.2 order but compresses the home/help keyboards into cleaner two-button rows where it improves mobile scanning, without changing invite, DM, intro, or LinkedIn contracts
 - STEP051.4 fixes command parity: `/start` now has one runtime owner, `/menu` stays the visible home fallback, `/inbox` gets a product-safe fallback path, and the accidental home-surface extra-notice leak is removed
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
+- STEP051.6 compacts the admin communications / broadcast / templates / system navigation into more consistent paired rows, keeps long audience selectors readable, and standardizes back/home navigation across the core admin menu surfaces
 
 ## Current truth
 
@@ -60,6 +61,7 @@
 - STEP051.3 keeps the same menu order but makes the keyboards more compact and organic on mobile by pairing the most related actions into shared rows
 - STEP051.4 keeps the paired menu layout intact and only hardens slash-command behavior so `/start`, `/menu`, and `/inbox` behave like honest entrypoints instead of partially diverging from the button flow
 - STEP051.5 keeps the STEP051.4 command/menu work intact and only restores the monetization member surface so the promoted `Plans` button is a working product screen again
+- STEP051.6 keeps the STEP051 invite/share + STEP051.5 plans fixes intact and only reorganizes admin/operator menu layouts for compactness, consistency, and easier thumb navigation in Telegram
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -75,7 +77,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.5 and do a short live smoke on the real bot: verify `⭐ Plans` and `/plans` both open the pricing screen, confirm `/start` still produces one home render, `/menu` still opens the same home surface, and invite deep links still attribute correctly
+- deploy STEP051.6 and do a short live smoke on the real bot: verify admin `💬 Коммуникации`, `📬 Рассылка`, `📌 Шаблоны`, `⚙️ Система`, and `💳 Монетизация` surfaces all render with the new paired rows, confirm long audience selectors still stay readable, and confirm `⭐ Plans`, `/start`, `/menu`, and invite paths still behave normally
 
 ## STEP039.1 delta
 
@@ -302,3 +304,10 @@
 - hardened `/inbox` with a product-safe fallback render and text clamping so the slash-command path no longer fails silently when the inbox surface cannot be rendered cleanly
 - removed the accidental extra-notice leak on home renders where `appBaseUrl` could be passed into the home surface as if it were a notice
 - updated command/router smoke coverage to assert one `/start` handler and the `/inbox` fallback path
+
+## STEP051.6 delta
+
+- admin home now pairs the top hub entrypoints as `Операции + Коммуникации` and `Монетизация + Система` so the founder/operator shell feels denser without becoming noisy
+- communications / notice / broadcast / templates / outbox menus now use paired action rows where labels stay readable, while long audience/template selectors remain single-column for clarity
+- system, monetization, search prompts, and many admin detail surfaces now share one compact `Back + Home` row instead of two stacked navigation rows
+- no runtime schema, invite attribution, LinkedIn auth, or monetization logic changes
