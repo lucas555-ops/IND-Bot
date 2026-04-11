@@ -81,3 +81,22 @@ Latest primary steps:
 - Telegram admin now includes `Broadcasts` and `Notice` as two separate comms primitives: active push via DB-backed broadcast drafts + delivery tick, and passive versioned system notices with user-side `📣 Current Notice` entry.
 - Web admin Overview now surfaces current broadcast/notice state so Telegram and web continue to reread the same backend truth.
 - Broadcast delivery now keeps persisted attempt counts, `retry_pending` rows, retry backoff timing, and manual `Retry failed` operator resume instead of treating any failed recipient as terminal with no retry path.
+
+- **`TDH-ADMIN-001.7 — Broadcast UX + Media/Preview Uplift`**
+
+## Current next likely steps
+- **`TDH-LIVE-002 — founder/operator comms live smoke on production`**
+- **`TDH-LIVE-001 — live deposit / withdraw / real-money verification`**
+
+## TDH-ADMIN-001.7.2
+- comms bootstrap/migration repair: `_create_comms_tables()` now adds retry-hardening columns before creating indexes that depend on them
+- fixes Postgres startup crash on pre-existing `broadcast_deliveries` tables missing `next_retry_at` and related retry columns
+
+- Telegram comms admin flows now use compact callback ids and short-ref resolution so notice/broadcast keyboards stay inside Telegram callback_data limits.
+
+
+## TDH-ADMIN-001.7.4
+- broadcast operator UX is now explicitly split into `Конструктор рассылки` and `Быстрый пост` instead of one overloaded draft path;
+- Telegram admin now has a dedicated broadcast outbox readout with recent rows, summary counters, and next-step guidance;
+- draft input prompts for text, media source message, photo-only, photo+caption, and URL button input are now actually wired through the backend draft truth;
+- web admin comms snapshot now also exposes outbox pressure / next-action guidance while keeping broadcast and notice separate.

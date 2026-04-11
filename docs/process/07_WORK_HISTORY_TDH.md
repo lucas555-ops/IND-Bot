@@ -344,3 +344,94 @@ Harden the new Broadcast delivery layer so failed recipients do not silently bec
 - channel/group broadcasting;
 - broad comms CRM;
 - live-money verification or RD-BOT product work.
+
+
+## TDH-ADMIN-001.6.2 — Telegram Admin RU Copy Polish
+
+### Goal
+Finish the Telegram admin/operator surface in Russian so founder/operator flows stop feeling mixed-language, while preserving English only where it is truly user-facing or part of canonical product naming.
+
+### Delivered
+- translated Telegram admin menu buttons for Overview / Withdrawals / Runtime / Users / Liabilities / Broadcasts / Notice / Help into Russian;
+- translated Telegram admin overview, withdrawals, runtime, liabilities, help, broadcasts, and notice copy into Russian-focused operator language;
+- translated broadcast/notice admin detail receipts, confirm prompts, and action labels so the founder/operator flow reads as one coherent RU control surface;
+- translated audience/target/CTA/expiry choice labels in admin comms helpers where they are rendered for operator use;
+- deliberately left user-facing product/game surfaces and user-facing notice entrypoints in English where that remains the product canon.
+
+### Explicit non-goals
+- changing user-facing duel/game copy;
+- broad web admin localization pass;
+- changing callback ids or business logic;
+- changing comms delivery truth or runtime behaviour.
+
+
+## TDH-ADMIN-001.7 — Broadcast UX + Media/Preview Uplift
+
+Goal:
+- bring Telegram admin broadcast to a stronger production-grade corridor without building a giant comms subsystem
+
+Delivered:
+- source-message/media-first broadcast payload path
+- URL button builder + presets
+- real preview and self/allowlist test sends before launch
+- source payload metadata persisted in DB
+- normalized delivery result codes persisted per delivery
+- web overview comms snapshot shows source type and button count
+
+Non-goals:
+- albums
+- multi-message campaigns
+- heavy segmentation
+- channel broadcasting
+- CRM-like comms center
+
+
+## TDH-ADMIN-001.7.1 — founder/media broadcast smoke hardening
+- fixed launch behavior so empty recipient cohorts no longer silently complete a broadcast
+- made self/allowlist test-send tolerant per target with partial-failure reporting
+- blocked pointless retry when there are no failed/retry-pending deliveries
+- added live smoke runbook for founder/media broadcast verification
+
+## TDH-ADMIN-001.7.2 — Comms Migration Bootstrap Repair
+- fixed `_create_comms_tables()` ordering so additive retry-hardening columns are added before indexes that reference `next_retry_at` are created;
+- repaired startup compatibility for Postgres environments that already had `broadcast_deliveries` from earlier comms steps but were missing retry columns;
+- verified locally against an older SQLite-style comms schema that the upgrade path now adds the retry columns and completes without crashing.
+
+
+## TDH-ADMIN-001.7.3 — Comms Callback Compaction + Flow Repair
+
+### Goal
+Repair broken Telegram admin flows for Broadcasts and Notice after production callback-data overflows caused `Button_data_invalid` and broken inline keyboards.
+
+### Delivered
+- added compact callback canon for comms admin flows with short refs and short option codes;
+- broadcast/notice open, menu, picker, preview, test, publish, deactivate, launch, stop, retry, and cancel flows now render with compact callback ids;
+- added short-ref resolution for broadcast and notice entities instead of passing full UUIDs in callback payloads;
+- operator-facing error receipts are now cleaner in Russian for empty payload / missing notice states;
+- kept backward compatibility for already-rendered legacy callback ids during transition.
+
+### Explicit non-goals
+- new delivery features;
+- new admin surfaces;
+- broad comms redesign;
+- new targeting or segmentation logic.
+
+
+## TDH-ADMIN-001.7.4 — Broadcast Repack: Dual Composer + Outbox Clarity
+
+### Goal
+Lift the operator UX of Telegram Broadcasts to a Collabka-level everyday flow while preserving the stronger Roll Duel backend truth: dual composer entry, clearer preview/test contract, and a more readable outbox/read model.
+
+### Delivered
+- split Telegram admin Broadcasts into two clear operator modes: `Конструктор рассылки` and `Быстрый пост`;
+- added explicit outbox screen/readout with recent rows, counters, and next-action guidance;
+- draft keyboard now exposes structured text / photo / photo+text entry plus the raw quick-post source-message path;
+- actually wired admin draft input states for text, source-message media, photo-only, photo+caption, and manual URL button input;
+- strengthened web admin comms block with outbox pressure and next-action guidance while keeping Notice separate.
+
+### Explicit non-goals
+- new delivery subsystem;
+- new segmentation engine;
+- new notice lifecycle features;
+- channel/group broadcasting;
+- broad web admin redesign.

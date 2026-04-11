@@ -85,7 +85,7 @@ from services.practice import (
 from services.real_mode import get_balance_snapshot, get_real_mode_readiness
 from services.social import get_duel_history, get_duel_share_payload, get_profile_snapshot, get_result_share_payload
 from admin import read_models as admin_read_models
-from services import broadcasts as broadcast_service, notices as notice_service
+from services import broadcasts as broadcast_service, notices as notice_service, comms_callbacks
 from game_logic import (
     validate_bet_amount, determine_winner, format_game_result,
     get_dice_emoji, format_balance_display, get_random_game_message
@@ -304,27 +304,27 @@ def _format_admin_alert_lines(alerts: list[dict], *, limit: int = 3) -> list[str
 def _render_tg_admin_overview_text(user_id: int) -> str:
     snapshot = admin_read_models.dashboard_snapshot()
     liabilities = admin_read_models.liabilities_snapshot()
-    founder_note = "Founder shortcut visible in main menu." if _show_admin_button(user_id) else "Operator shortcut opened via /admin fallback."
+    founder_note = "Founder-вход виден прямо в главном меню." if _show_admin_button(user_id) else "Операторский вход открыт через fallback-команду /admin."
     alert_lines = _format_admin_alert_lines(liabilities.get("alerts") or [], limit=3)
     if not alert_lines:
         alert_lines = ["• ✅ No operator alerts right now."]
     return (
         "👑 <b>Админка Roll Duel</b>\n\n"
         "Это узкий Telegram operator layer поверх того же backend truth, что и web admin.\n\n"
-        "<b>Quick snapshot</b>\n"
-        f"• Pending withdrawals: <b>{int(snapshot.get('requested_withdrawals') or 0)}</b>\n"
-        f"• Failed withdrawals: <b>{int(snapshot.get('failed_withdrawals') or 0)}</b>\n"
-        f"• Open / active / stuck duels: <b>{int(snapshot.get('open_duels') or 0)}</b> / <b>{int(snapshot.get('active_duels') or 0)}</b> / <b>{int(snapshot.get('stuck_duels') or 0)}</b>\n"
-        f"• Manual review users: <b>{int(snapshot.get('manual_review_users') or 0)}</b>\n"
-        f"• Frozen users: <b>{int(snapshot.get('frozen_users') or 0)}</b>\n\n"
-        "<b>Liabilities snapshot</b>\n"
-        f"• Customer liability: <b>{float(liabilities.get('total_customer_liability') or 0):.2f} TON</b>\n"
-        f"• Treasury balance: <b>{float(liabilities.get('treasury_balance') or 0):.2f} TON</b>\n"
-        f"• Inflight withdrawals: <b>{float(liabilities.get('hot_outflow_now') or 0):.2f} TON</b>\n"
-        f"• Treasury vs inflight: <b>{float(liabilities.get('operator_buffer') or 0):.2f} TON</b>\n\n"
-        + "<b>Operator alerts</b>\n"
+        "<b>Быстрый срез</b>\n"
+        f"• Выводы в ожидании: <b>{int(snapshot.get('requested_withdrawals') or 0)}</b>\n"
+        f"• Ошибочные выводы: <b>{int(snapshot.get('failed_withdrawals') or 0)}</b>\n"
+        f"• Дуэли open / active / stuck: <b>{int(snapshot.get('open_duels') or 0)}</b> / <b>{int(snapshot.get('active_duels') or 0)}</b> / <b>{int(snapshot.get('stuck_duels') or 0)}</b>\n"
+        f"• Пользователи на ручной проверке: <b>{int(snapshot.get('manual_review_users') or 0)}</b>\n"
+        f"• Замороженные пользователи: <b>{int(snapshot.get('frozen_users') or 0)}</b>\n\n"
+        "<b>Снимок обязательств</b>\n"
+        f"• Обязательства перед пользователями: <b>{float(liabilities.get('total_customer_liability') or 0):.2f} TON</b>\n"
+        f"• Баланс treasury: <b>{float(liabilities.get('treasury_balance') or 0):.2f} TON</b>\n"
+        f"• Выводы в процессе: <b>{float(liabilities.get('hot_outflow_now') or 0):.2f} TON</b>\n"
+        f"• Treasury против inflight: <b>{float(liabilities.get('operator_buffer') or 0):.2f} TON</b>\n\n"
+        + "<b>Операторские алерты</b>\n"
         + "\n".join(alert_lines)
-        + f"\n\n<b>Access model</b>\n• {founder_note}\n• /admin remains the fallback entrypoint for allowlist operators.\n• Heavy edits still belong in web admin."
+        + f"\n\n<b>Модель доступа</b>\n• {founder_note}\n• /admin остаётся fallback-входом для операторов из allowlist.\n• Тяжёлые изменения и глубокая работа всё ещё живут в web admin."
     )
 
 
@@ -332,13 +332,13 @@ def _render_tg_admin_withdrawals_text() -> str:
     snapshot = admin_read_models.dashboard_snapshot()
     queue = admin_read_models.list_withdrawals(limit=5, offset=0)
     lines = [
-        "💸 <b>Withdrawals</b>",
+        "💸 <b>Выводы</b>",
         "",
-        f"• Requested: <b>{int(snapshot.get('requested_withdrawals') or 0)}</b>",
-        f"• Processing / reserved: <b>{int(snapshot.get('processing_withdrawals') or 0)}</b>",
-        f"• Failed / rejected: <b>{int(snapshot.get('failed_withdrawals') or 0)}</b>",
+        f"• Запрошено: <b>{int(snapshot.get('requested_withdrawals') or 0)}</b>",
+        f"• В обработке / резерве: <b>{int(snapshot.get('processing_withdrawals') or 0)}</b>",
+        f"• Ошибка / отклонено: <b>{int(snapshot.get('failed_withdrawals') or 0)}</b>",
         "",
-        "<b>Latest queue</b>",
+        "<b>Последняя очередь</b>",
     ]
     if queue:
         for item in queue[:5]:
@@ -347,11 +347,11 @@ def _render_tg_admin_withdrawals_text() -> str:
                 f"• <code>{item.get('withdrawal_id')}</code> — {float(item.get('amount') or 0):.2f} TON — {item.get('status')} / {item.get('review_status')} — {escape(username)}"
             )
     else:
-        lines.append("• Queue is empty right now.")
+        lines.append("• Сейчас очередь пуста.")
     if int(snapshot.get('failed_withdrawals') or 0) > 0:
-        lines.extend(["", "<b>Receipt</b>", "• Failed / rejected withdrawals are above zero. Go deeper in web admin or Failed Items."])
+        lines.extend(["", "<b>Квитанция</b>", "• Есть ошибочные / отклонённые выводы. Уходи глубже в web admin или в Failed Items."])
     else:
-        lines.extend(["", "<b>Receipt</b>", "• Queue looks calm right now. Use web admin for full card detail and notes."])
+        lines.extend(["", "<b>Квитанция</b>", "• Сейчас очередь выглядит спокойно. Для полной карточки и заметок используй web admin."])
     return "\n".join(lines)
 
 
@@ -361,31 +361,31 @@ def _render_tg_admin_runtime_text() -> str:
     sanity = runtime.get('settings_sanity') or {}
     warnings = runtime.get('warnings') or []
     lines = [
-        "🧭 <b>Runtime</b>",
+        "🧭 <b>Рантайм</b>",
         "",
-        f"• DB backend: <b>{escape(str(runtime.get('database_backend') or '—'))}</b>",
-        f"• Admin web: <b>{'enabled' if runtime.get('admin_web_enabled') else 'disabled'}</b>",
-        f"• Mini App runtime: <b>{'enabled' if runtime.get('miniapp_runtime_enabled') else 'disabled'}</b>",
+        f"• Бэкенд БД: <b>{escape(str(runtime.get('database_backend') or '—'))}</b>",
+        f"• Web-админка: <b>{'enabled' if runtime.get('admin_web_enabled') else 'disabled'}</b>",
+        f"• Рантайм Mini App: <b>{'enabled' if runtime.get('miniapp_runtime_enabled') else 'disabled'}</b>",
         f"• Telegram webhook: <code>{escape(str(runtime.get('telegram_webhook_path') or '—'))}</code>",
         f"• Crypto Pay webhook: <code>{escape(str(runtime.get('cryptopay_webhook_path') or '—'))}</code>",
         "",
         "<b>Kill switches</b>",
-        f"• Duels: <b>{'enabled' if kill.get('duels_enabled') else 'disabled'}</b>",
-        f"• Deposits: <b>{'enabled' if kill.get('deposits_enabled') else 'disabled'}</b>",
-        f"• Withdrawals: <b>{'enabled' if kill.get('withdrawals_enabled') else 'disabled'}</b>",
+        f"• Дуэли: <b>{'enabled' if kill.get('duels_enabled') else 'disabled'}</b>",
+        f"• Депозиты: <b>{'enabled' if kill.get('deposits_enabled') else 'disabled'}</b>",
+        f"• Выводы: <b>{'enabled' if kill.get('withdrawals_enabled') else 'disabled'}</b>",
         f"• Maintenance: <b>{'enabled' if kill.get('maintenance_mode') else 'disabled'}</b>",
         "",
-        "<b>Settings sanity</b>",
-        f"• Rows: <b>{int(sanity.get('rows') or 0)}</b>",
-        f"• Native JSON rows: <b>{int(sanity.get('native_rows') or 0)}</b>",
-        f"• Malformed rows: <b>{int(sanity.get('malformed_rows') or 0)}</b>",
-        f"• Fallback mode: <b>{'enabled' if sanity.get('fallback_mode') else 'disabled'}</b>",
+        "<b>Проверка настроек</b>",
+        f"• Строк: <b>{int(sanity.get('rows') or 0)}</b>",
+        f"• Native JSON-строк: <b>{int(sanity.get('native_rows') or 0)}</b>",
+        f"• Битых строк: <b>{int(sanity.get('malformed_rows') or 0)}</b>",
+        f"• Fallback-режим: <b>{'enabled' if sanity.get('fallback_mode') else 'disabled'}</b>",
     ]
     if warnings:
-        lines.extend(["", "<b>Warnings</b>"] + [f"• {escape(str(item))}" for item in warnings[:5]])
-        lines.extend(["", "<b>Receipt</b>", "• Runtime is readable, but warnings exist. Use web admin Runtime for the full sanity surface."])
+        lines.extend(["", "<b>Предупреждения</b>"] + [f"• {escape(str(item))}" for item in warnings[:5]])
+        lines.extend(["", "<b>Квитанция</b>", "• Рантайм читается, но есть предупреждения. Для полного sanity-среза открой Runtime в web admin."])
     else:
-        lines.extend(["", "✅ No runtime warnings right now.", "", "<b>Receipt</b>", "• Runtime toggles stay in web admin so this shortcut remains fast and safe."])
+        lines.extend(["", "✅ Сейчас предупреждений по рантайму нет.", "", "<b>Квитанция</b>", "• Runtime-переключатели остаются в web admin, чтобы этот shortcut был быстрым и безопасным."])
     return "\n".join(lines)
 
 
@@ -395,36 +395,36 @@ def _render_tg_admin_liabilities_text() -> str:
     if not alert_lines:
         alert_lines = ["• ✅ No operator alerts right now."]
     return (
-        "🏦 <b>Liabilities</b>\n\n"
+        "🏦 <b>Обязательства</b>\n\n"
         "<b>Treasury / exposure snapshot</b>\n"
-        f"• Treasury balance: <b>{float(snap.get('treasury_balance') or 0):.2f} TON</b>\n"
-        f"• Treasury profit: <b>{float(snap.get('treasury_profit') or 0):.2f} TON</b>\n"
-        f"• Customer liability: <b>{float(snap.get('total_customer_liability') or 0):.2f} TON</b>\n"
-        f"• Inflight withdrawals: <b>{float(snap.get('hot_outflow_now') or 0):.2f} TON</b>\n"
+        f"• Баланс treasury: <b>{float(snap.get('treasury_balance') or 0):.2f} TON</b>\n"
+        f"• Прибыль treasury: <b>{float(snap.get('treasury_profit') or 0):.2f} TON</b>\n"
+        f"• Обязательства перед пользователями: <b>{float(snap.get('total_customer_liability') or 0):.2f} TON</b>\n"
+        f"• Выводы в процессе: <b>{float(snap.get('hot_outflow_now') or 0):.2f} TON</b>\n"
         f"• Pending deposit amount: <b>{float(snap.get('pending_deposit_amount') or 0):.2f} TON</b>\n"
-        f"• Treasury vs inflight: <b>{float(snap.get('operator_buffer') or 0):.2f} TON</b>\n\n"
-        + "<b>Alerts / receipts</b>\n"
+        f"• Treasury против inflight: <b>{float(snap.get('operator_buffer') or 0):.2f} TON</b>\n\n"
+        + "<b>Алерты / квитанции</b>\n"
         + "\n".join(alert_lines)
-        + "\n\nUse Liabilities in Telegram for the snapshot, then jump to web admin for deep operator work."
+        + "\n\nИспользуй раздел с обязательствами в Telegram для быстрого среза, а для глубокой операторской работы переходи в web admin."
     )
 
 
 def _render_tg_admin_help_text() -> str:
     return (
         "❓ <b>Telegram Admin Shortcuts</b>\n\n"
-        "This surface is intentionally narrow.\n\n"
-        "<b>What belongs here</b>\n"
-        "• quick overview\n"
-        "• withdrawal triage snapshot\n"
-        "• runtime/readiness snapshot\n"
-        "• liabilities / alert snapshot\n"
-        "• user lookup shortcut\n\n"
-        "<b>What stays in web admin</b>\n"
-        "• kill switch edits\n"
-        "• withdrawal state transitions\n"
-        "• full User Card write-actions\n"
-        "• audit / failed-items deep work\n\n"
-        "Use one source of truth: Telegram shortcuts for speed, web admin for heavy operator work."
+        "Эта поверхность специально сделана узкой.\n\n"
+        "<b>Что уместно здесь</b>\n"
+        "• быстрый обзор\n"
+        "• быстрый срез по выводам\n"
+        "• быстрый срез по runtime/readiness\n"
+        "• быстрый срез по обязательствам и алертам\n"
+        "• shortcut для поиска пользователя\n\n"
+        "<b>Что остаётся в web admin</b>\n"
+        "• изменение kill switch'ей\n"
+        "• переводы вывода по статусам\n"
+        "• полные write-action'ы в User Card\n"
+        "• глубокая работа в audit / failed items\n\n"
+        "Держим один source of truth: Telegram shortcuts — для скорости, web admin — для тяжёлой операторской работы."
     )
 
 
@@ -432,56 +432,80 @@ def _render_tg_admin_broadcasts_text() -> str:
     active = broadcast_service.get_active_broadcast()
     recent = broadcast_service.list_recent_broadcasts(limit=5)
     lines = [
-        "📣 <b>Broadcasts</b>",
+        "📣 <b>Рассылки</b>",
         "",
-        "Broadcast = active push from Telegram admin via backend/runtime truth.",
+        "Рассылка = активный push из Telegram admin через backend/runtime truth.",
+        "Продакшен-коридор: исходное сообщение → кнопки → реальный предпросмотр → тест → запуск.",
         "",
     ]
     if active:
         lines.extend([
-            "<b>Active broadcast</b>",
+            "<b>Активная рассылка</b>",
             f"• ID: <code>{escape(str(active.get('broadcast_id') or '—'))}</code>",
-            f"• Status: <b>{escape(str(active.get('status') or '—'))}</b>",
-            f"• Audience: <code>{escape(str(active.get('audience') or '—'))}</code>",
-            f"• Sent / total: <b>{int(active.get('sent_count') or 0)}</b> / <b>{int(active.get('total_count') or 0)}</b>",
-            f"• Retry pending: <b>{int(active.get('retry_pending') or 0)}</b>",
-            f"• Failed: <b>{int(active.get('failed_count') or 0)}</b>",
+            f"• Статус: <b>{escape(str(active.get('status') or '—'))}</b>",
+            f"• Аудитория: <code>{escape(str(active.get('audience') or '—'))}</code>",
+            f"• Тип источника: <b>{escape(str(active.get('source_message_type') or 'text'))}</b>",
+            f"• Кнопок: <b>{len(active.get('buttons') or [])}</b>",
+            f"• Отправлено / всего: <b>{int(active.get('sent_count') or 0)}</b> / <b>{int(active.get('total_count') or 0)}</b>",
+            f"• Ожидают ретрая: <b>{int(active.get('retry_pending') or 0)}</b>",
+            f"• Ошибок: <b>{int(active.get('failed_count') or 0)}</b>",
             "",
         ])
     else:
-        lines.extend(["<b>Active broadcast</b>", "• None right now.", ""])
-    lines.append("<b>Recent drafts / runs</b>")
+        lines.extend(["<b>Активная рассылка</b>", "• Сейчас нет.", ""])
+    lines.append("<b>Последние черновики / запуски</b>")
     if recent:
         for item in recent[:5]:
             lines.append(
-                f"• <code>{escape(str(item.get('broadcast_id') or '—'))}</code> — {escape(str(item.get('status') or '—'))} — {escape(str(item.get('audience') or '—'))} — {int(item.get('sent_count') or 0)}/{int(item.get('total_count') or 0)} — retry {int(item.get('retry_pending') or 0)}"
+                f"• <code>{escape(str(item.get('broadcast_id') or '—'))}</code> — {escape(str(item.get('status') or '—'))} — {escape(str(item.get('audience') or '—'))} — {escape(str(item.get('source_message_type') or 'text'))} — {int(item.get('sent_count') or 0)}/{int(item.get('total_count') or 0)} — retry {int(item.get('retry_pending') or 0)}"
             )
     else:
-        lines.append("• No broadcast rows yet.")
+        lines.append("• Пока нет строк рассылок.")
     lines.extend([
         "",
-        "<b>Receipt</b>",
-        "• Draft → preview → confirm launch. Delivery stays in backend/runtime, not in bot-only state.",
+        "<b>Что важно</b>",
+        "• До запуска нужен реальный предпросмотр и тест.",
+        "• Для founder-smoke используйте когорту <code>founder_test</code> или тест на allowlist.",
+        "• Если launch пишет про пустую аудиторию — сначала проверьте ADMIN_CHAT_ID / TG_OPERATOR_IDS.",
+        "• Запуск идёт из Telegram admin, но доставка живёт в backend/runtime truth.",
+        "• Источник может быть текстом или реальным Telegram-сообщением с медиа.",
     ])
     return "\n".join(lines)
 
 
 def _render_tg_admin_broadcast_detail_text(row: dict | None) -> str:
     if not row:
-        return "📣 <b>Broadcast</b>\n\nDraft not found."
+        return "📣 <b>Рассылка</b>\n\nЧерновик не найден."
     estimate = broadcast_service.count_recipients(str(row.get('audience') or 'founder_test'))
-    preview = escape(str(row.get('message_text') or '')) or '—'
+    preview = escape(str(row.get('preview_text') or row.get('message_text') or '')) or '—'
+    source_ref = (
+        f"<code>{escape(str(row.get('source_chat_id')))}:{escape(str(row.get('source_message_id')))}</code>"
+        if row.get('source_chat_id') and row.get('source_message_id')
+        else 'ещё не задано'
+    )
+    button_lines = broadcast_service.buttons_preview_lines(row.get('buttons') or [])
     return (
-        "📣 <b>Broadcast draft</b>\n\n"
+        "📣 <b>Черновик рассылки</b>\n\n"
         f"• ID: <code>{escape(str(row.get('broadcast_id') or '—'))}</code>\n"
-        f"• Status: <b>{escape(str(row.get('status') or '—'))}</b>\n"
-        f"• Audience: <code>{escape(str(row.get('audience') or '—'))}</code>\n"
-        f"• Estimated recipients: <b>{estimate}</b>\n"
-        f"• Sent / total: <b>{int(row.get('sent_count') or 0)}</b> / <b>{int(row.get('total_count') or 0)}</b>\n"
-        f"• Retry pending: <b>{int(row.get('retry_pending') or 0)}</b>\n"
-        f"• Failed: <b>{int(row.get('failed_count') or 0)}</b>\n\n"
-        "<b>Message preview</b>\n"
-        f"{preview}"
+        f"• Статус: <b>{escape(str(row.get('status') or '—'))}</b>\n"
+        f"• Аудитория: <code>{escape(str(row.get('audience') or '—'))}</code>\n"
+        f"• Оценка получателей: <b>{estimate}</b>\n"
+        f"• Тип источника: <b>{escape(str(row.get('source_message_type') or 'text'))}</b>\n"
+        f"• Источник: {source_ref}\n"
+        f"• Отправлено / всего: <b>{int(row.get('sent_count') or 0)}</b> / <b>{int(row.get('total_count') or 0)}</b>\n"
+        f"• Ожидают ретрая: <b>{int(row.get('retry_pending') or 0)}</b>\n"
+        f"• Ошибок: <b>{int(row.get('failed_count') or 0)}</b>\n\n"
+        "<b>Предпросмотр текста / подписи</b>\n"
+        f"{preview}\n\n"
+        "<b>Кнопки</b>\n"
+        + "\n".join(button_lines)
+        + "\n\n"
+        + "<b>Что дальше</b>\n"
+        + "• выбрать аудиторию\n"
+        + "• задать исходное сообщение\n"
+        + "• при необходимости собрать кнопки\n"
+        + "• сделать реальный предпросмотр и тест\n"
+        + "• только потом запускать"
     )
 
 
@@ -489,55 +513,55 @@ def _render_tg_admin_notice_text() -> str:
     active = notice_service.get_active_notice()
     recent = notice_service.list_recent_notices(limit=5)
     lines = [
-        "📢 <b>System Notice</b>",
+        "📢 <b>Системное объявление</b>",
         "",
-        "Notice = passive system message with versioned publish/deactivate flow.",
+        "Объявление = пассивное системное сообщение с versioned publish/deactivate flow.",
         "",
     ]
     if active:
         lines.extend([
-            "<b>Current active notice</b>",
+            "<b>Текущее активное объявление</b>",
             f"• ID: <code>{escape(str(active.get('notice_id') or '—'))}</code>",
-            f"• Severity: <b>{escape(str(active.get('severity') or 'info'))}</b>",
-            f"• Target: <code>{escape(str(active.get('target') or 'all_users'))}</code>",
-            f"• Version: <b>{int(active.get('version') or 0)}</b>",
+            f"• Серьёзность: <b>{escape(str(active.get('severity') or 'info'))}</b>",
+            f"• Таргет: <code>{escape(str(active.get('target') or 'all_users'))}</code>",
+            f"• Версия: <b>{int(active.get('version') or 0)}</b>",
             "",
         ])
     else:
-        lines.extend(["<b>Current active notice</b>", "• None right now.", ""])
-    lines.append("<b>Recent notices</b>")
+        lines.extend(["<b>Текущее активное объявление</b>", "• Сейчас нет.", ""])
+    lines.append("<b>Последние объявления</b>")
     if recent:
         for item in recent[:5]:
             lines.append(
                 f"• <code>{escape(str(item.get('notice_id') or '—'))}</code> — {escape(str(item.get('status') or '—'))} — {escape(str(item.get('severity') or 'info'))} — v{int(item.get('version') or 0)}"
             )
     else:
-        lines.append("• No notice rows yet.")
+        lines.append("• Пока нет строк объявлений.")
     lines.extend([
         "",
-        "<b>Receipt</b>",
-        "• Publish new version when you need a passive system message without noisy mass push.",
+        "<b>Квитанция</b>",
+        "• Публикуй новую версию, когда нужен пассивный системный месседж без шумной массовой рассылки.",
     ])
     return "\n".join(lines)
 
 
 def _render_tg_admin_notice_detail_text(row: dict | None) -> str:
     if not row:
-        return "📢 <b>System Notice</b>\n\nNotice not found."
+        return "📢 <b>Системное объявление</b>\n\nЧерновик не найден."
     cta_key = str(row.get('cta_key') or 'none')
-    cta_label = notice_service.CTA_CHOICES.get(cta_key, ("No CTA", None))[0]
-    expires_at = _format_timestamp(row.get('expires_at')) if row.get('expires_at') else 'No expiry'
+    cta_label = notice_service.CTA_CHOICES.get(cta_key, ("Без CTA", None))[0]
+    expires_at = _format_timestamp(row.get('expires_at')) if row.get('expires_at') else 'Без expiry'
     body = escape(str(row.get('body_text') or '')) or '—'
     return (
-        "📢 <b>Notice draft</b>\n\n"
+        "📢 <b>Черновик объявления</b>\n\n"
         f"• ID: <code>{escape(str(row.get('notice_id') or '—'))}</code>\n"
-        f"• Status: <b>{escape(str(row.get('status') or '—'))}</b>\n"
-        f"• Severity: <b>{escape(str(row.get('severity') or 'info'))}</b>\n"
-        f"• Target: <code>{escape(str(row.get('target') or 'all_users'))}</code>\n"
+        f"• Статус: <b>{escape(str(row.get('status') or '—'))}</b>\n"
+        f"• Серьёзность: <b>{escape(str(row.get('severity') or 'info'))}</b>\n"
+        f"• Таргет: <code>{escape(str(row.get('target') or 'all_users'))}</code>\n"
         f"• CTA: <b>{escape(cta_label)}</b>\n"
-        f"• Expiry: <b>{escape(expires_at)}</b>\n"
-        f"• Version: <b>{int(row.get('version') or 0)}</b>\n\n"
-        "<b>Notice preview</b>\n"
+        f"• Срок: <b>{escape(expires_at)}</b>\n"
+        f"• Версия: <b>{int(row.get('version') or 0)}</b>\n\n"
+        "<b>Предпросмотр объявления</b>\n"
         f"{body}"
     )
 
@@ -547,7 +571,7 @@ def _render_user_notice_text(row: dict | None) -> str:
         return "📣 <b>Current Notice</b>\n\nThere is no active notice right now."
     severity = str(row.get('severity') or 'info').lower()
     badge = 'ℹ️' if severity == 'info' else '⚠️' if severity == 'warning' else '🚨'
-    expires_at = _format_timestamp(row.get('expires_at')) if row.get('expires_at') else 'No expiry'
+    expires_at = _format_timestamp(row.get('expires_at')) if row.get('expires_at') else 'Без expiry'
     body = escape(str(row.get('body_text') or '')) or '—'
     return (
         f"{badge} <b>Current Notice</b>\n\n"
@@ -2173,20 +2197,24 @@ def _load_admin_settings_flags() -> tuple[bool, bool]:
 
 
 def _admin_broadcasts_hub_keyboard(admin_web_url: str | None = None) -> InlineKeyboardMarkup:
-    rows: list[list[InlineKeyboardButton]] = [[InlineKeyboardButton("➕ New draft", callback_data="admin_bc_new")]]
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton("🧱 Конструктор рассылки", callback_data=comms_callbacks.bc_builder_new())],
+        [InlineKeyboardButton("⚡ Быстрый пост", callback_data=comms_callbacks.bc_quick_new())],
+        [InlineKeyboardButton("📤 Outbox", callback_data=comms_callbacks.bc_outbox())],
+    ]
     active = broadcast_service.get_active_broadcast()
     if active:
-        rows.append([InlineKeyboardButton("▶️ Open active", callback_data=f"admin_bc_open|{active['broadcast_id']}")])
+        rows.append([InlineKeyboardButton("▶️ Открыть активную", callback_data=comms_callbacks.bc_open(str(active['broadcast_id'])))])
     for item in broadcast_service.list_recent_broadcasts(limit=4):
         rows.append([
             InlineKeyboardButton(
                 f"📣 {str(item.get('status') or 'draft').title()} · {str(item.get('broadcast_id') or '')[:8]}",
-                callback_data=f"admin_bc_open|{item['broadcast_id']}",
+                callback_data=comms_callbacks.bc_open(str(item['broadcast_id'])),
             )
         ])
     if admin_web_url:
-        rows.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data="admin_panel")])
+        rows.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data="admin_panel")])
     return InlineKeyboardMarkup(rows)
 
 
@@ -2194,31 +2222,41 @@ def _admin_broadcast_audience_keyboard(broadcast_id: str) -> InlineKeyboardMarku
     rows: list[list[InlineKeyboardButton]] = []
     current_row: list[InlineKeyboardButton] = []
     for key, label in broadcast_service.AUDIENCE_CHOICES.items():
-        current_row.append(InlineKeyboardButton(label[:28], callback_data=f"admin_bc_aud|{broadcast_id}|{key}"))
+        current_row.append(InlineKeyboardButton(label[:28], callback_data=comms_callbacks.bc_audience_set(broadcast_id, key)))
         if len(current_row) == 2:
             rows.append(current_row)
             current_row = []
     if current_row:
         rows.append(current_row)
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data=f"admin_bc_open|{broadcast_id}")])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.bc_open(broadcast_id))])
+    return InlineKeyboardMarkup(rows)
+
+
+def _admin_broadcast_buttons_keyboard(broadcast_id: str) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton("➕ URL кнопка", callback_data=comms_callbacks.bc_btn_add(broadcast_id)), InlineKeyboardButton("🧼 Очистить", callback_data=comms_callbacks.bc_btn_clear(broadcast_id))]
+    ]
+    for preset_key, label, _url in broadcast_service.get_button_preset_choices():
+        rows.append([InlineKeyboardButton(label[:30], callback_data=comms_callbacks.bc_btn_preset(broadcast_id, preset_key))])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.bc_open(broadcast_id))])
     return InlineKeyboardMarkup(rows)
 
 
 def _admin_notice_hub_keyboard(admin_web_url: str | None = None) -> InlineKeyboardMarkup:
-    rows: list[list[InlineKeyboardButton]] = [[InlineKeyboardButton("➕ New notice", callback_data="admin_notice_new")]]
+    rows: list[list[InlineKeyboardButton]] = [[InlineKeyboardButton("➕ Новый черновик", callback_data=comms_callbacks.nt_new())]]
     active = notice_service.get_active_notice()
     if active:
-        rows.append([InlineKeyboardButton("📢 Open active", callback_data=f"admin_notice_open|{active['notice_id']}")])
+        rows.append([InlineKeyboardButton("📢 Открыть активное", callback_data=comms_callbacks.nt_open(str(active['notice_id'])))])
     for item in notice_service.list_recent_notices(limit=4):
         rows.append([
             InlineKeyboardButton(
                 f"📢 {str(item.get('status') or 'draft').title()} · v{int(item.get('version') or 0)}",
-                callback_data=f"admin_notice_open|{item['notice_id']}",
+                callback_data=comms_callbacks.nt_open(str(item['notice_id'])),
             )
         ])
     if admin_web_url:
-        rows.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data="admin_panel")])
+        rows.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data="admin_panel")])
     return InlineKeyboardMarkup(rows)
 
 
@@ -2226,19 +2264,19 @@ def _admin_notice_target_keyboard(notice_id: str) -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
     current_row: list[InlineKeyboardButton] = []
     for key, label in notice_service.TARGET_CHOICES.items():
-        current_row.append(InlineKeyboardButton(label[:28], callback_data=f"admin_notice_target|{notice_id}|{key}"))
+        current_row.append(InlineKeyboardButton(label[:28], callback_data=comms_callbacks.nt_target_set(notice_id, key)))
         if len(current_row) == 2:
             rows.append(current_row)
             current_row = []
     if current_row:
         rows.append(current_row)
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data=f"admin_notice_open|{notice_id}")])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.nt_open(notice_id))])
     return InlineKeyboardMarkup(rows)
 
 
 def _admin_notice_severity_keyboard(notice_id: str) -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(label, callback_data=f"admin_notice_severity|{notice_id}|{key}")] for key, label in notice_service.SEVERITY_CHOICES.items()]
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data=f"admin_notice_open|{notice_id}")])
+    rows = [[InlineKeyboardButton(label, callback_data=comms_callbacks.nt_severity_set(notice_id, key))] for key, label in notice_service.SEVERITY_CHOICES.items()]
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.nt_open(notice_id))])
     return InlineKeyboardMarkup(rows)
 
 
@@ -2247,20 +2285,78 @@ def _admin_notice_cta_keyboard(notice_id: str) -> InlineKeyboardMarkup:
     current_row: list[InlineKeyboardButton] = []
     for key, meta in notice_service.CTA_CHOICES.items():
         label = meta[0]
-        current_row.append(InlineKeyboardButton(label[:28], callback_data=f"admin_notice_cta|{notice_id}|{key}"))
+        current_row.append(InlineKeyboardButton(label[:28], callback_data=comms_callbacks.nt_cta_set(notice_id, key)))
         if len(current_row) == 2:
             rows.append(current_row)
             current_row = []
     if current_row:
         rows.append(current_row)
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data=f"admin_notice_open|{notice_id}")])
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.nt_open(notice_id))])
     return InlineKeyboardMarkup(rows)
 
 
 def _admin_notice_expiry_keyboard(notice_id: str) -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton(label, callback_data=f"admin_notice_expiry|{notice_id}|{key}")] for key, (label, _days) in notice_service.EXPIRY_CHOICES.items()]
-    rows.append([InlineKeyboardButton("◀️ Back", callback_data=f"admin_notice_open|{notice_id}")])
+    rows = [[InlineKeyboardButton(label, callback_data=comms_callbacks.nt_expiry_set(notice_id, key))] for key, (label, _days) in notice_service.EXPIRY_CHOICES.items()]
+    rows.append([InlineKeyboardButton("◀️ Назад", callback_data=comms_callbacks.nt_open(notice_id))])
     return InlineKeyboardMarkup(rows)
+
+
+def _bc_ref_from_callback(callback_data: str) -> str | None:
+    if callback_data.startswith("admin_bc_") and "|" in callback_data:
+        return callback_data.split("|", 1)[1].split("|", 1)[0]
+    parts = callback_data.split(":")
+    if len(parts) >= 3 and parts[0] == "bc":
+        return comms_callbacks.resolve_broadcast_id(parts[2])
+    return None
+
+
+def _bc_option_from_callback(callback_data: str) -> str | None:
+    if callback_data.startswith("admin_bc_") and callback_data.count("|") >= 2:
+        return callback_data.split("|", 2)[2]
+    parts = callback_data.split(":")
+    if len(parts) >= 4 and parts[0] == "bc":
+        return parts[3]
+    return None
+
+
+def _nt_ref_from_callback(callback_data: str) -> str | None:
+    if callback_data.startswith("admin_notice_") and "|" in callback_data:
+        return callback_data.split("|", 1)[1].split("|", 1)[0]
+    parts = callback_data.split(":")
+    if len(parts) >= 3 and parts[0] == "nt":
+        return comms_callbacks.resolve_notice_id(parts[2])
+    return None
+
+
+def _nt_option_from_callback(callback_data: str) -> str | None:
+    if callback_data.startswith("admin_notice_") and callback_data.count("|") >= 2:
+        return callback_data.split("|", 2)[2]
+    parts = callback_data.split(":")
+    if len(parts) >= 4 and parts[0] == "nt":
+        return parts[3]
+    return None
+
+
+def _broadcast_admin_error_text(error_code: str | None) -> str:
+    key = str(error_code or "").strip()
+    mapping = {
+        "broadcast_payload_required": "Сначала задайте исходное сообщение или текст рассылки.",
+        "broadcast_audience_empty": "В выбранной аудитории сейчас нет получателей.",
+        "broadcast_test_targets_empty": "В allowlist сейчас нет тестовых получателей.",
+        "broadcast_no_retryable_deliveries": "Сейчас нет доставок, которые можно повторить.",
+        "broadcast_not_found": "Черновик рассылки не найден.",
+    }
+    return mapping.get(key, key or "Операция не выполнена.")
+
+
+def _notice_admin_error_text(error_code: str | None) -> str:
+    key = str(error_code or "").strip()
+    mapping = {
+        "notice_text_required": "Сначала задайте текст объявления.",
+        "notice_not_found": "Черновик объявления не найден.",
+        "notice_not_editable": "Это объявление уже нельзя редактировать.",
+    }
+    return mapping.get(key, key or "Операция не выполнена.")
 
 
 @require_admin_callback
@@ -2274,10 +2370,10 @@ async def _admin_callback_broadcasts(query, context, *, user_id: int, callback_d
 
 
 @require_admin_callback
-async def _admin_callback_bc_new(query, context, *, user_id: int, callback_data: str):
+async def _admin_callback_bc_builder_new(query, context, *, user_id: int, callback_data: str):
     draft = broadcast_service.create_broadcast_draft(operator_id=str(user_id))
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(draft),
+        _render_tg_admin_broadcast_detail_text(draft) + "\n\n<b>Режим: Конструктор рассылки</b>\nСоберите пост по частям: текст, фото или фото с подписью.",
         reply_markup=get_admin_broadcast_detail_keyboard(str(draft['broadcast_id']), str(draft.get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2285,23 +2381,84 @@ async def _admin_callback_bc_new(query, context, *, user_id: int, callback_data:
 
 
 @require_admin_callback
-async def _admin_callback_bc_open(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
-    row = broadcast_service.get_broadcast(broadcast_id)
+async def _admin_callback_bc_quick_new(query, context, *, user_id: int, callback_data: str):
+    draft = broadcast_service.create_broadcast_draft(operator_id=str(user_id))
+    broadcast_id = str(draft['broadcast_id'])
+    user_states[user_id] = f"admin_bc_source:{broadcast_id}"
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row),
-        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
+        _render_tg_admin_broadcast_detail_text(draft) + "\n\n<b>Режим: Быстрый пост</b>\nОтправьте одно готовое сообщение: текст, фото, видео, GIF или документ. Бот сохранит его как source message и затем разошлёт безопасным copy-потоком.",
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str(draft.get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
 
 
 @require_admin_callback
-async def _admin_callback_bc_text(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+async def _admin_callback_bc_outbox(query, context, *, user_id: int, callback_data: str):
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_outbox_text(),
+        reply_markup=_admin_broadcasts_hub_keyboard(_admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_builder_text(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     user_states[user_id] = f"admin_bc_text:{broadcast_id}"
     await query.edit_message_text(
-        "📣 <b>Broadcast text</b>\n\nОтправьте следующий текст в чат с ботом. Он станет content текущего broadcast draft.",
+        _render_tg_admin_broadcast_detail_text(broadcast_service.get_broadcast(broadcast_id)) + "\n\n<b>Конструктор → Текст</b>\nОтправьте текст рассылки одним сообщением. Он сохранится в draft и будет использоваться для preview/test/launch.",
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, 'draft', _admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_builder_photo(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    user_states[user_id] = f"admin_bc_builder_photo:{broadcast_id}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(broadcast_service.get_broadcast(broadcast_id)) + "\n\n<b>Конструктор → Только фото</b>\nОтправьте фото. Можно без подписи — draft всё равно сохранится и будет доступен для предпросмотра и тестов.",
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, 'draft', _admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_builder_textphoto(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    user_states[user_id] = f"admin_bc_builder_textphoto:{broadcast_id}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(broadcast_service.get_broadcast(broadcast_id)) + "\n\n<b>Конструктор → Фото + текст</b>\nОтправьте фото с подписью. Подпись станет preview/caption, а само фото будет сохранено как source message.",
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, 'draft', _admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_source(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    user_states[user_id] = f"admin_bc_source:{broadcast_id}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(broadcast_service.get_broadcast(broadcast_id))
+        + "\n\nОтправьте сюда одно реальное Telegram-сообщение: текст, фото, видео, GIF или документ.\n\n"
+        + "Бот сохранит source_chat_id/source_message_id и потом будет рассылать именно это сообщение через безопасный copy-поток.",
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, 'draft', _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2310,9 +2467,12 @@ async def _admin_callback_bc_text(query, context, *, user_id: int, callback_data
 
 @require_admin_callback
 async def _admin_callback_bc_audience_menu(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     await query.edit_message_text(
-        "📣 <b>Choose audience</b>\n\nВыберите узкий cohort для v1 broadcast.",
+        "📣 <b>Выбор аудитории</b>\n\nВыберите когорту для текущего черновика.",
         reply_markup=_admin_broadcast_audience_keyboard(broadcast_id),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2321,11 +2481,15 @@ async def _admin_callback_bc_audience_menu(query, context, *, user_id: int, call
 
 @require_admin_callback
 async def _admin_callback_bc_audience_set(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id, audience = callback_data.split('|', 2)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    audience = comms_callbacks.decode_broadcast_audience(_bc_option_from_callback(callback_data))
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось обновить аудиторию. Обновите экран.", show_alert=True)
+        return
     result = broadcast_service.set_broadcast_audience(broadcast_id, audience=audience, operator_id=str(user_id))
     row = result.get('broadcast') if result.get('ok') else broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row) + ("\n\nAudience updated." if result.get('ok') else "\n\nAudience update failed."),
+        _render_tg_admin_broadcast_detail_text(row) + ("\n\nАудитория обновлена." if result.get('ok') else "\n\nНе удалось обновить аудиторию."),
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2333,11 +2497,133 @@ async def _admin_callback_bc_audience_set(query, context, *, user_id: int, callb
 
 
 @require_admin_callback
-async def _admin_callback_bc_preview(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+async def _admin_callback_bc_buttons(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     row = broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row),
+        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Конструктор кнопок v1</b>\n• До 3 URL-кнопок\n• Можно добавить готовый пресет\n• Формат ручной кнопки: <code>Текст | https://...</code>",
+        reply_markup=_admin_broadcast_buttons_keyboard(broadcast_id),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_btn_add(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    user_states[user_id] = f"admin_bc_button:{broadcast_id}"
+    await query.edit_message_text(
+        "🧩 <b>Новая URL-кнопка</b>\n\nОтправьте строку в формате:\n<code>Текст | https://example.com</code>",
+        reply_markup=_admin_broadcast_buttons_keyboard(broadcast_id),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_btn_preset(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    preset = comms_callbacks.decode_button_preset(_bc_option_from_callback(callback_data))
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось применить пресет кнопки. Обновите экран.", show_alert=True)
+        return
+    result = broadcast_service.add_broadcast_button_preset(broadcast_id, operator_id=str(user_id), preset=preset)
+    row = result.get('broadcast') if result.get('ok') else broadcast_service.get_broadcast(broadcast_id)
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(row) + ("\n\nКнопка-пресет добавлена." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'Не удалось добавить пресет-кнопку'))}"),
+        reply_markup=_admin_broadcast_buttons_keyboard(broadcast_id),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_btn_clear(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    result = broadcast_service.clear_broadcast_buttons(broadcast_id, operator_id=str(user_id))
+    row = result.get('broadcast') if result.get('ok') else broadcast_service.get_broadcast(broadcast_id)
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(row) + ("\n\nКнопки очищены." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_buttons_clear_failed'))}"),
+        reply_markup=_admin_broadcast_buttons_keyboard(broadcast_id),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_preview(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    result = await broadcast_service.send_preview_to_operator(context.bot, broadcast_id, operator_chat_id=user_id, operator_id=str(user_id))
+    row = broadcast_service.get_broadcast(broadcast_id)
+    suffix = "\n\n✅ Реальный предпросмотр отправлен вам в личные сообщения." if result.get('ok') else f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_preview_failed'))}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(row) + suffix,
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_test_self(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    result = await broadcast_service.send_test_delivery(context.bot, broadcast_id, operator_id=str(user_id), scope='self', operator_chat_id=user_id)
+    row = broadcast_service.get_broadcast(broadcast_id)
+    if result.get('ok'):
+        suffix = f"\n\n✅ Тест себе отправлен. Число получателей: <b>{int(result.get('target_count') or 0)}</b>."
+    else:
+        suffix = f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_test_failed'))}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(row) + suffix,
+        reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_test_allow(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    await query.edit_message_text(
+        "🧪 <b>Тест на allowlist</b>\n\nБот отправит сообщение всем founder/operator account из allowlist. Подтвердить?",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.bc_test_allow_confirm(broadcast_id), comms_callbacks.bc_open(broadcast_id)),
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+@require_admin_callback
+async def _admin_callback_bc_test_allow_confirm(query, context, *, user_id: int, callback_data: str):
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
+    result = await broadcast_service.send_test_delivery(context.bot, broadcast_id, operator_id=str(user_id), scope='allowlist', operator_chat_id=user_id)
+    row = broadcast_service.get_broadcast(broadcast_id)
+    if result.get('ok'):
+        suffix = f"\n\n✅ Тест на allowlist отправлен. Число получателей: <b>{int(result.get('target_count') or 0)}</b>."
+    else:
+        suffix = f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_test_allow_failed'))}"
+    await query.edit_message_text(
+        _render_tg_admin_broadcast_detail_text(row) + suffix,
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2346,11 +2632,14 @@ async def _admin_callback_bc_preview(query, context, *, user_id: int, callback_d
 
 @require_admin_callback
 async def _admin_callback_bc_launch(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     row = broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Confirm launch</b>\nThis will start backend delivery for this cohort.",
-        reply_markup=get_yes_no_keyboard(f"admin_bc_launch_confirm|{broadcast_id}", f"admin_bc_open|{broadcast_id}"),
+        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Подтвердить запуск</b>\nЭто запустит backend-доставку для выбранной когорты.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.bc_launch_confirm(broadcast_id), comms_callbacks.bc_open(broadcast_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2358,10 +2647,13 @@ async def _admin_callback_bc_launch(query, context, *, user_id: int, callback_da
 
 @require_admin_callback
 async def _admin_callback_bc_launch_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     result = broadcast_service.launch_broadcast(broadcast_id, operator_id=str(user_id))
     row = broadcast_service.get_broadcast(broadcast_id)
-    suffix = "\n\n✅ Broadcast launched." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_launch_failed'))}"
+    suffix = "\n\n✅ Рассылка запущена." if result.get('ok') else f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_launch_failed'))}"
     await query.edit_message_text(
         _render_tg_admin_broadcast_detail_text(row) + suffix,
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
@@ -2372,11 +2664,14 @@ async def _admin_callback_bc_launch_confirm(query, context, *, user_id: int, cal
 
 @require_admin_callback
 async def _admin_callback_bc_stop(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     row = broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Confirm stop</b>\nThis stops further delivery for the active broadcast.",
-        reply_markup=get_yes_no_keyboard(f"admin_bc_stop_confirm|{broadcast_id}", f"admin_bc_open|{broadcast_id}"),
+        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Подтвердить остановку</b>\nЭто остановит дальнейшую доставку активной рассылки.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.bc_stop_confirm(broadcast_id), comms_callbacks.bc_open(broadcast_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2384,10 +2679,13 @@ async def _admin_callback_bc_stop(query, context, *, user_id: int, callback_data
 
 @require_admin_callback
 async def _admin_callback_bc_stop_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     result = broadcast_service.stop_broadcast(broadcast_id, operator_id=str(user_id))
     row = broadcast_service.get_broadcast(broadcast_id)
-    suffix = "\n\n✅ Broadcast stopped." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_stop_failed'))}"
+    suffix = "\n\n✅ Рассылка остановлена." if result.get('ok') else f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_stop_failed'))}"
     await query.edit_message_text(
         _render_tg_admin_broadcast_detail_text(row) + suffix,
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'stopped'), _admin_web_url('/')),
@@ -2398,11 +2696,14 @@ async def _admin_callback_bc_stop_confirm(query, context, *, user_id: int, callb
 
 @require_admin_callback
 async def _admin_callback_bc_retry(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     row = broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Confirm retry</b>\nThis will resume failed/retry-pending deliveries right now.",
-        reply_markup=get_yes_no_keyboard(f"admin_bc_retry_confirm|{broadcast_id}", f"admin_bc_open|{broadcast_id}"),
+        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Подтвердить повтор</b>\nЭто заново откроет failed/retry-pending доставки прямо сейчас.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.bc_retry_confirm(broadcast_id), comms_callbacks.bc_open(broadcast_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2410,14 +2711,17 @@ async def _admin_callback_bc_retry(query, context, *, user_id: int, callback_dat
 
 @require_admin_callback
 async def _admin_callback_bc_retry_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     result = broadcast_service.retry_failed_deliveries_now(broadcast_id, operator_id=str(user_id))
     row = broadcast_service.get_broadcast(broadcast_id)
     if result.get('ok'):
         retryable_count = int(result.get('retryable_count') or 0)
-        suffix = f"\n\n✅ Retry window reopened for <b>{retryable_count}</b> failed/pending deliveries."
+        suffix = f"\n\n✅ Окно ретрая заново открыто для <b>{retryable_count}</b> failed/pending доставок."
     else:
-        suffix = f"\n\n❌ {escape(str(result.get('error') or 'broadcast_retry_failed'))}"
+        suffix = f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_retry_failed'))}"
     await query.edit_message_text(
         _render_tg_admin_broadcast_detail_text(row) + suffix,
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'running'), _admin_web_url('/')),
@@ -2428,11 +2732,14 @@ async def _admin_callback_bc_retry_confirm(query, context, *, user_id: int, call
 
 @require_admin_callback
 async def _admin_callback_bc_cancel(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     row = broadcast_service.get_broadcast(broadcast_id)
     await query.edit_message_text(
-        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Confirm cancel</b>\nDraft will be closed and kept for audit/history.",
-        reply_markup=get_yes_no_keyboard(f"admin_bc_cancel_confirm|{broadcast_id}", f"admin_bc_open|{broadcast_id}"),
+        _render_tg_admin_broadcast_detail_text(row) + "\n\n<b>Подтвердить отмену</b>\nЧерновик будет закрыт и останется в audit/history.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.bc_cancel_confirm(broadcast_id), comms_callbacks.bc_open(broadcast_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2440,10 +2747,13 @@ async def _admin_callback_bc_cancel(query, context, *, user_id: int, callback_da
 
 @require_admin_callback
 async def _admin_callback_bc_cancel_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, broadcast_id = callback_data.split('|', 1)
+    broadcast_id = _bc_ref_from_callback(callback_data)
+    if not broadcast_id:
+        await safe_answer_callback(query, "Не удалось открыть черновик рассылки. Обновите экран.", show_alert=True)
+        return
     result = broadcast_service.stop_broadcast(broadcast_id, operator_id=str(user_id))
     row = broadcast_service.get_broadcast(broadcast_id)
-    suffix = "\n\n✅ Draft cancelled." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_cancel_failed'))}"
+    suffix = "\n\n✅ Черновик отменён." if result.get('ok') else f"\n\n❌ {escape(_broadcast_admin_error_text(result.get('error') or 'broadcast_cancel_failed'))}"
     await query.edit_message_text(
         _render_tg_admin_broadcast_detail_text(row) + suffix,
         reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'stopped'), _admin_web_url('/')),
@@ -2475,7 +2785,10 @@ async def _admin_callback_notice_new(query, context, *, user_id: int, callback_d
 
 @require_admin_callback
 async def _admin_callback_notice_open(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     row = notice_service.get_notice(notice_id)
     await query.edit_message_text(
         _render_tg_admin_notice_detail_text(row),
@@ -2487,10 +2800,13 @@ async def _admin_callback_notice_open(query, context, *, user_id: int, callback_
 
 @require_admin_callback
 async def _admin_callback_notice_text(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     user_states[user_id] = f"admin_notice_text:{notice_id}"
     await query.edit_message_text(
-        "📢 <b>Notice text</b>\n\nОтправьте следующий текст в чат с ботом. Он станет body текущего notice draft.",
+        "📢 <b>Текст объявления</b>\n\nОтправьте следующий текст в чат с ботом. Он станет текстом текущего черновика объявления.",
         reply_markup=get_admin_notice_detail_keyboard(notice_id, 'draft', _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2499,9 +2815,12 @@ async def _admin_callback_notice_text(query, context, *, user_id: int, callback_
 
 @require_admin_callback
 async def _admin_callback_notice_severity_menu(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     await query.edit_message_text(
-        "📢 <b>Choose severity</b>",
+        "📢 <b>Выберите серьёзность</b>",
         reply_markup=_admin_notice_severity_keyboard(notice_id),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2510,11 +2829,15 @@ async def _admin_callback_notice_severity_menu(query, context, *, user_id: int, 
 
 @require_admin_callback
 async def _admin_callback_notice_severity_set(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id, severity = callback_data.split('|', 2)
+    notice_id = _nt_ref_from_callback(callback_data)
+    severity = comms_callbacks.decode_notice_severity(_nt_option_from_callback(callback_data))
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось обновить серьёзность. Обновите экран.", show_alert=True)
+        return
     result = notice_service.set_notice_meta(notice_id, operator_id=str(user_id), severity=severity)
     row = result.get('notice') if result.get('ok') else notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + ("\n\nSeverity updated." if result.get('ok') else "\n\nSeverity update failed."),
+        _render_tg_admin_notice_detail_text(row) + ("\n\nСерьёзность обновлена." if result.get('ok') else "\n\nНе удалось обновить серьёзность."),
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2523,9 +2846,12 @@ async def _admin_callback_notice_severity_set(query, context, *, user_id: int, c
 
 @require_admin_callback
 async def _admin_callback_notice_target_menu(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     await query.edit_message_text(
-        "📢 <b>Choose target</b>",
+        "📢 <b>Выберите таргет</b>",
         reply_markup=_admin_notice_target_keyboard(notice_id),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2534,11 +2860,15 @@ async def _admin_callback_notice_target_menu(query, context, *, user_id: int, ca
 
 @require_admin_callback
 async def _admin_callback_notice_target_set(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id, target = callback_data.split('|', 2)
+    notice_id = _nt_ref_from_callback(callback_data)
+    target = comms_callbacks.decode_notice_target(_nt_option_from_callback(callback_data))
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось обновить таргет. Обновите экран.", show_alert=True)
+        return
     result = notice_service.set_notice_meta(notice_id, operator_id=str(user_id), target=target)
     row = result.get('notice') if result.get('ok') else notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + ("\n\nTarget updated." if result.get('ok') else "\n\nTarget update failed."),
+        _render_tg_admin_notice_detail_text(row) + ("\n\nТаргет обновлён." if result.get('ok') else "\n\nНе удалось обновить таргет."),
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2547,9 +2877,12 @@ async def _admin_callback_notice_target_set(query, context, *, user_id: int, cal
 
 @require_admin_callback
 async def _admin_callback_notice_cta_menu(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     await query.edit_message_text(
-        "📢 <b>Choose CTA</b>",
+        "📢 <b>Выберите CTA</b>",
         reply_markup=_admin_notice_cta_keyboard(notice_id),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2558,11 +2891,15 @@ async def _admin_callback_notice_cta_menu(query, context, *, user_id: int, callb
 
 @require_admin_callback
 async def _admin_callback_notice_cta_set(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id, cta_key = callback_data.split('|', 2)
+    notice_id = _nt_ref_from_callback(callback_data)
+    cta_key = comms_callbacks.decode_notice_cta(_nt_option_from_callback(callback_data))
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось обновить CTA. Обновите экран.", show_alert=True)
+        return
     result = notice_service.set_notice_meta(notice_id, operator_id=str(user_id), cta_key=cta_key)
     row = result.get('notice') if result.get('ok') else notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + ("\n\nCTA updated." if result.get('ok') else "\n\nCTA update failed."),
+        _render_tg_admin_notice_detail_text(row) + ("\n\nCTA обновлён." if result.get('ok') else "\n\nНе удалось обновить CTA."),
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2571,9 +2908,12 @@ async def _admin_callback_notice_cta_set(query, context, *, user_id: int, callba
 
 @require_admin_callback
 async def _admin_callback_notice_expiry_menu(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     await query.edit_message_text(
-        "📢 <b>Choose expiry</b>",
+        "📢 <b>Выберите срок действия</b>",
         reply_markup=_admin_notice_expiry_keyboard(notice_id),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2582,11 +2922,15 @@ async def _admin_callback_notice_expiry_menu(query, context, *, user_id: int, ca
 
 @require_admin_callback
 async def _admin_callback_notice_expiry_set(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id, expiry_key = callback_data.split('|', 2)
+    notice_id = _nt_ref_from_callback(callback_data)
+    expiry_key = comms_callbacks.decode_notice_expiry(_nt_option_from_callback(callback_data))
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось обновить срок. Обновите экран.", show_alert=True)
+        return
     result = notice_service.set_notice_meta(notice_id, operator_id=str(user_id), expiry_key=expiry_key)
     row = result.get('notice') if result.get('ok') else notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + ("\n\nExpiry updated." if result.get('ok') else "\n\nExpiry update failed."),
+        _render_tg_admin_notice_detail_text(row) + ("\n\nСрок обновлён." if result.get('ok') else "\n\nНе удалось обновить срок."),
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
@@ -2595,7 +2939,10 @@ async def _admin_callback_notice_expiry_set(query, context, *, user_id: int, cal
 
 @require_admin_callback
 async def _admin_callback_notice_preview(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     row = notice_service.get_notice(notice_id)
     await query.edit_message_text(
         _render_tg_admin_notice_detail_text(row),
@@ -2607,11 +2954,14 @@ async def _admin_callback_notice_preview(query, context, *, user_id: int, callba
 
 @require_admin_callback
 async def _admin_callback_notice_publish(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     row = notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + "\n\n<b>Confirm publish</b>\nPublishing a new version resets seen-state via the new notice id/version.",
-        reply_markup=get_yes_no_keyboard(f"admin_notice_publish_confirm|{notice_id}", f"admin_notice_open|{notice_id}"),
+        _render_tg_admin_notice_detail_text(row) + "\n\n<b>Подтвердите публикацию</b>\nНовая версия объявления сбросит seen-state у подходящих пользователей.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.nt_publish_confirm(notice_id), comms_callbacks.nt_open(notice_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2619,10 +2969,13 @@ async def _admin_callback_notice_publish(query, context, *, user_id: int, callba
 
 @require_admin_callback
 async def _admin_callback_notice_publish_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     result = notice_service.publish_notice(notice_id, operator_id=str(user_id))
     row = notice_service.get_notice(notice_id)
-    suffix = "\n\n✅ Notice published." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'notice_publish_failed'))}"
+    suffix = "\n\n✅ Объявление опубликовано." if result.get('ok') else f"\n\n❌ {escape(_notice_admin_error_text(result.get('error') or 'Не удалось опубликовать объявление'))}"
     await query.edit_message_text(
         _render_tg_admin_notice_detail_text(row) + suffix,
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'active'), _admin_web_url('/')),
@@ -2633,11 +2986,14 @@ async def _admin_callback_notice_publish_confirm(query, context, *, user_id: int
 
 @require_admin_callback
 async def _admin_callback_notice_deactivate(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     row = notice_service.get_notice(notice_id)
     await query.edit_message_text(
-        _render_tg_admin_notice_detail_text(row) + "\n\n<b>Confirm deactivate</b>\nCurrent notice will stop showing to users.",
-        reply_markup=get_yes_no_keyboard(f"admin_notice_deactivate_confirm|{notice_id}", f"admin_notice_open|{notice_id}"),
+        _render_tg_admin_notice_detail_text(row) + "\n\n<b>Подтвердите отключение</b>\nТекущее объявление перестанет показываться пользователям.",
+        reply_markup=get_yes_no_keyboard(comms_callbacks.nt_deactivate_confirm(notice_id), comms_callbacks.nt_open(notice_id)),
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
     )
@@ -2645,10 +3001,13 @@ async def _admin_callback_notice_deactivate(query, context, *, user_id: int, cal
 
 @require_admin_callback
 async def _admin_callback_notice_deactivate_confirm(query, context, *, user_id: int, callback_data: str):
-    _prefix, notice_id = callback_data.split('|', 1)
+    notice_id = _nt_ref_from_callback(callback_data)
+    if not notice_id:
+        await safe_answer_callback(query, "Не удалось открыть объявление. Обновите экран.", show_alert=True)
+        return
     result = notice_service.deactivate_notice(notice_id, operator_id=str(user_id))
     row = notice_service.get_notice(notice_id)
-    suffix = "\n\n✅ Notice deactivated." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'notice_deactivate_failed'))}"
+    suffix = "\n\n✅ Объявление отключено." if result.get('ok') else f"\n\n❌ {escape(_notice_admin_error_text(result.get('error') or 'Не удалось отключить объявление'))}"
     await query.edit_message_text(
         _render_tg_admin_notice_detail_text(row) + suffix,
         reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'inactive'), _admin_web_url('/')),
@@ -2932,8 +3291,13 @@ ADMIN_CALLBACK_EXACT_HANDLERS = {
     "admin_broadcast": _admin_callback_broadcast,
     "admin_broadcasts": _admin_callback_broadcasts,
     "admin_bc_new": _admin_callback_bc_new,
+    "bc:n": _admin_callback_bc_new,
+    "bc:bn": _admin_callback_bc_builder_new,
+    "bc:qn": _admin_callback_bc_quick_new,
+    "bc:ob": _admin_callback_bc_outbox,
     "admin_notice": _admin_callback_notice,
     "admin_notice_new": _admin_callback_notice_new,
+    "nt:n": _admin_callback_notice_new,
     "admin_settings": _admin_callback_settings,
     "toggle_create_game": _admin_callback_toggle_create_game,
     "toggle_withdraw": _admin_callback_toggle_withdraw,
@@ -2944,11 +3308,57 @@ ADMIN_CALLBACK_EXACT_HANDLERS = {
 }
 
 ADMIN_CALLBACK_PREFIX_HANDLERS = (
+    ("bc:o:", _admin_callback_bc_open),
+    ("bc:tx:", _admin_callback_bc_builder_text),
+    ("bc:ph:", _admin_callback_bc_builder_photo),
+    ("bc:tp:", _admin_callback_bc_builder_textphoto),
+    ("bc:src:", _admin_callback_bc_source),
+    ("bc:am:", _admin_callback_bc_audience_menu),
+    ("bc:a:", _admin_callback_bc_audience_set),
+    ("bc:btn:", _admin_callback_bc_buttons),
+    ("bc:ba:", _admin_callback_bc_btn_add),
+    ("bc:bp:", _admin_callback_bc_btn_preset),
+    ("bc:bc:", _admin_callback_bc_btn_clear),
+    ("bc:pv:", _admin_callback_bc_preview),
+    ("bc:ts:", _admin_callback_bc_test_self),
+    ("bc:tac:", _admin_callback_bc_test_allow_confirm),
+    ("bc:ta:", _admin_callback_bc_test_allow),
+    ("bc:lnc:", _admin_callback_bc_launch_confirm),
+    ("bc:ln:", _admin_callback_bc_launch),
+    ("bc:stc:", _admin_callback_bc_stop_confirm),
+    ("bc:st:", _admin_callback_bc_stop),
+    ("bc:rtc:", _admin_callback_bc_retry_confirm),
+    ("bc:rt:", _admin_callback_bc_retry),
+    ("bc:cxc:", _admin_callback_bc_cancel_confirm),
+    ("bc:cx:", _admin_callback_bc_cancel),
+    ("nt:o:", _admin_callback_notice_open),
+    ("nt:tx:", _admin_callback_notice_text),
+    ("nt:sm:", _admin_callback_notice_severity_menu),
+    ("nt:s:", _admin_callback_notice_severity_set),
+    ("nt:tm:", _admin_callback_notice_target_menu),
+    ("nt:t:", _admin_callback_notice_target_set),
+    ("nt:cm:", _admin_callback_notice_cta_menu),
+    ("nt:c:", _admin_callback_notice_cta_set),
+    ("nt:em:", _admin_callback_notice_expiry_menu),
+    ("nt:e:", _admin_callback_notice_expiry_set),
+    ("nt:pv:", _admin_callback_notice_preview),
+    ("nt:pbc:", _admin_callback_notice_publish_confirm),
+    ("nt:pb:", _admin_callback_notice_publish),
+    ("nt:dxc:", _admin_callback_notice_deactivate_confirm),
+    ("nt:dx:", _admin_callback_notice_deactivate),
     ("admin_bc_open|", _admin_callback_bc_open),
-    ("admin_bc_text|", _admin_callback_bc_text),
+    ("admin_bc_text|", _admin_callback_bc_source),
+    ("admin_bc_source|", _admin_callback_bc_source),
     ("admin_bc_audience_menu|", _admin_callback_bc_audience_menu),
     ("admin_bc_aud|", _admin_callback_bc_audience_set),
+    ("admin_bc_buttons|", _admin_callback_bc_buttons),
+    ("admin_bc_btn_add|", _admin_callback_bc_btn_add),
+    ("admin_bc_btn_preset|", _admin_callback_bc_btn_preset),
+    ("admin_bc_btn_clear|", _admin_callback_bc_btn_clear),
     ("admin_bc_preview|", _admin_callback_bc_preview),
+    ("admin_bc_test_self|", _admin_callback_bc_test_self),
+    ("admin_bc_test_allow_confirm|", _admin_callback_bc_test_allow_confirm),
+    ("admin_bc_test_allow|", _admin_callback_bc_test_allow),
     ("admin_bc_launch|", _admin_callback_bc_launch),
     ("admin_bc_launch_confirm|", _admin_callback_bc_launch_confirm),
     ("admin_bc_stop|", _admin_callback_bc_stop),
@@ -3622,9 +4032,9 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
             
     except Exception as e:
         if 'Message is not modified' in str(e):
-            await safe_answer_callback(query, "Already up to date.")
+            await safe_answer_callback(query, "Уже актуально.")
         else:
-            await safe_answer_callback(query, "Something went wrong. Please try again.", show_alert=True)
+            await safe_answer_callback(query, "Что-то пошло не так. Попробуйте ещё раз.", show_alert=True)
             logger.error(f"Error in handle_callback_query: {e}")
 
 async def handle_main_menu(query, context):
@@ -4080,6 +4490,27 @@ async def handle_withdraw_amount(update, context):
         reply_markup=_main_menu_markup(update.effective_user.id)
     )
 
+def _extract_admin_broadcast_message_payload(message) -> dict | None:
+    if message is None:
+        return None
+    if getattr(message, 'photo', None):
+        return {"kind": "media", "source_type": "photo", "preview_text": str(message.caption or '').strip(), "chat_id": int(message.chat.id), "message_id": int(message.message_id)}
+    if getattr(message, 'video', None):
+        return {"kind": "media", "source_type": "video", "preview_text": str(message.caption or '').strip(), "chat_id": int(message.chat.id), "message_id": int(message.message_id)}
+    if getattr(message, 'animation', None):
+        return {"kind": "media", "source_type": "animation", "preview_text": str(message.caption or '').strip(), "chat_id": int(message.chat.id), "message_id": int(message.message_id)}
+    if getattr(message, 'document', None):
+        return {"kind": "media", "source_type": "document", "preview_text": str(message.caption or '').strip(), "chat_id": int(message.chat.id), "message_id": int(message.message_id)}
+    if getattr(message, 'text', None):
+        return {"kind": "text", "text": str(message.text or '').strip(), "chat_id": int(message.chat.id), "message_id": int(message.message_id)}
+    return None
+
+
+def _broadcast_button_input_help() -> str:
+    return "Формат кнопки: <code>Текст | https://example.com</code>"
+
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик текстовых сообщений"""
     user_id = update.effective_user.id
@@ -4176,7 +4607,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_card = admin_read_models.get_user_card(target_id)
         if not user_card:
             await update.message.reply_text(
-                "❌ Пользователь не найден. Введите другой ID или откройте Users в web admin.",
+                "❌ Пользователь не найден. Введите другой ID или откройте раздел Users в web admin.",
                 reply_markup=get_admin_shortcuts_keyboard("admin_users", _admin_web_url('/users')),
                 disable_web_page_preview=True,
             )
@@ -4235,7 +4666,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_states.pop(user_id, None)
         result = broadcast_service.set_broadcast_text(broadcast_id, text=update.message.text, operator_id=str(user_id))
         row = result.get('broadcast') if result.get('ok') else broadcast_service.get_broadcast(broadcast_id)
-        suffix = "\n\n✅ Broadcast text updated." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_text_failed'))}"
+        suffix = "\n\n✅ Текст рассылки обновлён." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'broadcast_text_failed'))}"
         await update.message.reply_text(
             _render_tg_admin_broadcast_detail_text(row) + suffix,
             reply_markup=get_admin_broadcast_detail_keyboard(broadcast_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),
@@ -4252,7 +4683,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_states.pop(user_id, None)
         result = notice_service.set_notice_text(notice_id, body_text=update.message.text, operator_id=str(user_id))
         row = result.get('notice') if result.get('ok') else notice_service.get_notice(notice_id)
-        suffix = "\n\n✅ Notice text updated." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'notice_text_failed'))}"
+        suffix = "\n\n✅ Текст объявления обновлён." if result.get('ok') else f"\n\n❌ {escape(str(result.get('error') or 'notice_text_failed'))}"
         await update.message.reply_text(
             _render_tg_admin_notice_detail_text(row) + suffix,
             reply_markup=get_admin_notice_detail_keyboard(notice_id, str((row or {}).get('status') or 'draft'), _admin_web_url('/')),

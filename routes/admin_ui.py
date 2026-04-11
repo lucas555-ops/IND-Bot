@@ -425,33 +425,36 @@ def _overview_page() -> str:
         + (
             (
                 f"<div class='stack'><div><b>Active broadcast</b></div><div class='metric-note'>ID: <code>{html.escape(str((comms.get('active_broadcast') or {}).get('broadcast_id') or '—'))}</code></div>"
-                f"<div class='metric-note'>Audience: <code>{html.escape(str((comms.get('active_broadcast') or {}).get('audience') or '—'))}</code></div>"
+                f"<div class='metric-note'>Аудитория: <code>{html.escape(str((comms.get('active_broadcast') or {}).get('audience') or '—'))}</code></div>"
+                f"<div class='metric-note'>Тип: <b>{html.escape(str((comms.get('active_broadcast') or {}).get('source_message_type') or 'text'))}</b></div>"
                 f"<div class='metric-note'>Sent / total: <b>{int((comms.get('active_broadcast') or {}).get('sent_count') or 0)}</b> / <b>{int((comms.get('active_broadcast') or {}).get('total_count') or 0)}</b></div>"
                 f"<div class='metric-note'>Retry pending: <b>{int((comms.get('active_broadcast') or {}).get('retry_pending') or 0)}</b> · Failed: <b>{int((comms.get('active_broadcast') or {}).get('failed_count') or 0)}</b></div></div>"
             )
             if comms.get('active_broadcast')
             else "<div class='empty'>Активной рассылки сейчас нет.</div>"
         )
+        + f"<div class='cards' style='margin:14px 0'><div class='card'><div class='metric-label'>Drafts</div><div class='metric-value'>{int(((comms.get('outbox') or {}).get('summary') or {}).get('draft') or 0)}</div></div><div class='card'><div class='metric-label'>Running</div><div class='metric-value'>{int(((comms.get('outbox') or {}).get('summary') or {}).get('running') or 0)}</div></div><div class='card'><div class='metric-label'>Retry pending</div><div class='metric-value'>{int(((comms.get('outbox') or {}).get('summary') or {}).get('retry_pending') or 0)}</div></div><div class='card'><div class='metric-label'>Failed deliveries</div><div class='metric-value'>{int(((comms.get('outbox') or {}).get('summary') or {}).get('failed_deliveries') or 0)}</div></div></div>"
+        + f"<div class='footnote'>{html.escape(str((comms.get('outbox') or {}).get('next_action') or ''))}</div>"
         + _html_table(
             comms.get('recent_broadcasts') or [],
-            [("broadcast_id", "Broadcast"), ("status", "Status"), ("audience", "Audience"), ("sent_count", "Sent"), ("retry_pending", "Retry"), ("failed_count", "Failed"), ("total_count", "Total")],
+            [("broadcast_id", "Рассылка"), ("status", "Статус"), ("source_message_type", "Тип"), ("audience", "Аудитория"), ("sent_count", "Отправлено"), ("retry_pending", "На ретрае"), ("failed_count", "Ошибки"), ("total_count", "Всего")],
             empty_label='История рассылок пока пустая.',
         )
         + "</section>"
-        + "<section class='panel'><h2>System Notice</h2>"
+        + "<section class='panel'><h2>Системное объявление</h2>"
         + (
             (
-                f"<div class='stack'><div><b>Current active notice</b></div><div class='metric-note'>ID: <code>{html.escape(str((comms.get('current_notice') or {}).get('notice_id') or '—'))}</code></div>"
-                f"<div class='metric-note'>Severity: <b>{html.escape(str((comms.get('current_notice') or {}).get('severity') or '—'))}</b></div>"
-                f"<div class='metric-note'>Target: <code>{html.escape(str((comms.get('current_notice') or {}).get('target') or '—'))}</code></div>"
-                f"<div class='metric-note'>Version: <b>{int((comms.get('current_notice') or {}).get('version') or 0)}</b></div></div>"
+                f"<div class='stack'><div><b>Текущее активное объявление</b></div><div class='metric-note'>ID: <code>{html.escape(str((comms.get('current_notice') or {}).get('notice_id') or '—'))}</code></div>"
+                f"<div class='metric-note'>Серьёзность: <b>{html.escape(str((comms.get('current_notice') or {}).get('severity') or '—'))}</b></div>"
+                f"<div class='metric-note'>Таргет: <code>{html.escape(str((comms.get('current_notice') or {}).get('target') or '—'))}</code></div>"
+                f"<div class='metric-note'>Версия: <b>{int((comms.get('current_notice') or {}).get('version') or 0)}</b></div></div>"
             )
             if comms.get('current_notice')
-            else "<div class='empty'>Активного notice сейчас нет.</div>"
+            else "<div class='empty'>Активного объявления сейчас нет.</div>"
         )
         + _html_table(
             comms.get('recent_notices') or [],
-            [("notice_id", "Notice"), ("status", "Status"), ("severity", "Severity"), ("target", "Target"), ("version", "Version")],
+            [("notice_id", "Объявление"), ("status", "Статус"), ("severity", "Серьёзность"), ("target", "Таргет"), ("version", "Версия")],
             empty_label='История notice пока пустая.',
         )
         + "</section></div>"

@@ -205,13 +205,13 @@ def comms_snapshot() -> dict:
     conn = database.get_connection()
     try:
         active_broadcast = conn.execute(
-            "SELECT broadcast_id, audience, status, total_count, sent_count, failed_count, created_at FROM broadcasts WHERE status = 'running' ORDER BY started_at DESC, created_at DESC LIMIT 1"
+            "SELECT broadcast_id, audience, status, source_message_type, preview_text, buttons_json, total_count, sent_count, failed_count, created_at FROM broadcasts WHERE status = 'running' ORDER BY started_at DESC, created_at DESC LIMIT 1"
         ).fetchone()
         current_notice = conn.execute(
             "SELECT notice_id, status, target, severity, version, published_at, expires_at FROM system_notices WHERE status = 'active' ORDER BY published_at DESC, created_at DESC LIMIT 1"
         ).fetchone()
         recent_broadcasts = conn.execute(
-            "SELECT broadcast_id, audience, status, total_count, sent_count, failed_count, created_at FROM broadcasts ORDER BY created_at DESC LIMIT 5"
+            "SELECT broadcast_id, audience, status, source_message_type, preview_text, buttons_json, total_count, sent_count, failed_count, created_at FROM broadcasts ORDER BY created_at DESC LIMIT 5"
         ).fetchall()
         recent_notices = conn.execute(
             "SELECT notice_id, status, target, severity, version, published_at, expires_at, created_at FROM system_notices ORDER BY COALESCE(published_at, created_at) DESC LIMIT 5"
@@ -229,6 +229,7 @@ def comms_snapshot() -> dict:
             "current_notice": dict(current_notice) if current_notice else None,
             "recent_broadcasts": recent_broadcast_items,
             "recent_notices": [dict(row) for row in recent_notices],
+            "outbox": broadcast_service.outbox_snapshot(limit=8),
         }
     finally:
         conn.close()

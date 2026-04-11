@@ -9,6 +9,8 @@ from urllib.parse import quote, urlencode
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 
+from services import comms_callbacks
+
 BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "rollduelbot").strip().lstrip("@") or "rollduelbot"
 
 
@@ -469,27 +471,27 @@ def get_insufficient_balance_keyboard() -> InlineKeyboardMarkup:
 
 def get_admin_panel_keyboard(admin_web_url: Optional[str] = None) -> InlineKeyboardMarkup:
     keyboard = [
-        [InlineKeyboardButton("📊 Overview", callback_data="admin_overview"), InlineKeyboardButton("💸 Withdrawals", callback_data="admin_withdrawals")],
-        [InlineKeyboardButton("🧭 Runtime", callback_data="admin_runtime"), InlineKeyboardButton("👥 Users", callback_data="admin_users")],
-        [InlineKeyboardButton("🏦 Liabilities", callback_data="admin_liabilities"), InlineKeyboardButton("📣 Broadcasts", callback_data="admin_broadcasts")],
-        [InlineKeyboardButton("📢 Notice", callback_data="admin_notice"), InlineKeyboardButton("❓ Help", callback_data="admin_help")],
+        [InlineKeyboardButton("📊 Обзор", callback_data="admin_overview"), InlineKeyboardButton("💸 Выводы", callback_data="admin_withdrawals")],
+        [InlineKeyboardButton("🧭 Рантайм", callback_data="admin_runtime"), InlineKeyboardButton("👥 Пользователи", callback_data="admin_users")],
+        [InlineKeyboardButton("🏦 Обязательства", callback_data="admin_liabilities"), InlineKeyboardButton("📣 Рассылки", callback_data="admin_broadcasts")],
+        [InlineKeyboardButton("📢 Объявление", callback_data="admin_notice"), InlineKeyboardButton("❓ Помощь", callback_data="admin_help")],
     ]
     if admin_web_url:
-        keyboard.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
+        keyboard.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
     keyboard.append([InlineKeyboardButton("◀️ Main menu", callback_data="back_to_main")])
     return InlineKeyboardMarkup(keyboard)
 
 
 def get_admin_shortcuts_keyboard(current: str, admin_web_url: Optional[str] = None) -> InlineKeyboardMarkup:
     labels = [
-        ("admin_overview", "📊 Overview"),
-        ("admin_withdrawals", "💸 Withdrawals"),
-        ("admin_runtime", "🧭 Runtime"),
-        ("admin_users", "👥 Users"),
-        ("admin_liabilities", "🏦 Liabilities"),
-        ("admin_broadcasts", "📣 Broadcasts"),
-        ("admin_notice", "📢 Notice"),
-        ("admin_help", "❓ Help"),
+        ("admin_overview", "📊 Обзор"),
+        ("admin_withdrawals", "💸 Выводы"),
+        ("admin_runtime", "🧭 Рантайм"),
+        ("admin_users", "👥 Пользователи"),
+        ("admin_liabilities", "🏦 Обязательства"),
+        ("admin_broadcasts", "📣 Рассылки"),
+        ("admin_notice", "📢 Объявление"),
+        ("admin_help", "❓ Помощь"),
     ]
     rows = []
     current_row = []
@@ -503,7 +505,7 @@ def get_admin_shortcuts_keyboard(current: str, admin_web_url: Optional[str] = No
     if current_row:
         rows.append(current_row)
     if admin_web_url:
-        rows.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
+        rows.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
     rows.append([InlineKeyboardButton("◀️ Main menu", callback_data="back_to_main")])
     return InlineKeyboardMarkup(rows)
 
@@ -726,21 +728,24 @@ def get_admin_broadcast_detail_keyboard(broadcast_id: str, status: str, admin_we
     keyboard: list[list[InlineKeyboardButton]] = []
     if is_draft:
         keyboard.extend([
-            [InlineKeyboardButton("✍️ Edit text", callback_data=f"admin_bc_text|{broadcast_id}"), InlineKeyboardButton("👥 Audience", callback_data=f"admin_bc_audience_menu|{broadcast_id}")],
-            [InlineKeyboardButton("👀 Preview", callback_data=f"admin_bc_preview|{broadcast_id}"), InlineKeyboardButton("🚀 Launch", callback_data=f"admin_bc_launch|{broadcast_id}")],
-            [InlineKeyboardButton("🗑️ Cancel draft", callback_data=f"admin_bc_cancel|{broadcast_id}")],
+            [InlineKeyboardButton("✍️ Текст", callback_data=comms_callbacks.bc_builder_text(broadcast_id)), InlineKeyboardButton("🖼️ Фото + текст", callback_data=comms_callbacks.bc_builder_textphoto(broadcast_id))],
+            [InlineKeyboardButton("🖼️ Только фото", callback_data=comms_callbacks.bc_builder_photo(broadcast_id)), InlineKeyboardButton("⚡ Быстрый пост", callback_data=comms_callbacks.bc_source(broadcast_id))],
+            [InlineKeyboardButton("👥 Аудитория", callback_data=comms_callbacks.bc_audience_menu(broadcast_id)), InlineKeyboardButton("🧩 Кнопки", callback_data=comms_callbacks.bc_buttons(broadcast_id))],
+            [InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.bc_preview(broadcast_id)), InlineKeyboardButton("🧪 Тест себе", callback_data=comms_callbacks.bc_test_self(broadcast_id))],
+            [InlineKeyboardButton("🧪 Тест allowlist", callback_data=comms_callbacks.bc_test_allow(broadcast_id)), InlineKeyboardButton("🚀 Запустить", callback_data=comms_callbacks.bc_launch(broadcast_id))],
+            [InlineKeyboardButton("🗑️ Отменить черновик", callback_data=comms_callbacks.bc_cancel(broadcast_id))],
         ])
     elif is_running:
         keyboard.extend([
-            [InlineKeyboardButton("👀 Preview", callback_data=f"admin_bc_preview|{broadcast_id}"), InlineKeyboardButton("🛑 Stop", callback_data=f"admin_bc_stop|{broadcast_id}")],
-            [InlineKeyboardButton("🔁 Retry failed", callback_data=f"admin_bc_retry|{broadcast_id}")],
+            [InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.bc_preview(broadcast_id)), InlineKeyboardButton("🛑 Остановить", callback_data=comms_callbacks.bc_stop(broadcast_id))],
+            [InlineKeyboardButton("🔁 Повторить ошибки", callback_data=comms_callbacks.bc_retry(broadcast_id)), InlineKeyboardButton("🧪 Тест себе", callback_data=comms_callbacks.bc_test_self(broadcast_id))],
         ])
     else:
-        keyboard.append([InlineKeyboardButton("👀 Preview", callback_data=f"admin_bc_preview|{broadcast_id}")])
-        keyboard.append([InlineKeyboardButton("🔁 Retry failed", callback_data=f"admin_bc_retry|{broadcast_id}")])
-    keyboard.append([InlineKeyboardButton("◀️ Back", callback_data="admin_broadcasts")])
+        keyboard.append([InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.bc_preview(broadcast_id)), InlineKeyboardButton("🧪 Тест себе", callback_data=comms_callbacks.bc_test_self(broadcast_id))])
+        keyboard.append([InlineKeyboardButton("🔁 Повторить ошибки", callback_data=comms_callbacks.bc_retry(broadcast_id))])
+    keyboard.append([InlineKeyboardButton("📤 Outbox", callback_data=comms_callbacks.bc_outbox()), InlineKeyboardButton("◀️ Назад", callback_data="admin_broadcasts")])
     if admin_web_url:
-        keyboard.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
+        keyboard.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -750,18 +755,18 @@ def get_admin_notice_detail_keyboard(notice_id: str, status: str, admin_web_url:
     keyboard: list[list[InlineKeyboardButton]] = []
     if is_draft:
         keyboard.extend([
-            [InlineKeyboardButton("✍️ Edit text", callback_data=f"admin_notice_text|{notice_id}"), InlineKeyboardButton("⚠️ Severity", callback_data=f"admin_notice_severity_menu|{notice_id}")],
-            [InlineKeyboardButton("🎯 Target", callback_data=f"admin_notice_target_menu|{notice_id}"), InlineKeyboardButton("🔗 CTA", callback_data=f"admin_notice_cta_menu|{notice_id}")],
-            [InlineKeyboardButton("⏱️ Expiry", callback_data=f"admin_notice_expiry_menu|{notice_id}"), InlineKeyboardButton("👀 Preview", callback_data=f"admin_notice_preview|{notice_id}")],
-            [InlineKeyboardButton("📢 Publish", callback_data=f"admin_notice_publish|{notice_id}"), InlineKeyboardButton("🗑️ Cancel draft", callback_data=f"admin_notice_deactivate|{notice_id}")],
+            [InlineKeyboardButton("✍️ Текст", callback_data=comms_callbacks.nt_text(notice_id)), InlineKeyboardButton("⚠️ Серьёзность", callback_data=comms_callbacks.nt_severity_menu(notice_id))],
+            [InlineKeyboardButton("🎯 Таргет", callback_data=comms_callbacks.nt_target_menu(notice_id)), InlineKeyboardButton("🔗 CTA", callback_data=comms_callbacks.nt_cta_menu(notice_id))],
+            [InlineKeyboardButton("⏱️ Срок", callback_data=comms_callbacks.nt_expiry_menu(notice_id)), InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.nt_preview(notice_id))],
+            [InlineKeyboardButton("📢 Опубликовать", callback_data=comms_callbacks.nt_publish(notice_id)), InlineKeyboardButton("🗑️ Отменить черновик", callback_data=comms_callbacks.nt_deactivate(notice_id))],
         ])
     elif is_active:
         keyboard.extend([
-            [InlineKeyboardButton("👀 Preview", callback_data=f"admin_notice_preview|{notice_id}"), InlineKeyboardButton("⏹️ Deactivate", callback_data=f"admin_notice_deactivate|{notice_id}")],
+            [InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.nt_preview(notice_id)), InlineKeyboardButton("⏹️ Отключить", callback_data=comms_callbacks.nt_deactivate(notice_id))],
         ])
     else:
-        keyboard.append([InlineKeyboardButton("👀 Preview", callback_data=f"admin_notice_preview|{notice_id}")])
+        keyboard.append([InlineKeyboardButton("👀 Предпросмотр", callback_data=comms_callbacks.nt_preview(notice_id))])
     keyboard.append([InlineKeyboardButton("◀️ Back", callback_data="admin_notice")])
     if admin_web_url:
-        keyboard.append([InlineKeyboardButton("🌐 Open web admin", url=admin_web_url)])
+        keyboard.append([InlineKeyboardButton("🌐 Открыть web admin", url=admin_web_url)])
     return InlineKeyboardMarkup(keyboard)

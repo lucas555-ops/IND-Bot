@@ -36,6 +36,7 @@ Shared truth that remains canonical:
 - Web admin now includes a dedicated Liabilities snapshot surface plus tighter operator alerts/receipts copy so treasury/liability visibility is no longer buried only inside overview cards.
 - Failed Items desk now exposes narrow audited recovery actions: `Process now` for supported `invoice_paid` payment events, `Run timeout reconcile now` for stuck duels, and `Retry now` for failed runtime jobs via the canonical runtime queue.
 - Broadcast delivery is now hardened beyond the initial foundation: deliveries persist attempt counters, `retry_pending` state, backoff-based retry timing, and manual operator `Retry failed` resume from Telegram admin instead of silently dying after the first failed send.
+- Comms admin callback flows for Broadcasts/Notice now use compact callback ids plus short-ref resolution so Telegram inline buttons stay below callback_data limits; operator receipts around empty payload / missing notice states are also cleaner in Russian.
 
 ## Mini App state after RD-BOT-001
 - Mini App code is still present in the repo and remains session-backed when explicitly enabled.
@@ -58,7 +59,7 @@ Latest Mini App line status: frozen after `RD-MA-012.1`.
 - `/app` remains only as an optional dormant-surface launcher.
 
 Latest classic bot shell step: `RD-BOT-001 — Bot-First Shell + Mini App Freeze`.
-Latest coordinated stabilization/admin pass: `TDH-ADMIN-001.2 + TDH-STAB-002.3 + RD-BOT-006.3.1`.
+Latest coordinated stabilization/admin pass: `TDH-ADMIN-001.7.3 + TDH-STAB-002.3 + RD-BOT-006.3.1`.
 Latest product step: `RD-BOT-006.3.1 — Empty Giveaway Recovery + Terminal State Polish`.
 
 ## Practice Mode status
@@ -197,3 +198,33 @@ Tighten the bot-first practice loop after the first real Telegram pass without e
 - newly created open real duels now expose a share-duel action from the waiting room screen
 - finished real duel messages now expose a share-result action and direct links into `My Duels` / next duel creation
 - history keeps practice visible with a clear badge while real profile stats remain isolated from practice truth
+
+
+## Latest backend/admin polish
+- **`TDH-ADMIN-001.6.2 — Telegram Admin RU Copy Polish`**
+
+- **`TDH-ADMIN-001.7 — Broadcast UX + Media/Preview Uplift`**
+  - source-message / media-first broadcast corridor
+  - URL button builder + presets
+  - real preview + self/allowlist tests before launch
+  - normalized delivery result codes persisted in broadcast deliveries
+
+
+## Latest TDH admin hotfix
+- **TDH-ADMIN-001.7.1 — founder/media broadcast smoke hardening**
+  - launch now blocks on empty audience instead of silently completing
+  - self/allowlist test delivery is per-target tolerant and reports partial failures
+  - retry action now refuses empty retry windows
+  - live smoke runbook added at `docs/TELEGRAM_BROADCAST_LIVE_SMOKE_RU.md`
+
+## TDH-ADMIN-001.7.2
+- comms bootstrap/migration repair: `_create_comms_tables()` now adds retry-hardening columns before creating indexes that depend on them
+- fixes Postgres startup crash on pre-existing `broadcast_deliveries` tables missing `next_retry_at` and related retry columns
+
+
+## TDH-ADMIN-001.7.4
+- broadcast admin repacked into two clearer operator modes: `Конструктор рассылки` and `Быстрый пост`;
+- Telegram admin now has a dedicated broadcast outbox readout with next-action guidance;
+- draft keyboard now exposes structured text / photo / photo+text entry alongside the raw quick-post source-message path;
+- admin draft input states now really handle text, source-message media, and manual URL button input instead of leaving those prompts half-wired;
+- web admin comms block now also surfaces outbox pressure and next-action guidance, while keeping notice as a separate comms primitive.
