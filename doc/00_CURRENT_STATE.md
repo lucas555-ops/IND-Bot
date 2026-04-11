@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.7
-- Phase: broadcast composer uplift on top of the STEP051.6 admin navigation/menu polish, the STEP051.5 pricing hotfix, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.7.1
+- Phase: broadcast composer hardening on top of the STEP051.7 broadcast composer uplift, the STEP051.6 admin navigation/menu polish, the STEP051.5 pricing hotfix, and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.7 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the compact admin communications/broadcast/system menu layout preserved, and the broadcast composer upgraded to support optional image, optional inline CTA button text/url, and smart text/photo delivery routing with outbox metadata preserved; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.7.1 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the compact admin communications/broadcast/system menu layout preserved, and the broadcast composer hardened so nullable outbox/status parameters are explicitly typed and raw SQL typing errors no longer leak into the admin UI; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -39,6 +39,7 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 - STEP051.6 compacts the admin communications / broadcast / templates / system navigation into more consistent paired rows, keeps long audience selectors readable, and standardizes back/home navigation across the core admin menu surfaces
 - STEP051.7 upgrades admin Broadcast composition so operators can send text-only, image-only, image + text, or text/image plus one inline CTA button, with smart routing for long image posts and media/button metadata persisted into draft/outbox state
+- STEP051.7.1 hardens the broadcast send/outbox SQL path by explicitly typing nullable insert/update parameters and masking raw SQL typing errors from the operator surface
 
 ## Current truth
 
@@ -64,6 +65,7 @@
 - STEP051.5 keeps the STEP051.4 command/menu work intact and only restores the monetization member surface so the promoted `Plans` button is a working product screen again
 - STEP051.6 keeps the STEP051 invite/share + STEP051.5 plans fixes intact and only reorganizes admin/operator menu layouts for compactness, consistency, and easier thumb navigation in Telegram
 - STEP051.7 keeps the STEP051.6 admin navigation polish intact and only upgrades the broadcast composer so the founder/operator can attach one optional image, one optional inline CTA button, and still send normal text with raw links in-body without extra complexity
+- STEP051.7.1 keeps the STEP051.7 broadcast UX intact and only hardens the SQL/update path so nullable status timestamps and error fields cannot trigger PostgreSQL type-inference failures during send
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -79,7 +81,14 @@
 
 ## Next recommended step
 
-- deploy STEP051.7 and do a short live smoke on the real bot: verify admin `📬 Рассылка` supports text only, raw URL in text, image only, image + short text, image + long text split delivery, and optional inline CTA button text/url; confirm outbox rows show media/button metadata and confirm `⭐ Plans`, `/start`, `/menu`, and invite paths still behave normally
+- deploy STEP051.7.1 and do a short live smoke on the real bot: verify admin `📬 Рассылка` no longer shows raw SQL notices, then verify text only, raw URL in text, image only, image + short text, image + long text split delivery, and optional inline CTA button text/url; confirm outbox rows show media/button metadata and confirm `⭐ Plans`, `/start`, `/menu`, and invite paths still behave normally
+
+## STEP051.7.1 delta
+
+- outbox insert/update SQL now explicitly types nullable integer, timestamptz, bigint, and text parameters in the broadcast send path
+- the `finished_at` / `last_error` update logic no longer relies on PostgreSQL inferring a type from nullable parameters
+- operator-facing notices now mask raw PostgreSQL typing errors instead of echoing database internals into the broadcast screen
+- broadcast behavior and UX remain otherwise unchanged from STEP051.7
 
 ## STEP051.7 delta
 

@@ -1175,12 +1175,12 @@ export async function createAdminCommOutboxRecord(client, {
         created_by_user_id
       )
       values (
-        $1, $2, $3, $4, $5, $6, $7, $8,
-        $9, coalesce($10, 0), $11, $12, $13,
-        $14, $15, $16,
+        $1::text, $2::text, $3::text, $4::bigint, $5::text, $6::integer, $7::integer, $8::integer,
+        $9::integer, coalesce($10::integer, 0), $11::timestamptz, $12::timestamptz, $13::text,
+        $14::text, $15::text, $16::text,
         now(), now(),
-        case when $5 in ('sent', 'failed', 'sent_with_failures', 'disabled') then now() else null end,
-        $17
+        case when $5::text in ('sent', 'failed', 'sent_with_failures', 'disabled') then now() else null end,
+        $17::bigint
       )
       returning id
     `,
@@ -1206,18 +1206,18 @@ export async function updateAdminCommOutboxRecord(client, {
     `
       update admin_comm_outbox
       set
-        status = $2,
-        estimated_recipient_count = coalesce($3, estimated_recipient_count),
-        delivered_count = coalesce($4, delivered_count),
-        failed_count = coalesce($5, failed_count),
-        batch_size = coalesce($6, batch_size),
-        cursor = coalesce($7, cursor),
-        started_at = coalesce($8, started_at),
-        finished_at = case when $9 is not null then $9 when $2 in ('sent', 'failed', 'sent_with_failures', 'disabled') then coalesce(finished_at, now()) else finished_at end,
-        last_error = case when $10 is not null then $10 else last_error end,
+        status = $2::text,
+        estimated_recipient_count = coalesce($3::integer, estimated_recipient_count),
+        delivered_count = coalesce($4::integer, delivered_count),
+        failed_count = coalesce($5::integer, failed_count),
+        batch_size = coalesce($6::integer, batch_size),
+        cursor = coalesce($7::integer, cursor),
+        started_at = coalesce($8::timestamptz, started_at),
+        finished_at = case when $9::timestamptz is not null then $9::timestamptz when $2::text in ('sent', 'failed', 'sent_with_failures', 'disabled') then coalesce(finished_at, now()) else finished_at end,
+        last_error = case when $10::text is not null then $10::text else last_error end,
         updated_at = now(),
-        sent_at = case when $2 in ('sent', 'failed', 'sent_with_failures', 'disabled') then coalesce(sent_at, now()) else sent_at end
-      where id = $1
+        sent_at = case when $2::text in ('sent', 'failed', 'sent_with_failures', 'disabled') then coalesce(sent_at, now()) else sent_at end
+      where id = $1::bigint
       returning id
     `,
     [outboxId, status, estimatedRecipientCount, deliveredCount, failedCount, batchSize, cursor, startedAt, finishedAt, lastError]

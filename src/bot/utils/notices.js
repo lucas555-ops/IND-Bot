@@ -79,8 +79,6 @@ export function formatContactUnlockRequestReason(reason) {
       return 'This direct contact request was already paid.';
     case 'contact_unlock_covered_by_pro':
       return 'This direct contact request is included in active Pro and is already waiting for approval.';
-    case 'contact_unlock_requires_migrations':
-      return 'Direct contact unlock is not available in this database yet. Apply STEP046 migration 019_contact_unlock_requests.sql first.';
     default:
       return 'Could not open the direct contact request right now.';
   }
@@ -104,8 +102,6 @@ export function formatContactUnlockDecisionReason(reason) {
       return 'This profile no longer accepts paid direct contact requests.';
     case 'target_profile_no_hidden_telegram_username':
       return 'No hidden Telegram username is available to reveal right now.';
-    case 'contact_unlock_requires_migrations':
-      return 'Direct contact unlock is not available in this database yet. Apply STEP046 migration 019_contact_unlock_requests.sql first.';
     default:
       return 'Could not update the direct contact request right now.';
   }
@@ -202,7 +198,10 @@ export function formatUserFacingError(input, fallback = 'Something went wrong. P
     'column ',
     'insert into',
     'update ',
-    'delete from'
+    'delete from',
+    'could not determine data type of parameter',
+    'invalid input syntax',
+    'operator does not exist'
   ];
 
   if (internalSignals.some((needle) => message.includes(needle))) {
