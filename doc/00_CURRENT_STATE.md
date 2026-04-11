@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.7.2
-- Phase: broadcast composer hardening on top of the STEP051.7 broadcast composer uplift, the STEP051.6 admin navigation/menu polish, the STEP051.5 pricing hotfix, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.8
+- Phase: admin IA cleanup on top of the STEP051.7 broadcast/status closure layer, the STEP051.6 admin navigation/menu polish, the STEP051.5 pricing hotfix, and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.7.2 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the compact admin communications/broadcast/system menu layout preserved, and the broadcast composer/status loop hardened so nullable outbox/status parameters are explicitly typed, raw SQL typing errors no longer leak into the admin UI, the broadcast screen now exposes a direct last-task path, and preview can now send a live Telegram-format sample back to the operator chat; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.8 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the broadcast composer/status closure layer preserved, and the admin root/navigation IA now decluttered so `👑 Админка` starts with four hub sections plus quick alerts while users/intros/notice/broadcast live inside the correct hubs; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -41,6 +41,7 @@
 - STEP051.7 upgrades admin Broadcast composition so operators can send text-only, image-only, image + text, or text/image plus one inline CTA button, with smart routing for long image posts and media/button metadata persisted into draft/outbox state
 - STEP051.7.1 hardens the broadcast send/outbox SQL path by explicitly typing nullable insert/update parameters and masking raw SQL typing errors from the operator surface
 - STEP051.7.2 closes the broadcast status loop by adding a direct `Последняя задача` path, a live `Отправить превью себе` action, and a more complete post-send status block on the broadcast screen
+- STEP051.8 declutters the admin IA: the admin root now shows only hubs plus quick alerts, leaf entrypoints move into the correct hub screens, operations labels become more readable, and monetization button naming is normalized into Russian operator language
 
 ## Current truth
 
@@ -68,6 +69,7 @@
 - STEP051.7 keeps the STEP051.6 admin navigation polish intact and only upgrades the broadcast composer so the founder/operator can attach one optional image, one optional inline CTA button, and still send normal text with raw links in-body without extra complexity
 - STEP051.7.1 keeps the STEP051.7 broadcast UX intact and only hardens the SQL/update path so nullable status timestamps and error fields cannot trigger PostgreSQL type-inference failures during send
 - STEP051.7.2 keeps the STEP051.7.1 composer/send path intact and only closes the operator loop so preview can send a live sample to the admin chat, the broadcast screen exposes the last task directly, and the latest broadcast block reads more like a status console than a raw draft footer
+- STEP051.8 keeps the STEP051.7.2 broadcast/status loop intact and only reorganizes the admin information architecture so the root screen is no longer a mixed dashboard/action wall: hubs stay on top, quick alerts stay shallow, and users/intros/notice/broadcast move into their proper sections
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -83,7 +85,15 @@
 
 ## Next recommended step
 
-- deploy STEP051.7.2 and do a short live smoke on the real bot: verify `👁 Превью` can send a live sample back to the operator chat, verify `📄 Последняя задача` opens the latest broadcast outbox record, then verify text only, raw URL in text, image only, image + short text, image + long text split delivery, optional inline CTA button text/url, and the direct `🧾 Ошибки` path from the latest broadcast block
+- deploy STEP051.8 and do a short admin IA smoke on the real bot: verify `👑 Админка` now opens on the four main hubs plus quick alerts only, verify users/intros are reachable through `🧰 Операции`, verify notice/broadcast/outbox live under `💬 Коммуникации`, then re-open `💳 Монетизация` and `⚙️ Система` to confirm the renamed buttons and back/home flow stayed intact
+
+## STEP051.8 delta
+
+- `👑 Админка` root is now intentionally shallow: only four hubs, four quick alerts, and `🏠 Главная` remain on the first screen
+- root no longer mixes leaf actions such as users, intros, notice, or broadcast with hub navigation
+- `🧰 Операции` now carries the user/profile/catalog/intro funnel more explicitly, with clearer labels for LinkedIn-connected, no-profile, ready-not-listed, accepted intro, and delivery problem drilldowns
+- `💳 Монетизация` button labels are now normalized into Russian operator wording instead of mixed EN/RU fragments
+- data already present in admin summary is now exposed on the home surface with `connectedNoProfile`, `readyNotListed`, and `deliveryIssues` so the new root quick-alert rows are honest
 
 ## STEP051.7.2 delta
 

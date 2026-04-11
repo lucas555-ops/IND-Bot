@@ -114,39 +114,40 @@ function buildAdminStatusLabel(value, fallback = 'нет') {
 }
 
 function buildAdminHomeText({ summary = null } = {}) {
+  const connectedNoProfile = summary?.connectedNoProfile != null
+    ? summary.connectedNoProfile
+    : Math.max(0, (summary?.connectedUsers || 0) - (summary?.profileStartedUsers || 0));
+  const readyNotListed = summary?.readyNotListed || 0;
+  const pendingOlder24h = summary?.pendingOlder24h || 0;
+  const deliveryIssues = summary?.deliveryIssues != null ? summary.deliveryIssues : (summary?.failedDeliveries || 0);
   return [
     '👑 Админка',
     '',
-    'Компактный founder/operator overview.',
+    'Чистый founder/operator root: сначала раздел, потом тревога, потом drilldown.',
     '',
-    'Воронка:',
-    countLine('Пользователи всего', summary?.totalUsers || 0),
-    countLine('Подключили LinkedIn', summary?.connectedUsers || 0),
-    countLine('Начали профиль', summary?.profileStartedUsers || 0),
-    countLine('Готовые профили', summary?.readyProfiles || 0),
-    countLine('Готовые, но не опубликованы', summary?.readyNotListed || 0),
-    countLine('Опубликованы', summary?.listedUsers || 0),
-    countLine('Активны в каталоге', summary?.listedActiveUsers || 0),
-    countLine('Без интро', summary?.noIntroYet || 0),
-    countLine('Получили первое интро', summary?.firstIntroUsers || 0),
-    countLine('Получили принятое интро', summary?.acceptedIntroUsers || 0),
+    'Разделы:',
+    '🧰 Операции — пользователи, профиль, каталог, интро и quality',
+    '💬 Коммуникации — notice, рассылка, шаблоны и исходящие',
+    '💳 Монетизация — Pro, direct unlock и DM-платежи',
+    '⚙️ Система — retry, delivery issues, аудит и health',
     '',
-    'Сводка 24ч / 7д:',
-    `Новые пользователи +${summary?.newUsers24h || 0} / +${summary?.newUsers7d || 0}`,
-    `Подключили LinkedIn +${summary?.connected24h || 0} / +${summary?.connected7d || 0}`,
-    `Опубликованы +${summary?.listed24h || 0} / +${summary?.listed7d || 0}`,
-    `Новые интро ${summary?.intros24h || 0} / ${summary?.intros7d || 0}`,
-    `Принятые ${summary?.accepted7d || 0} • Отклонённые ${summary?.declined7d || 0}`,
-    `Pending >24ч: ${summary?.pendingOlder24h || 0}`,
-    `Ошибки доставки ${summary?.failures24h || 0} / ${summary?.failures7d || 0}`,
-    `Рассылки ${summary?.broadcasts7d || 0}/7д • ЛС ${summary?.directMessages7d || 0}/7д`,
+    'Быстрые сигналы:',
+    countLine('Подключили, без профиля', connectedNoProfile),
+    countLine('Готовы, но не опубликованы', readyNotListed),
+    countLine('Pending >24ч', pendingOlder24h),
+    countLine('Ошибки доставки', deliveryIssues),
     '',
-    `Уведомление: ${summary?.activeNotice ? 'активно' : 'неактивно'}`,
-    `Последняя рассылка: ${buildAdminStatusLabel(summary?.latestBroadcastStatus, 'нет')}`
+    `Уведомление: ${summary?.activeNotice ? 'активно' : 'неактивно'} • Последняя рассылка: ${buildAdminStatusLabel(summary?.latestBroadcastStatus, 'нет')}`
   ].join('\n');
 }
 
 function buildAdminHomeKeyboard({ summary = null } = {}) {
+  const connectedNoProfile = summary?.connectedNoProfile != null
+    ? summary.connectedNoProfile
+    : Math.max(0, (summary?.connectedUsers || 0) - (summary?.profileStartedUsers || 0));
+  const readyNotListed = summary?.readyNotListed || 0;
+  const pendingOlder24h = summary?.pendingOlder24h || 0;
+  const deliveryIssues = summary?.deliveryIssues != null ? summary.deliveryIssues : (summary?.failedDeliveries || 0);
   return buildInlineKeyboard([
     [
       { text: '🧰 Операции', callback_data: 'adm:ops' },
@@ -157,28 +158,12 @@ function buildAdminHomeKeyboard({ summary = null } = {}) {
       { text: '⚙️ Система', callback_data: 'adm:sys' }
     ],
     [
-      { text: `🔗 LinkedIn: ${summary?.connectedUsers || 0}`, callback_data: 'adm:home:funnel:connected' },
-      { text: `🧩 Без профиля: ${summary?.profileStartedUsers != null ? Math.max(0, (summary?.connectedUsers || 0) - (summary?.profileStartedUsers || 0)) : 0}`, callback_data: 'adm:home:funnel:noprofile' }
+      { text: `🧩 Без профиля: ${connectedNoProfile}`, callback_data: 'adm:ops:funnel:conn_noprofile' },
+      { text: `✅ Не опубликованы: ${readyNotListed}`, callback_data: 'adm:ops:funnel:ready_not_listed' }
     ],
     [
-      { text: `✅ Не опубликованы: ${summary?.readyNotListed || 0}`, callback_data: 'adm:home:funnel:ready_not_listed' },
-      { text: `📇 Опубликованы: ${summary?.listedUsers || 0}`, callback_data: 'adm:home:funnel:listed' }
-    ],
-    [
-      { text: `📭 Без интро: ${summary?.noIntroYet || 0}`, callback_data: 'adm:home:funnel:nointro' },
-      { text: `🤝 Принятые: ${summary?.acceptedIntroUsers || 0}`, callback_data: 'adm:home:funnel:accepted' }
-    ],
-    [
-      { text: `📨 Первое интро: ${summary?.firstIntroUsers || 0}`, callback_data: 'adm:home:funnel:firstintro' },
-      { text: `🧾 Ошибки доставки: ${summary?.failedDeliveries || 0}`, callback_data: 'adm:home:funnel:dlv_fail' }
-    ],
-    [
-      { text: '👥 Пользователи', callback_data: 'adm:usr:list' },
-      { text: '📨 Интро', callback_data: 'adm:intro:list' }
-    ],
-    [
-      { text: '📣 Уведомление', callback_data: 'adm:not' },
-      { text: '📬 Рассылка', callback_data: 'adm:bc' }
+      { text: `⏳ Pending >24ч: ${pendingOlder24h}`, callback_data: 'adm:ops:funnel:intro_p24' },
+      { text: `🧾 Ошибки доставки: ${deliveryIssues}`, callback_data: 'adm:ops:funnel:delivery_issue' }
     ],
     [{ text: '🏠 Главная', callback_data: 'home:root' }]
   ]);
@@ -227,19 +212,19 @@ function buildAdminMonetizationKeyboard({ state = null } = {}) {
   return buildInlineKeyboard([
     [
       { text: `⭐ Выручка 7д: ${summary.revenue7dStars || 0}`, callback_data: 'adm:money' },
-      { text: `👑 Pro: ${summary.activePro || 0}`, callback_data: 'adm:money' }
+      { text: `👑 Активные Pro: ${summary.activePro || 0}`, callback_data: 'adm:money' }
     ],
     [
-      { text: `🔓 Contact paid: ${summary.contactPaid7d || 0}`, callback_data: 'adm:money' },
-      { text: `💬 DM paid: ${summary.dmPaid7d || 0}`, callback_data: 'adm:money' }
+      { text: `🔓 Оплачены direct: ${summary.contactPaid7d || 0}`, callback_data: 'adm:money' },
+      { text: `💬 Оплачены DM: ${summary.dmPaid7d || 0}`, callback_data: 'adm:money' }
     ],
     [
-      { text: `✅ Contact revealed: ${summary.contactRevealed7d || 0}`, callback_data: 'adm:money' },
-      { text: `✅ DM accepted: ${summary.dmAccepted7d || 0}`, callback_data: 'adm:money' }
+      { text: `✅ Раскрыт контакт: ${summary.contactRevealed7d || 0}`, callback_data: 'adm:money' },
+      { text: `✅ Принятые DM: ${summary.dmAccepted7d || 0}`, callback_data: 'adm:money' }
     ],
     [
-      { text: `⛔ DM blocks: ${summary.dmBlocked7d || 0}`, callback_data: 'adm:money' },
-      { text: `🚩 DM reports: ${summary.dmReported7d || 0}`, callback_data: 'adm:money' }
+      { text: `⛔ Блоки DM: ${summary.dmBlocked7d || 0}`, callback_data: 'adm:money' },
+      { text: `🚩 Репорты DM: ${summary.dmReported7d || 0}`, callback_data: 'adm:money' }
     ],
     buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
@@ -249,52 +234,50 @@ function buildOperationsHubText({ summary = null } = {}) {
   return [
     '🧰 Операции',
     '',
-    'Продуктовая воронка и проблемные сегменты.',
+    'Пользовательская воронка: LinkedIn → профиль → каталог → интро.',
     '',
+    'Сводка:',
     countLine('Пользователи', summary?.totalUsers || 0),
     countLine('Подключили LinkedIn', summary?.connectedUsers || 0),
-    countLine('Начали профиль', summary?.profileStartedUsers || 0),
     countLine('Готовые профили', summary?.readyProfiles || 0),
     countLine('Готовые, но не опубликованы', summary?.readyNotListed || 0),
-    countLine('Опубликованы неполные', summary?.listedIncomplete || 0),
-    countLine('Проблемы доставки', summary?.deliveryIssues || 0),
+    countLine('Опубликованы в каталоге', summary?.listedActive || 0),
+    countLine('Опубликованы, но неактивны', summary?.listedInactive || 0),
     '',
-    'Drilldowns:',
-    `Подключили, но без профиля: ${summary?.connectedNoProfile || 0}`,
+    'Узкие места:',
+    `Подключили, без профиля: ${summary?.connectedNoProfile || 0}`,
     `Готовые без навыков: ${summary?.readyNoSkills || 0}`,
-    `Активны в каталоге: ${summary?.listedActive || 0} • неактивны ${summary?.listedInactive || 0}`,
-    `Без интро: ${summary?.noIntroYet || 0}`,
-    `Первое интро: ${summary?.firstIntroUsers || 0} • принятое ${summary?.acceptedIntroUsers || 0}`,
-    `Новые интро 24ч: ${summary?.newIntros24h || 0}`,
+    `Ещё без интро: ${summary?.noIntroYet || 0}`,
+    `Есть принятые интро: ${summary?.acceptedIntroUsers || 0}`,
     `Pending >24ч: ${summary?.pendingOlder24h || 0} • >72ч: ${summary?.staleIntros || 0}`,
-    `Недавние relink: ${summary?.recentRelinks7d || 0}/7д`
+    `Проблемы доставки: ${summary?.deliveryIssues || 0} • relink 7д: ${summary?.recentRelinks7d || 0}`
   ].join('\n');
 }
 
 function buildOperationsHubKeyboard({ summary = null } = {}) {
   return buildInlineKeyboard([
     [
-      { text: `🧩 Без профиля: ${summary?.connectedNoProfile || 0}`, callback_data: 'adm:ops:funnel:conn_noprofile' },
-      { text: `🛠 Без навыков: ${summary?.readyNoSkills || 0}`, callback_data: 'adm:ops:funnel:ready_no_skills' }
+      { text: `🔗 Подключили LinkedIn: ${summary?.connectedUsers || 0}`, callback_data: 'adm:ops:funnel:connected' },
+      { text: `🧩 Без профиля: ${summary?.connectedNoProfile || 0}`, callback_data: 'adm:ops:funnel:conn_noprofile' }
     ],
     [
-      { text: `📈 Активны: ${summary?.listedActive || 0}`, callback_data: 'adm:ops:funnel:listed_active' },
-      { text: `🕯 Неактивны: ${summary?.listedInactive || 0}`, callback_data: 'adm:ops:funnel:listed_inactive' }
+      { text: `🛠 Без навыков: ${summary?.readyNoSkills || 0}`, callback_data: 'adm:ops:funnel:ready_no_skills' },
+      { text: `✅ Не опубликованы: ${summary?.readyNotListed || 0}`, callback_data: 'adm:ops:funnel:ready_not_listed' }
     ],
     [
       { text: `📭 Без интро: ${summary?.noIntroYet || 0}`, callback_data: 'adm:ops:funnel:no_intro' },
-      { text: `⏳ Pending >24ч: ${summary?.pendingOlder24h || 0}`, callback_data: 'adm:ops:funnel:intro_p24' }
+      { text: `🤝 Принятые: ${summary?.acceptedIntroUsers || 0}`, callback_data: 'adm:ops:funnel:accepted' }
     ],
     [
-      { text: `⌛ Pending >72ч: ${summary?.staleIntros || 0}`, callback_data: 'adm:ops:funnel:intro_p72' },
-      { text: `🧾 Доставка: ${summary?.deliveryIssues || 0}`, callback_data: 'adm:ops:funnel:delivery_issue' }
+      { text: `⏳ Pending >24ч: ${summary?.pendingOlder24h || 0}`, callback_data: 'adm:ops:funnel:intro_p24' },
+      { text: `🧾 Ошибки доставки: ${summary?.deliveryIssues || 0}`, callback_data: 'adm:ops:funnel:delivery_issue' }
     ],
     [
       { text: '👥 Пользователи', callback_data: 'adm:usr:list' },
-      { text: '🚩 Качество', callback_data: 'adm:qual' }
+      { text: '📨 Интро', callback_data: 'adm:intro:list' }
     ],
     [
-      { text: '📨 Интро', callback_data: 'adm:intro:list' },
+      { text: '🚩 Качество', callback_data: 'adm:qual' },
       { text: '🧾 Доставка', callback_data: 'adm:dlv' }
     ],
     buildBackHomeRow('↩️ Назад в Админку', 'adm:home')

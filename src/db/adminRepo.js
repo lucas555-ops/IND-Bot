@@ -2044,8 +2044,10 @@ export async function getAdminDashboardSummary(client) {
     home: {
       totalUsers: users.total_users || 0,
       connectedUsers: users.connected_users || 0,
+      connectedNoProfile: totalCountsOr(users.connected_no_profile_count),
       profileStartedUsers: users.profile_started_users || 0,
       readyProfiles: users.ready_profiles || 0,
+      readyNotListed: users.ready_not_listed || 0,
       listedUsers: users.listed_users || 0,
       listedActiveUsers: users.listed_active_users || 0,
       pendingIntros: intros.pending_intros || 0,
@@ -2053,6 +2055,7 @@ export async function getAdminDashboardSummary(client) {
       firstIntroUsers: quality.first_intro_user_count || 0,
       acceptedIntroUsers: quality.accepted_intro_user_count || 0,
       failedDeliveries: delivery.failed_deliveries || 0,
+      deliveryIssues: delivery.delivery_issues || 0,
       activeNotice: Boolean(noticeState?.isActive),
       latestBroadcastStatus: latestBroadcast?.status || 'none',
       latestBroadcastId: latestBroadcast?.id || 0,

@@ -6,6 +6,7 @@ const home = await surfaces.buildAdminHomeSurface({
   summary: {
     totalUsers: 120,
     connectedUsers: 90,
+    connectedNoProfile: 20,
     profileStartedUsers: 70,
     readyProfiles: 50,
     readyNotListed: 10,
@@ -15,6 +16,7 @@ const home = await surfaces.buildAdminHomeSurface({
     firstIntroUsers: 18,
     acceptedIntroUsers: 7,
     failedDeliveries: 2,
+    deliveryIssues: 2,
     activeNotice: true,
     latestBroadcastStatus: 'sent_with_failures',
     newUsers24h: 6,
@@ -34,14 +36,15 @@ const home = await surfaces.buildAdminHomeSurface({
     directMessages7d: 7
   }
 });
-for (const fragment of ['Воронка:', 'Подключили LinkedIn: 90', 'Получили первое интро: 18', 'Последняя рассылка: отправлен с ошибками']) {
+for (const fragment of ['Разделы:', 'Подключили, без профиля: 20', 'Pending >24ч: 3', 'Последняя рассылка: отправлен с ошибками']) {
   if (!home.text.includes(fragment)) {
     throw new Error(`Admin home missing STEP040 fragment: ${fragment}`);
   }
 }
-if (!JSON.stringify(home.reply_markup.inline_keyboard).includes('adm:home:funnel:accepted')) {
-  throw new Error('Admin home keyboard must expose accepted drilldown');
+if (!JSON.stringify(home.reply_markup.inline_keyboard).includes('adm:ops:funnel:intro_p24')) {
+  throw new Error('Admin home keyboard must expose the pending >24h alert drilldown');
 }
+
 
 const comms = await surfaces.buildAdminCommunicationsSurface({
   state: {

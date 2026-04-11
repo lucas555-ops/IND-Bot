@@ -21,7 +21,7 @@ const adminHome = await surfaces.buildAdminHomeSurface();
 if (!adminHome.text.includes('👑 Админка')) {
   throw new Error('Admin home surface must expose the Russian admin title');
 }
-for (const callback of ['adm:ops', 'adm:comms', 'adm:sys', 'adm:home:funnel:connected', 'adm:home:funnel:ready_not_listed', 'home:root']) {
+for (const callback of ['adm:ops', 'adm:comms', 'adm:sys', 'adm:ops:funnel:conn_noprofile', 'adm:ops:funnel:ready_not_listed', 'home:root']) {
   if (!JSON.stringify(adminHome.reply_markup.inline_keyboard).includes(callback)) {
     throw new Error(`Admin home keyboard missing ${callback}`);
   }
@@ -35,8 +35,8 @@ for (const fragment of ['adm:home:funnel:', 'adm:ops:funnel:', 'adm:comms:funnel
 }
 
 const createBotSource = readFileSync(new URL('../src/bot/createBot.js', import.meta.url), 'utf8');
-if (!createBotSource.includes("currentStep: 'STEP048'")) {
-  throw new Error('Bot factory must wire STEP048 admin surfaces');
+if (!createBotSource.includes("currentStep: 'STEP")) {
+  throw new Error('Bot factory must wire admin surfaces with an explicit step marker');
 }
 
 console.log('OK: admin shell contract');

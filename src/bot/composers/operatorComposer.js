@@ -771,14 +771,20 @@ export function createOperatorComposer({
     }
   });
 
-  composer.callbackQuery(/^adm:ops:funnel:(conn_noprofile|ready_no_skills|listed_active|listed_inactive|no_intro|intro_p24|intro_p72|delivery_issue|retry_due|exhausted)$/, async (ctx) => {
+  composer.callbackQuery(/^adm:ops:funnel:(connected|conn_noprofile|ready_no_skills|ready_not_listed|listed_active|listed_inactive|no_intro|accepted|intro_p24|intro_p72|delivery_issue|retry_due|exhausted)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     switch (ctx.match?.[1]) {
+      case 'connected':
+        await renderAdminUsers(ctx, { segmentKey: 'conn', page: 0 }, 'edit');
+        return;
       case 'conn_noprofile':
         await renderAdminUsers(ctx, { segmentKey: 'noprof', page: 0 }, 'edit');
         return;
       case 'ready_no_skills':
         await renderAdminUsers(ctx, { segmentKey: 'noskills', page: 0 }, 'edit');
+        return;
+      case 'ready_not_listed':
+        await renderAdminUsers(ctx, { segmentKey: 'ready', page: 0 }, 'edit');
         return;
       case 'listed_active':
         await renderAdminUsers(ctx, { segmentKey: 'listact', page: 0 }, 'edit');
@@ -788,6 +794,9 @@ export function createOperatorComposer({
         return;
       case 'no_intro':
         await renderAdminUsers(ctx, { segmentKey: 'nointro', page: 0 }, 'edit');
+        return;
+      case 'accepted':
+        await renderAdminIntros(ctx, { segmentKey: 'arec', page: 0 }, 'edit');
         return;
       case 'intro_p24':
         await renderAdminIntros(ctx, { segmentKey: 'p24', page: 0 }, 'edit');
