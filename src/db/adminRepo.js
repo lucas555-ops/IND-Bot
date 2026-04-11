@@ -1262,17 +1262,20 @@ export async function createAdminBroadcastDeliveryItems(client, { outboxId, reci
   return result.rowCount || 0;
 }
 
-export async function listAdminBroadcastDeliveryBatch(client, { outboxId, limit = 25 } = {}) {
+export async function listAdminBroadcastDeliveryBatch(client, { outboxId, limit = 25, statuses = ['pending', 'retry_due'] } = {}) {
   const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 25;
+  const normalizedStatuses = Array.isArray(statuses) && statuses.length
+    ? Array.from(new Set(statuses.filter((item) => ['pending', 'retry_due', 'failed', 'exhausted', 'sending', 'sent'].includes(item))))
+    : ['pending', 'retry_due'];
   const result = await client.query(
     `
       select id, outbox_id, target_user_id, target_telegram_user_id, status, attempts, last_error, retry_due_at, sent_at
       from admin_broadcast_delivery_items
-      where outbox_id = $1 and status in ('pending', 'retry_due')
+      where outbox_id = $1 and status = any($3::text[])
       order by id asc
       limit $2
     `,
-    [outboxId, safeLimit]
+    [outboxId, safeLimit, normalizedStatuses]
   );
   return result.rows || [];
 }
@@ -1319,6 +1322,27 @@ export async function summarizeAdminBroadcastDelivery(client, { outboxId }) {
     [outboxId]
   );
   return result.rows[0] || null;
+}
+
+
+export async function listAdminBroadcastDeliveryItemsByStatuses(client, { outboxId, statuses = [] } = {}) {
+  const normalizedStatuses = Array.isArray(statuses) && statuses.length
+    ? Array.from(new Set(statuses.filter((item) => ['pending', 'retry_due', 'failed', 'exhausted', 'sending', 'sent'].includes(item))))
+    : [];
+  if (!normalizedStatuses.length) {
+    return [];
+  }
+
+  const result = await client.query(
+    `
+      select id, outbox_id, target_user_id, target_telegram_user_id, status, attempts, last_error, retry_due_at, sent_at
+      from admin_broadcast_delivery_items
+      where outbox_id = $1 and status = any($2::text[])
+      order by id asc
+    `,
+    [outboxId, normalizedStatuses]
+  );
+  return result.rows || [];
 }
 
 export async function listAdminBroadcastFailurePage(client, { outboxId, page = 0, pageSize = 10 } = {}) {

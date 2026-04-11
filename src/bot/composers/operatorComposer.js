@@ -42,6 +42,7 @@ import {
   selectAdminDirectMessageTemplate,
   sendAdminBroadcast,
   sendAdminBroadcastPreviewToSelf,
+  retryAdminBroadcastRecoveries,
   sendAdminDirectMessage,
   prepareAdminUserSegmentBulkBroadcast,
   prepareAdminUserSegmentBulkNotice,
@@ -1675,6 +1676,30 @@ export function createOperatorComposer({
       outboxId: parsePositiveInt(ctx.match?.[1]),
       page: parsePage(ctx.match?.[2])
     }, 'edit');
+  });
+
+  composer.callbackQuery(/^adm:bc:retry:(failed|retry_due):(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const mode = ctx.match?.[1] || 'failed';
+    const outboxId = parsePositiveInt(ctx.match?.[2]);
+    if (!outboxId) {
+      await renderAdminBroadcast(ctx, { notice: '⚠️ Не удалось определить задачу для повторной доставки.' }, 'edit');
+      return;
+    }
+    const result = await retryAdminBroadcastRecoveries({
+      operatorTelegramUserId: ctx.from.id,
+      operatorTelegramUsername: ctx.from.username || null,
+      outboxId,
+      mode
+    }).catch((error) => ({ persistenceEnabled: true, retried: false, skipped: false, reason: String(error?.message || error) }));
+    const notice = result.retried
+      ? (mode === 'retry_due'
+          ? `✅ Повторная доставка retry_due запущена. Обновлено: доставлено ${result.deliveredCount || 0}, retry_due ${result.retryDueCount || 0}, failed ${result.failedCount || 0}.`
+          : `✅ Повторная доставка failed получателей запущена. Обновлено: доставлено ${result.deliveredCount || 0}, failed ${result.failedCount || 0}, retry_due ${result.retryDueCount || 0}.`)
+      : result.skipped
+        ? `ℹ️ ${formatUserFacingError(result.reason, mode === 'retry_due' ? 'Нет retry_due элементов для повторной доставки.' : 'Нет failed получателей для повторной доставки.')}`
+        : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось запустить повторную доставку.')}`;
+    await renderAdminOutboxRecord(ctx, { outboxId, notice, backCallback: 'adm:bc' }, 'edit');
   });
 
   composer.callbackQuery('adm:bc:confirm', async (ctx) => {

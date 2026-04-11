@@ -39,6 +39,7 @@ import {
   listAdminAuditPage,
   listAdminBroadcastFailurePage,
   listAdminBroadcastDeliveryBatch,
+  listAdminBroadcastDeliveryItemsByStatuses,
   listAdminBroadcastRecipients,
   listAdminCommOutbox,
   listAdminDeliveryPage,
@@ -192,6 +193,100 @@ export async function sendAdminBroadcastPreviewToSelf({ operatorTelegramUserId, 
       reason: 'admin_broadcast_preview_sent'
     };
   });
+}
+
+function normalizeBroadcastRecoveryMode(mode = null) {
+  return mode === 'retry_due' ? 'retry_due' : 'failed';
+}
+
+function countRecoveryEligibleItems(record = null, mode = null) {
+  const normalizedMode = normalizeBroadcastRecoveryMode(mode);
+  const failedCount = Math.max(0, (record?.failed_count || 0) - (record?.retry_due_count || 0) - (record?.exhausted_count || 0));
+  if (normalizedMode === 'retry_due') {
+    return record?.retry_due_count || 0;
+  }
+  return failedCount;
+}
+
+function buildBroadcastDraftFromOutboxRecord(record = null) {
+  return {
+    body: record?.body || '',
+    audienceKey: record?.audience_key || 'ALL_CONNECTED',
+    mediaRef: record?.media_ref || null,
+    buttonText: record?.button_text || null,
+    buttonUrl: record?.button_url || null
+  };
+}
+
+function deriveBroadcastTaskStatus(summary = null) {
+  const pendingCount = summary?.pending_count || 0;
+  const sentCount = summary?.sent_count || 0;
+  const failedCount = summary?.failed_count || 0;
+  const retryDueCount = summary?.retry_due_count || 0;
+  const exhaustedCount = summary?.exhausted_count || 0;
+
+  if (pendingCount > 0) {
+    return 'sending';
+  }
+  if (retryDueCount > 0) {
+    return 'retry_due';
+  }
+  if (exhaustedCount > 0 && sentCount === 0) {
+    return 'exhausted';
+  }
+  if (failedCount > 0) {
+    return sentCount > 0 ? 'sent_with_failures' : 'failed';
+  }
+  return 'sent';
+}
+
+async function runAdminBroadcastDeliveryItems({ outboxId, draft, batchSize = 25, items = [] } = {}) {
+  const { botToken } = getTelegramConfig();
+  let lastError = null;
+  const normalizedBatchSize = Number.isFinite(batchSize) && batchSize > 0 ? Math.min(batchSize, 100) : 25;
+
+  for (let index = 0; index < items.length; index += normalizedBatchSize) {
+    const batch = items.slice(index, index + normalizedBatchSize);
+    for (const item of batch) {
+      await withDbTransaction(async (client) => {
+        await markAdminBroadcastDeliveryItemSending(client, { itemId: item.id });
+      });
+
+      try {
+        await deliverBroadcastMessage({
+          botToken,
+          chatId: item.target_telegram_user_id,
+          draft
+        });
+        await withDbTransaction(async (client) => {
+          await completeAdminBroadcastDeliveryItem(client, { itemId: item.id, status: 'sent' });
+        });
+      } catch (error) {
+        const message = String(error?.message || error);
+        lastError = message;
+        console.warn('[admin broadcast] send failed', item.target_telegram_user_id, message);
+        await withDbTransaction(async (client) => {
+          await completeAdminBroadcastDeliveryItem(client, { itemId: item.id, status: 'failed', errorMessage: message });
+        });
+      }
+    }
+
+    const summary = await withDbClient(async (client) => summarizeAdminBroadcastDelivery(client, { outboxId }));
+    const processedCount = (summary?.sent_count || 0) + (summary?.failed_count || 0);
+    await withDbTransaction(async (client) => {
+      await updateAdminCommOutboxRecord(client, {
+        outboxId,
+        status: deriveBroadcastTaskStatus(summary),
+        estimatedRecipientCount: summary?.total_count || items.length,
+        deliveredCount: summary?.sent_count || 0,
+        failedCount: summary?.failed_count || 0,
+        batchSize: normalizedBatchSize,
+        cursor: processedCount,
+        lastError: lastError || summary?.last_error || null,
+        finishedAt: summary?.pending_count > 0 ? null : new Date().toISOString()
+      });
+    });
+  }
 }
 
 export async function loadAdminDashboardSummary() {
@@ -1383,58 +1478,23 @@ export async function sendAdminBroadcast({ operatorTelegramUserId, operatorTeleg
       finishedAt: recipients.length > 0 ? null : new Date().toISOString()
     });
 
-    return { draft, recipients, outboxId, operatorUserId: operatorUser.id, batchSize, deliveryMode: describeBroadcastDeliveryMode(draft) };
+    return {
+      draft,
+      recipients,
+      outboxId,
+      operatorUserId: operatorUser.id,
+      batchSize,
+      deliveryMode: describeBroadcastDeliveryMode(draft),
+      items: await listAdminBroadcastDeliveryItemsByStatuses(client, { outboxId, statuses: ['pending', 'retry_due'] })
+    };
   });
 
-  const { botToken } = getTelegramConfig();
-  let lastError = null;
-
-  while (true) {
-    const batch = await withDbClient(async (client) => listAdminBroadcastDeliveryBatch(client, { outboxId: prep.outboxId, limit: prep.batchSize }));
-    if (!batch.length) {
-      break;
-    }
-
-    for (const item of batch) {
-      await withDbTransaction(async (client) => {
-        await markAdminBroadcastDeliveryItemSending(client, { itemId: item.id });
-      });
-
-      try {
-        await deliverBroadcastMessage({
-          botToken,
-          chatId: item.target_telegram_user_id,
-          draft: prep.draft
-        });
-        await withDbTransaction(async (client) => {
-          await completeAdminBroadcastDeliveryItem(client, { itemId: item.id, status: 'sent' });
-        });
-      } catch (error) {
-        const message = String(error?.message || error);
-        lastError = message;
-        console.warn('[admin broadcast] send failed', item.target_telegram_user_id, message);
-        await withDbTransaction(async (client) => {
-          await completeAdminBroadcastDeliveryItem(client, { itemId: item.id, status: 'failed', errorMessage: message });
-        });
-      }
-    }
-
-    const summary = await withDbClient(async (client) => summarizeAdminBroadcastDelivery(client, { outboxId: prep.outboxId }));
-    const processedCount = (summary?.sent_count || 0) + (summary?.failed_count || 0);
-    await withDbTransaction(async (client) => {
-      await updateAdminCommOutboxRecord(client, {
-        outboxId: prep.outboxId,
-        status: summary?.pending_count > 0 ? 'sending' : ((summary?.failed_count || 0) > 0 ? ((summary?.sent_count || 0) > 0 ? 'sent_with_failures' : 'failed') : 'sent'),
-        estimatedRecipientCount: summary?.total_count || prep.recipients.length,
-        deliveredCount: summary?.sent_count || 0,
-        failedCount: summary?.failed_count || 0,
-        batchSize: prep.batchSize,
-        cursor: processedCount,
-        lastError: lastError || summary?.last_error || null,
-        finishedAt: summary?.pending_count > 0 ? null : new Date().toISOString()
-      });
-    });
-  }
+  await runAdminBroadcastDeliveryItems({
+    outboxId: prep.outboxId,
+    draft: prep.draft,
+    batchSize: prep.batchSize,
+    items: prep.items
+  });
 
   const finalRecord = await withDbClient(async (client) => getAdminCommOutboxRecordById(client, { outboxId: prep.outboxId }));
   const finalStatus = finalRecord?.status || 'failed';
@@ -1471,6 +1531,118 @@ export async function sendAdminBroadcast({ operatorTelegramUserId, operatorTeleg
     outboxId: prep.outboxId,
     deliveryMode: prep.deliveryMode,
     reason: 'admin_broadcast_sent'
+  };
+}
+
+export async function retryAdminBroadcastRecoveries({ operatorTelegramUserId, operatorTelegramUsername = null, outboxId, mode = 'failed' }) {
+  if (!isDatabaseConfigured()) {
+    return { persistenceEnabled: false, retried: false, reason: 'DATABASE_URL is not configured' };
+  }
+
+  const normalizedMode = normalizeBroadcastRecoveryMode(mode);
+  const eligibleStatuses = normalizedMode === 'retry_due' ? ['retry_due'] : ['failed'];
+  const prep = await withDbTransaction(async (client) => {
+    const operatorUser = await upsertTelegramUser(client, {
+      telegramUserId: operatorTelegramUserId,
+      telegramUsername: operatorTelegramUsername || null
+    });
+    const record = await getAdminCommOutboxRecordById(client, { outboxId });
+    if (!record || record.event_type !== 'broadcast') {
+      throw new Error('Broadcast task not found.');
+    }
+    const items = await listAdminBroadcastDeliveryItemsByStatuses(client, { outboxId, statuses: eligibleStatuses });
+    const eligibleCount = countRecoveryEligibleItems(record, normalizedMode);
+    if (!items.length || eligibleCount <= 0) {
+      return {
+        operatorUserId: operatorUser.id,
+        record,
+        items: [],
+        outboxId,
+        batchSize: record.batch_size || 25,
+        draft: buildBroadcastDraftFromOutboxRecord(record),
+        mode: normalizedMode,
+        deliveryMode: describeBroadcastDeliveryMode(buildBroadcastDraftFromOutboxRecord(record)),
+        empty: true
+      };
+    }
+
+    await updateAdminCommOutboxRecord(client, {
+      outboxId,
+      status: 'sending',
+      estimatedRecipientCount: record.estimated_recipient_count || items.length,
+      deliveredCount: record.delivered_count || 0,
+      failedCount: record.failed_count || 0,
+      batchSize: record.batch_size || 25,
+      cursor: record.cursor || 0,
+      startedAt: record.started_at || new Date().toISOString(),
+      finishedAt: null,
+      lastError: record.last_error || null
+    });
+
+    return {
+      operatorUserId: operatorUser.id,
+      record,
+      items,
+      outboxId,
+      batchSize: record.batch_size || 25,
+      draft: buildBroadcastDraftFromOutboxRecord(record),
+      mode: normalizedMode,
+      deliveryMode: describeBroadcastDeliveryMode(buildBroadcastDraftFromOutboxRecord(record)),
+      empty: false
+    };
+  });
+
+  if (prep.empty) {
+    return {
+      persistenceEnabled: true,
+      retried: false,
+      skipped: true,
+      outboxId: prep.outboxId,
+      mode: prep.mode,
+      reason: prep.mode === 'retry_due' ? 'No retry_due recipients.' : 'No failed recipients.'
+    };
+  }
+
+  await runAdminBroadcastDeliveryItems({
+    outboxId: prep.outboxId,
+    draft: prep.draft,
+    batchSize: prep.batchSize,
+    items: prep.items
+  });
+
+  const finalRecord = await withDbClient(async (client) => getAdminCommOutboxRecordById(client, { outboxId: prep.outboxId }));
+  await withDbTransaction(async (client) => {
+    await createAdminAuditEvent(client, {
+      eventType: 'admin_broadcast_recovery_sent',
+      actorUserId: prep.operatorUserId,
+      summary: prep.mode === 'retry_due' ? 'Broadcast retry_due recovery sent.' : 'Broadcast failed recovery sent.',
+      detail: {
+        outboxId: prep.outboxId,
+        mode: prep.mode,
+        recoveredItemCount: prep.items.length,
+        deliveredCount: finalRecord?.delivered_count || 0,
+        failedCount: finalRecord?.failed_count || 0,
+        retryDueCount: finalRecord?.retry_due_count || 0,
+        exhaustedCount: finalRecord?.exhausted_count || 0,
+        status: finalRecord?.status || 'failed',
+        deliveryMode: prep.deliveryMode
+      }
+    });
+  });
+
+  return {
+    persistenceEnabled: true,
+    retried: true,
+    skipped: false,
+    outboxId: prep.outboxId,
+    mode: prep.mode,
+    status: finalRecord?.status || 'failed',
+    deliveredCount: finalRecord?.delivered_count || 0,
+    failedCount: finalRecord?.failed_count || 0,
+    retryDueCount: finalRecord?.retry_due_count || 0,
+    exhaustedCount: finalRecord?.exhausted_count || 0,
+    recoveredItemCount: prep.items.length,
+    reason: 'admin_broadcast_recovery_sent'
   };
 }
 

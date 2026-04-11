@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.8
-- Phase: admin IA cleanup on top of the STEP051.7 broadcast/status closure layer, the STEP051.6 admin navigation/menu polish, the STEP051.5 pricing hotfix, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP051.9
+- Phase: broadcast recovery actions on top of the STEP051.8 admin IA cleanup layer, the STEP051.7 broadcast/status closure layer, and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.8 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the broadcast composer/status closure layer preserved, and the admin root/navigation IA now decluttered so `👑 Админка` starts with four hub sections plus quick alerts while users/intros/notice/broadcast live inside the correct hubs; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP051.9 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the broadcast composer/status closure layer preserved, and the admin root/navigation IA now decluttered so `👑 Админка` starts with four hub sections plus quick alerts while users/intros/notice/broadcast live inside the correct hubs; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -42,6 +42,7 @@
 - STEP051.7.1 hardens the broadcast send/outbox SQL path by explicitly typing nullable insert/update parameters and masking raw SQL typing errors from the operator surface
 - STEP051.7.2 closes the broadcast status loop by adding a direct `Последняя задача` path, a live `Отправить превью себе` action, and a more complete post-send status block on the broadcast screen
 - STEP051.8 declutters the admin IA: the admin root now shows only hubs plus quick alerts, leaf entrypoints move into the correct hub screens, operations labels become more readable, and monetization button naming is normalized into Russian operator language
+- STEP051.9 closes the next broadcast operations gap by adding direct recovery actions for failed and retry_due recipients on the broadcast screen, the outbox task screen, and the broadcast failures surface, without changing the existing composer or admin IA layers
 
 ## Current truth
 
@@ -70,6 +71,7 @@
 - STEP051.7.1 keeps the STEP051.7 broadcast UX intact and only hardens the SQL/update path so nullable status timestamps and error fields cannot trigger PostgreSQL type-inference failures during send
 - STEP051.7.2 keeps the STEP051.7.1 composer/send path intact and only closes the operator loop so preview can send a live sample to the admin chat, the broadcast screen exposes the last task directly, and the latest broadcast block reads more like a status console than a raw draft footer
 - STEP051.8 keeps the STEP051.7.2 broadcast/status loop intact and only reorganizes the admin information architecture so the root screen is no longer a mixed dashboard/action wall: hubs stay on top, quick alerts stay shallow, and users/intros/notice/broadcast move into their proper sections
+- STEP051.9 keeps the STEP051.8 admin IA intact and only adds narrow recovery controls so an operator can retry failed or retry_due subsets for an existing broadcast task without resending already-delivered items
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
 
 ## What must not break
@@ -85,7 +87,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.8 and do a short admin IA smoke on the real bot: verify `👑 Админка` now opens on the four main hubs plus quick alerts only, verify users/intros are reachable through `🧰 Операции`, verify notice/broadcast/outbox live under `💬 Коммуникации`, then re-open `💳 Монетизация` and `⚙️ Система` to confirm the renamed buttons and back/home flow stayed intact
+- deploy STEP051.9 and run a narrow broadcast recovery smoke: send a broadcast that yields at least one failed or retry_due delivery, open `📄 Последняя задача`, verify `🔁 Повторить failed` and/or `🔁 Повторить retry_due` appear when appropriate, trigger the recovery action once, then confirm the outbox record summary updates without duplicating already-sent recipients
 
 ## STEP051.8 delta
 
@@ -94,6 +96,14 @@
 - `🧰 Операции` now carries the user/profile/catalog/intro funnel more explicitly, with clearer labels for LinkedIn-connected, no-profile, ready-not-listed, accepted intro, and delivery problem drilldowns
 - `💳 Монетизация` button labels are now normalized into Russian operator wording instead of mixed EN/RU fragments
 - data already present in admin summary is now exposed on the home surface with `connectedNoProfile`, `readyNotListed`, and `deliveryIssues` so the new root quick-alert rows are honest
+
+## STEP051.9 delta
+
+- broadcast recovery is now first-class: failed-only and retry_due-only retry actions can surface on `📬 Рассылка`, on the broadcast outbox record, and on the broadcast failures page
+- recovery actions work against the existing delivery items of a конкретной broadcast task instead of re-expanding the whole audience again
+- already-sent recipients are excluded from recovery runs because the retry helpers now target only the selected failed or retry_due delivery subset
+- the outbox task screen now reads more like an operator console for recovery, exposing separate failed / retry_due / exhausted counts instead of only one mixed error number
+- recovery notices are now operator-safe and explain whether a retry was launched, skipped because no eligible recipients remain, or failed to start
 
 ## STEP051.7.2 delta
 

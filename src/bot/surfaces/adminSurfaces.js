@@ -1179,6 +1179,28 @@ function adminBroadcastButtonLabel(draft = null) {
   return 'нет';
 }
 
+
+function adminBroadcastHardFailedCount(record = null) {
+  return Math.max(0, (record?.failed_count || 0) - (record?.retry_due_count || 0) - (record?.exhausted_count || 0));
+}
+
+function buildBroadcastRecoveryActionRows(record = null) {
+  const rows = [];
+  const failedCount = adminBroadcastHardFailedCount(record);
+  const retryDueCount = record?.retry_due_count || 0;
+  if (failedCount > 0 || retryDueCount > 0) {
+    const row = [];
+    if (failedCount > 0) {
+      row.push({ text: `🔁 Повторить failed: ${failedCount}`, callback_data: `adm:bc:retry:failed:${record.id}` });
+    }
+    if (retryDueCount > 0) {
+      row.push({ text: `🔁 Повторить retry_due: ${retryDueCount}`, callback_data: `adm:bc:retry:retry_due:${record.id}` });
+    }
+    if (row.length) rows.push(row);
+  }
+  return rows;
+}
+
 function adminBroadcastDeliveryModeLabel(draft = null) {
   if (draft?.mediaRef && draft?.body && draft.body.length > 1024) {
     return 'картинка, затем текст';
@@ -1207,8 +1229,9 @@ function buildAdminBroadcastText({ state = null, notice = null } = {}) {
   ];
 
   if (latest) {
+    const failedOnly = adminBroadcastHardFailedCount(latest);
     lines.push(`Последняя задача: #${latest.id} • ${formatShortStatus(latest.status, 'none')}`);
-    lines.push(`Прогресс: ${latest.delivered_count || 0}/${latest.estimated_recipient_count ?? 0} доставлено • ${latest.failed_count || 0} ошибок • ${latest.pending_count || 0} pending`);
+    lines.push(`Прогресс: ${latest.delivered_count || 0}/${latest.estimated_recipient_count ?? 0} доставлено • failed ${failedOnly} • retry_due ${latest.retry_due_count || 0} • exhausted ${latest.exhausted_count || 0} • pending ${latest.pending_count || 0}`);
     lines.push(`Старт: ${formatDateTimeShort(latest.started_at)} • Завершено: ${formatDateTimeShort(latest.finished_at) || 'ещё выполняется'}`);
     lines.push(`Batch: ${latest.batch_size || '—'} • cursor ${latest.cursor || 0}`);
     if (latest.last_error) {
@@ -1252,6 +1275,7 @@ function buildAdminBroadcastKeyboard({ state = null } = {}) {
       lastTaskRow.push({ text: '🧾 Ошибки', callback_data: `adm:bc:fail:${latest.id}:0` });
     }
     rows.push(lastTaskRow);
+    rows.push(...buildBroadcastRecoveryActionRows(latest));
     rows.push([{ text: '📤 Исходящие', callback_data: 'adm:outbox' }]);
     rows.push([{ text: '🗑 Очистить черновик', callback_data: 'adm:bc:clear' }]);
   } else {
@@ -1319,8 +1343,9 @@ function buildAdminBroadcastPreviewSurface({ state = null, notice = null } = {})
     draft.body ? draft.body : 'Текст не задан. Будет отправлена только картинка, если она указана.'
   ];
   if (latest?.id) {
+    const failedOnly = adminBroadcastHardFailedCount(latest);
     lines.push('', `Последняя задача: #${latest.id} • ${formatShortStatus(latest.status, 'none')}`);
-    lines.push(`Прогресс: ${latest.delivered_count || 0}/${latest.estimated_recipient_count ?? 0} доставлено • ${latest.failed_count || 0} ошибок • ${latest.pending_count || 0} pending`);
+    lines.push(`Прогресс: ${latest.delivered_count || 0}/${latest.estimated_recipient_count ?? 0} доставлено • failed ${failedOnly} • retry_due ${latest.retry_due_count || 0} • exhausted ${latest.exhausted_count || 0} • pending ${latest.pending_count || 0}`);
   }
   if (notice) {
     lines.push('', notice);
@@ -1335,6 +1360,7 @@ function buildAdminBroadcastPreviewSurface({ state = null, notice = null } = {})
       latestRow.push({ text: '🧾 Ошибки', callback_data: `adm:bc:fail:${latest.id}:0` });
     }
     rows.push(latestRow);
+    rows.push(...buildBroadcastRecoveryActionRows(latest));
   }
   rows.push(buildBackHomeRow('↩️ Назад к рассылке', 'adm:bc'));
   return {
@@ -1452,7 +1478,9 @@ function buildAdminOutboxRecordText({ record = null, notice = null } = {}) {
     `Цель: ${formatOutboxTarget(record)}`,
     `Оценка: ${record.estimated_recipient_count ?? '—'}`,
     `Доставлено: ${record.delivered_count ?? '—'}`,
-    `Ошибок: ${record.failed_count ?? '—'}`,
+    `Failed: ${adminBroadcastHardFailedCount(record)}`,
+    `Retry due: ${record.retry_due_count ?? '—'}`,
+    `Исчерпано: ${record.exhausted_count ?? '—'}`,
     `В ожидании: ${record.pending_count ?? '—'}`,
     `Размер батча: ${record.batch_size ?? '—'}`,
     `Курсор: ${record.cursor ?? '—'}`,
@@ -1481,6 +1509,7 @@ function buildAdminOutboxRecordKeyboard({ record = null, backCallback = 'adm:out
   }
   if (record?.event_type === 'broadcast' && ((record?.failed_count || 0) > 0 || (record?.retry_due_count || 0) > 0 || (record?.exhausted_count || 0) > 0)) {
     rows.push([{ text: '🧾 Открыть ошибки', callback_data: `adm:bc:fail:${record.id}:0` }]);
+    rows.push(...buildBroadcastRecoveryActionRows(record));
   }
   rows.push(buildBackHomeRow(backCallback === 'adm:bc' ? '↩️ Назад к рассылке' : '↩️ Назад к исходящим', backCallback));
   return buildInlineKeyboard(rows);
@@ -1516,6 +1545,9 @@ function buildAdminBroadcastFailuresKeyboard({ state = null } = {}) {
   if (state?.hasPrev) pager.push({ text: '◀️ Назад', callback_data: `adm:bc:fail:${state.outboxId}:${Math.max(0, (state.page || 0) - 1)}` });
   if (state?.hasNext) pager.push({ text: 'Вперёд ▶️', callback_data: `adm:bc:fail:${state.outboxId}:${(state.page || 0) + 1}` });
   if (pager.length) rows.push(pager);
+  if (state?.record) {
+    rows.push(...buildBroadcastRecoveryActionRows(state.record));
+  }
   rows.push(buildBackHomeRow('↩️ Назад к записи исходящих', `adm:outbox:open:${state?.outboxId || 0}`));
   return buildInlineKeyboard(rows);
 }
