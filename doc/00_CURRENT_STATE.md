@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.9
-- Phase: broadcast recovery actions on top of the STEP051.8 admin IA cleanup layer, the STEP051.7 broadcast/status closure layer, and the STEP050M landing + STEP048.4 product baseline
+- Current STEP: STEP052
+- Phase: invite module A uplift on top of the STEP051.9 broadcast/admin hardening layer and the STEP050M landing + STEP048.4 product baseline
 - Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.9 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the broadcast composer/status closure layer preserved, and the admin root/navigation IA now decluttered so `👑 Админка` starts with four hub sections plus quick alerts while users/intros/notice/broadcast live inside the correct hubs; live status not confirmed — manual verification required
+- Runtime status: source-clean STEP052 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, the `Plans` surface restored, the broadcast composer/status closure layer preserved, and the admin root/navigation IA now decluttered so `👑 Админка` starts with four hub sections plus quick alerts while users/intros/notice/broadcast live inside the correct hubs; live status not confirmed — manual verification required
 
 ## What exists now
 
@@ -43,6 +43,7 @@
 - STEP051.7.2 closes the broadcast status loop by adding a direct `Последняя задача` path, a live `Отправить превью себе` action, and a more complete post-send status block on the broadcast screen
 - STEP051.8 declutters the admin IA: the admin root now shows only hubs plus quick alerts, leaf entrypoints move into the correct hub screens, operations labels become more readable, and monetization button naming is normalized into Russian operator language
 - STEP051.9 closes the next broadcast operations gap by adding direct recovery actions for failed and retry_due recipients on the broadcast screen, the outbox task screen, and the broadcast failures surface, without changing the existing composer or admin IA layers
+- STEP052 applies the reusable invite suite to the current product at Module A depth: the invite layer now has a bounded hub plus separate `Performance` and paged `Invite history` screens, while founder/operator admin gets a new read-only `📨 Инвайты` surface inside `🧰 Операции`
 
 ## Current truth
 
@@ -73,6 +74,7 @@
 - STEP051.8 keeps the STEP051.7.2 broadcast/status loop intact and only reorganizes the admin information architecture so the root screen is no longer a mixed dashboard/action wall: hubs stay on top, quick alerts stay shallow, and users/intros/notice/broadcast move into their proper sections
 - STEP051.9 keeps the STEP051.8 admin IA intact and only adds narrow recovery controls so an operator can retry failed or retry_due subsets for an existing broadcast task without resending already-delivered items
 - invite attribution only applies to first-start new users and differentiates `inline_share`, `raw_link`, and `invite_card` sources
+- STEP052 keeps rewards/redeem out of Intro Deck for now and only applies the safe Module A invite truths: bounded invite hub, performance split, paged history, and admin read-only visibility
 
 ## What must not break
 
@@ -87,7 +89,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.9 and run a narrow broadcast recovery smoke: send a broadcast that yields at least one failed or retry_due delivery, open `📄 Последняя задача`, verify `🔁 Повторить failed` and/or `🔁 Повторить retry_due` appear when appropriate, trigger the recovery action once, then confirm the outbox record summary updates without duplicating already-sent recipients
+- deploy STEP052 and run a narrow invite module smoke: `/invite` → `📊 Performance` → `📋 Invite history`, verify the root/Perf/History split reads cleanly, then open `👑 Админка` → `🧰 Операции` → `📨 Инвайты` and confirm the read-only founder snapshot renders honestly
 
 ## STEP051.8 delta
 
@@ -363,12 +365,11 @@
 - system, monetization, search prompts, and many admin detail surfaces now share one compact `Back + Home` row instead of two stacked navigation rows
 - no runtime schema, invite attribution, LinkedIn auth, or monetization logic changes
 
+## STEP052 delta
 
-## STEP051.8.1 delta
-
-- operator/admin text layer polished into more consistent Russian wording across hubs, broadcast, outbox, notice, and system surfaces
-- broadcast screen now shows human-readable status blocks (`Статус`, `Прогресс`, `Ошибки`, `Ждут повтора`, `Исчерпано`, `В ожидании`) instead of mixed storage/runtime wording
-- outbox list/detail surfaces now map event types, statuses, audiences, and cursor/batch fields into operator-grade labels (`рассылка`, `уведомление`, `личное сообщение`, `все подключённые`, `Размер пакета`, `Позиция курсора`)
-- communications hub wording now uses `Охват уведомления`, `Черновик рассылки`, and `Ошибки отправки` instead of mixed notice/broadcast/outbox terminology
-- monetization/operator labels were cleaned up around contacts/messages terminology while preserving `LinkedIn` and `Pro`
-- system/runbook/freeze/live-verification surfaces now read more consistently in Russian operator wording
+- applies the reusable invite suite to Intro Deck at Module A depth instead of broad rewards/redeem transplantation
+- the user invite layer is now a bounded hub: `Share invite`, `Link + copy`, and `Invite card` stay primary while `📊 Performance` and paged `📋 Invite history` move deeper
+- the invite root now shows a cleaner snapshot plus recent contacts instead of mixing raw link, copy ideas, and all detail in one overloaded screen
+- `📊 Performance` now exposes invited / activated / activation-rate truth and the host-specific activation rule: connected LinkedIn or started a profile
+- `📋 Invite history` now gives a paged view over invited contacts without overloading the invite root
+- founder/operator now gets a read-only `📨 Инвайты` screen inside `🧰 Операции`, showing top inviters, recent invites, source mix, and activation quality without enabling rewards or redeem flows

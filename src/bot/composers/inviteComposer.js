@@ -41,6 +41,8 @@ export function createInviteComposer({
   buildHomeSurface,
   buildInviteSurface,
   buildInviteLinkSurface,
+  buildInvitePerformanceSurface,
+  buildInviteHistorySurface,
   buildInviteCardMessage
 }) {
   const composer = new Composer();
@@ -66,6 +68,36 @@ export function createInviteComposer({
   const renderInvite = async (ctx, method = 'edit', notice = null) => {
     await clearAllPendingInputs(ctx.from.id);
     const surface = await buildInviteSurface(ctx, notice);
+    const options = {
+      reply_markup: surface.reply_markup,
+      ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
+      ...(surface.disable_web_page_preview ? { disable_web_page_preview: true } : {})
+    };
+    if (method === 'reply') {
+      await ctx.reply(surface.text, options);
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, options);
+  };
+
+  const renderInvitePerformance = async (ctx, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildInvitePerformanceSurface(ctx, notice);
+    const options = {
+      reply_markup: surface.reply_markup,
+      ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
+      ...(surface.disable_web_page_preview ? { disable_web_page_preview: true } : {})
+    };
+    if (method === 'reply') {
+      await ctx.reply(surface.text, options);
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, options);
+  };
+
+  const renderInviteHistory = async (ctx, page = 1, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildInviteHistorySurface(ctx, page, notice);
     const options = {
       reply_markup: surface.reply_markup,
       ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
@@ -105,6 +137,17 @@ export function createInviteComposer({
   composer.callbackQuery('invite:root', async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderInvite(ctx, 'edit');
+  });
+
+
+  composer.callbackQuery('invite:perf', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderInvitePerformance(ctx, 'edit');
+  });
+
+  composer.callbackQuery(/^invite:hist:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderInviteHistory(ctx, Number.parseInt(ctx.match?.[1] || '1', 10), 'edit');
   });
 
   composer.callbackQuery('invite:show_link', async (ctx) => {

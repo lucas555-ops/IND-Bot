@@ -5,7 +5,11 @@ import {
   renderInviteCardKeyboard,
   buildInlineInviteResult,
   renderInviteKeyboard,
+  renderInviteHistoryKeyboard,
+  renderInviteHistoryText,
   renderInviteLinkText,
+  renderInvitePerformanceKeyboard,
+  renderInvitePerformanceText,
   renderInviteText,
   renderInlineInviteCaption,
   renderInlineInviteShareText
@@ -15,6 +19,8 @@ import { buildInviteCodeFromTelegramUserId, buildInviteLink, buildInviteStartPar
 const inviteComposerSource = readFileSync(new URL('../src/bot/composers/inviteComposer.js', import.meta.url), 'utf8');
 const createBotSource = readFileSync(new URL('../src/bot/createBot.js', import.meta.url), 'utf8');
 const appSurfacesSource = readFileSync(new URL('../src/bot/surfaces/appSurfaces.js', import.meta.url), 'utf8');
+const adminSurfacesSource = readFileSync(new URL('../src/bot/surfaces/adminSurfaces.js', import.meta.url), 'utf8');
+const operatorComposerSource = readFileSync(new URL('../src/bot/composers/operatorComposer.js', import.meta.url), 'utf8');
 const renderSource = readFileSync(new URL('../src/lib/telegram/render.js', import.meta.url), 'utf8');
 
 if (!inviteComposerSource.includes("composer.command('invite'")) {
@@ -25,12 +31,35 @@ if (!inviteComposerSource.includes("composer.callbackQuery('invite:root'")) {
   throw new Error('Invite surface root callback is missing');
 }
 
+
+if (!inviteComposerSource.includes("composer.callbackQuery('invite:perf'")) {
+  throw new Error('Invite performance callback is missing');
+}
+
+if (!inviteComposerSource.includes('composer.callbackQuery(/^invite:hist:')) {
+  throw new Error('Invite history callback is missing');
+}
+
 if (!inviteComposerSource.includes('composer.inlineQuery(')) {
   throw new Error('Invite inline query handler is missing');
 }
 
 if (!createBotSource.includes('createInviteComposer')) {
   throw new Error('Invite composer is not wired into createBot');
+}
+
+for (const token of ['buildInvitePerformanceSurface', 'buildInviteHistorySurface']) {
+  if (!createBotSource.includes(token)) {
+    throw new Error(`Missing invite module builder wiring: ${token}`);
+  }
+}
+
+if (!operatorComposerSource.includes("composer.callbackQuery('adm:invite'")) {
+  throw new Error('Admin invite callback is missing');
+}
+
+if (!adminSurfacesSource.includes('📨 Инвайты')) {
+  throw new Error('Admin operations surface must expose invite entrypoint');
 }
 
 if (!renderSource.includes('photo_file_id') || !renderSource.includes('thumbnail_url')) {
@@ -75,15 +104,58 @@ const inviteText = renderInviteText({
     invited: [{ displayName: 'Alice', headlineUser: 'Founder', joinedAt: '2026-04-10T10:00:00Z', source: 'inline_share', status: 'activated' }]
   }
 });
-if (!inviteText.includes('Three ready message ideas') || !inviteText.includes('Recent invited contacts')) {
-  throw new Error('Invite text must include share ideas and recent invited contacts');
+if (!inviteText.includes('Snapshot') || !inviteText.includes('Recent invited contacts')) {
+  throw new Error('Invite root text must include snapshot and recent invited contacts');
 }
 
 const inviteKeyboard = JSON.stringify(renderInviteKeyboard({ inviteState: { persistenceEnabled: true, inviteLink: inviteUrl, shareInlineQuery: 'invite' } }).inline_keyboard);
-for (const token of ['switch_inline_query', 'invite:show_link', 'invite:send_card', 'invite:root']) {
+for (const token of ['switch_inline_query', 'invite:show_link', 'invite:send_card', 'invite:perf', 'invite:root']) {
   if (!inviteKeyboard.includes(token)) {
     throw new Error(`Invite keyboard missing ${token}`);
   }
+}
+
+
+const perfText = renderInvitePerformanceText({
+  inviteState: {
+    inviteCode,
+    invitedCount: 2,
+    activatedCount: 1,
+    activationHint: 'connected LinkedIn or started a profile',
+    invited: [{ displayName: 'Alice', headlineUser: 'Founder', joinedAt: '2026-04-10T10:00:00Z', source: 'inline_share', status: 'activated' }],
+    hasMoreInvites: true
+  }
+});
+if (!perfText.includes('Activation rate') || !perfText.includes('Activation rule')) {
+  throw new Error('Invite performance text must expose activation quality');
+}
+
+const perfKeyboard = JSON.stringify(renderInvitePerformanceKeyboard({ inviteState: { invitedCount: 2 } }).inline_keyboard);
+if (!perfKeyboard.includes('invite:hist:1') || !perfKeyboard.includes('invite:root')) {
+  throw new Error('Invite performance keyboard must link back to root and history');
+}
+
+const historyText = renderInviteHistoryText({
+  inviteState: { invitedCount: 2, activatedCount: 1 },
+  historyState: {
+    totalCount: 2,
+    page: 1,
+    totalPages: 1,
+    startIndex: 0,
+    endIndex: 2,
+    items: [{ displayName: 'Alice', headlineUser: 'Founder', joinedAt: '2026-04-10T10:00:00Z', source: 'inline_share', status: 'activated' }]
+  }
+});
+if (!historyText.includes('History window') || !historyText.includes('Contacts')) {
+  throw new Error('Invite history text must expose a paged history window');
+}
+
+const historyKeyboard = JSON.stringify(renderInviteHistoryKeyboard({
+  inviteState: { invitedCount: 2 },
+  historyState: { page: 1, hasPrev: false, hasNext: true }
+}).inline_keyboard);
+if (!historyKeyboard.includes('invite:perf') || !historyKeyboard.includes('invite:hist:2')) {
+  throw new Error('Invite history keyboard must expose navigation and performance');
 }
 
 const cardKeyboard = JSON.stringify(renderInviteCardKeyboard({ inviteState: { inviteCardLink: inviteUrl } }).inline_keyboard);

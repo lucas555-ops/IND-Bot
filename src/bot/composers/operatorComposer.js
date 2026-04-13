@@ -54,6 +54,7 @@ import {
 } from '../../lib/storage/adminStore.js';
 import { normalizeAdminAuditSegment, normalizeAdminDeliverySegment, normalizeAdminIntroSegment, normalizeAdminQualitySegment, normalizeAdminUserSegment } from '../../db/adminRepo.js';
 import { formatUserFacingError } from '../utils/notices.js';
+import { loadAdminInviteSnapshotState } from '../../lib/storage/inviteStore.js';
 
 function parseOpsIntroRequestId(text = '') {
   const match = String(text).match(/^\/ops(?:@\w+)?(?:\s+(\d+))?/);
@@ -80,6 +81,7 @@ export function createOperatorComposer({
   buildOperatorDiagnosticsSurface,
   buildAdminHomeSurface,
   buildAdminOperationsSurface,
+  buildAdminInviteSurface,
   buildAdminCommunicationsSurface,
   buildAdminMonetizationSurface,
   buildAdminSystemSurface,
@@ -166,6 +168,37 @@ export function createOperatorComposer({
   }
 
 
+
+
+  async function renderAdminInvite(ctx, { notice = null } = {}, method = 'edit') {
+    if (!isOperatorTelegramUser(ctx.from.id)) {
+      await renderOperatorOnly(ctx, method);
+      return;
+    }
+
+    const state = await loadAdminInviteSnapshotState().catch((error) => ({
+      persistenceEnabled: false,
+      snapshot: {
+        summary: {
+          totalInvites: 0,
+          activatedInvites: 0,
+          activationRate: 0,
+          inlineShareCount: 0,
+          rawLinkCount: 0,
+          inviteCardCount: 0,
+          joined7d: 0,
+          activated7d: 0
+        },
+        topInviters: [],
+        recentInvites: []
+      },
+      activationHint: 'connected LinkedIn or started a profile',
+      reason: String(error?.message || error)
+    }));
+
+    const surface = await buildAdminInviteSurface({ state, notice });
+    await renderSurface(ctx, surface, method);
+  }
 
   async function renderAdminMonetization(ctx, { notice = null } = {}, method = 'edit') {
     if (!isOperatorTelegramUser(ctx.from.id)) {
@@ -650,6 +683,9 @@ export function createOperatorComposer({
       case 'ops':
         surface = await buildAdminOperationsSurface({ summary: dashboard?.summary?.operations || null });
         break;
+      case 'invite':
+        await renderAdminInvite(ctx, {}, method);
+        return;
       case 'comms':
         await renderAdminCommunications(ctx, {}, method);
         return;
@@ -870,6 +906,11 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:ops', async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderAdminSurface(ctx, 'ops', 'edit');
+  });
+
+  composer.callbackQuery('adm:invite', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderAdminSurface(ctx, 'invite', 'edit');
   });
 
   composer.callbackQuery('adm:comms', async (ctx) => {

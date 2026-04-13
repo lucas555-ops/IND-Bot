@@ -31,7 +31,7 @@ export async function createBot() {
   const bot = new Bot(botToken);
 
   const surfaces = createSurfaceBuilders({ appBaseUrl, invitePhotoFileId });
-  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP051.7' });
+  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP052' });
 
 
   bot.use(createInviteComposer({
@@ -39,6 +39,8 @@ export async function createBot() {
     buildHomeSurface: surfaces.buildHomeSurface,
     buildInviteSurface: surfaces.buildInviteSurface,
     buildInviteLinkSurface: surfaces.buildInviteLinkSurface,
+    buildInvitePerformanceSurface: surfaces.buildInvitePerformanceSurface,
+    buildInviteHistorySurface: surfaces.buildInviteHistorySurface,
     buildInviteCardMessage: surfaces.buildInviteCardMessage
   }));
 
@@ -104,6 +106,7 @@ export async function createBot() {
     buildOperatorDiagnosticsSurface: surfaces.buildOperatorDiagnosticsSurface,
     buildAdminHomeSurface: adminSurfaces.buildAdminHomeSurface,
     buildAdminOperationsSurface: adminSurfaces.buildAdminOperationsSurface,
+    buildAdminInviteSurface: adminSurfaces.buildAdminInviteSurface,
     buildAdminCommunicationsSurface: adminSurfaces.buildAdminCommunicationsSurface,
     buildAdminMonetizationSurface: adminSurfaces.buildAdminMonetizationSurface,
     buildAdminSystemSurface: adminSurfaces.buildAdminSystemSurface,

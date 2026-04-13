@@ -36,6 +36,31 @@ function renderInviteFriendLine(item, index) {
   return `${index + 1}. ${name}${headline} • ${item?.status === 'activated' ? 'activated' : 'joined'} • ${inviteSourceLabel(item?.source)} • ${formatDateShort(item?.joinedAt)}`;
 }
 
+function renderInviteHistoryLine(item, index, startIndex = 0) {
+  const name = toDisplayValue(item?.displayName, 'New contact');
+  const headline = item?.headlineUser ? ` — ${truncate(item.headlineUser, 40)}` : '';
+  const joined = formatDateShort(item?.joinedAt);
+  const activated = item?.status === 'activated' && item?.activatedAt ? formatDateShort(item?.activatedAt) : null;
+  return `${startIndex + index + 1}. ${name}${headline} • ${item?.status === 'activated' ? 'activated' : 'joined'} • ${inviteSourceLabel(item?.source)} • joined ${joined}${activated ? ` • activated ${activated}` : ''}`;
+}
+
+function getInviteActivationRate(invitedCount = 0, activatedCount = 0) {
+  const invited = Number(invitedCount || 0) || 0;
+  const activated = Number(activatedCount || 0) || 0;
+  if (invited <= 0) {
+    return '0%';
+  }
+  return `${Math.round((activated / invited) * 1000) / 10}%`;
+}
+
+function renderAdminInviteTopLine(item, index) {
+  return `${index + 1}. ${toDisplayValue(item?.displayName, 'Member')} — ${Number(item?.invitedCount || 0)} invited • ${Number(item?.activatedCount || 0)} activated • ${Number(item?.activationRate || 0)}%`;
+}
+
+function renderAdminInviteRecentLine(item, index) {
+  return `${index + 1}. ${toDisplayValue(item?.referrerDisplayName, 'Member')} → ${toDisplayValue(item?.displayName, 'Member')} • ${item?.status === 'activated' ? 'activated' : 'joined'} • ${inviteSourceLabel(item?.source)} • ${formatDateShort(item?.joinedAt)}`;
+}
+
 function buildJoinIntroDeckAnchor(inviteUrl) {
   return inviteUrl ? `<a href="${escapeHtml(inviteUrl)}">Join Intro Deck</a>` : 'Join Intro Deck';
 }
@@ -1600,44 +1625,34 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
     '📨 Invite contacts',
     '',
     'Share your personal Intro Deck invite straight into any chat.',
-    'Use Share invite for the fastest Telegram-native flow.'
+    'This hub keeps sharing, performance, and history together without overloading Home.'
   ];
 
   if (!inviteState?.persistenceEnabled) {
-    lines.push('');
-    lines.push('Invite tracking is unavailable right now.');
+    lines.push('', 'Invite tracking is unavailable right now.');
   } else {
-    lines.push('');
-    lines.push('<b>Your invite link</b>');
-    lines.push(`<code>${escapeHtml(inviteState.inviteLink || '—')}</code>`);
-    lines.push('');
-    lines.push('<b>Three ready message ideas</b>');
-    lines.push(`1) I found a clean Telegram directory for discovering people, requesting intros, and unlocking direct contact. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
-    lines.push(`2) Useful bot for finding relevant people and continuing in Telegram. You can request an intro or direct contact. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
-    lines.push(`3) If you want a cleaner way to find people and get warm intros in Telegram, try this. ${buildJoinIntroDeckAnchor(inviteState.inlineInviteLink || inviteState.inviteLink)}`);
-    lines.push('');
-    lines.push(`<b>Your invite code:</b> <code>${escapeHtml(inviteState.inviteCode || '—')}</code>`);
-    lines.push(`<b>Friends invited:</b> ${Number(inviteState.invitedCount || 0)}`);
-    lines.push(`<b>Activated:</b> ${Number(inviteState.activatedCount || 0)}`);
+    const invitedCount = Number(inviteState.invitedCount || 0) || 0;
+    const activatedCount = Number(inviteState.activatedCount || 0) || 0;
+    lines.push('', '<b>Snapshot</b>');
+    lines.push(`• Invited: ${invitedCount} · Activated: ${activatedCount} · Rate: ${getInviteActivationRate(invitedCount, activatedCount)}`);
+    lines.push(`• Invite code: <code>${escapeHtml(inviteState.inviteCode || '—')}</code>`);
     if (inviteState.invitedBy?.displayName) {
-      lines.push(`<b>Joined from:</b> ${escapeHtml(inviteState.invitedBy.displayName)}`);
+      lines.push(`• Joined from: ${escapeHtml(inviteState.invitedBy.displayName)}`);
     }
 
+    lines.push('', '<b>Recent invited contacts</b>');
     if (Array.isArray(inviteState.invited) && inviteState.invited.length) {
-      lines.push('');
-      lines.push('<b>Recent invited contacts</b>');
-      for (const [index, item] of inviteState.invited.entries()) {
-        lines.push(escapeHtml(renderInviteFriendLine(item, index)));
+      inviteState.invited.slice(0, 3).forEach((item, index) => lines.push(escapeHtml(renderInviteFriendLine(item, index))));
+      if (inviteState.hasMoreInvites) {
+        lines.push('• Open Invite history for the full paged list.');
       }
     } else {
-      lines.push('');
-      lines.push('No invited contacts yet. Use Share invite for the fastest path, Show link for a raw link, or Get invite card for a forwardable bot card.');
+      lines.push('• No invited contacts yet. Share invite is the fastest path, while Link + copy and Invite card stay as fallbacks.');
     }
   }
 
   if (notice) {
-    lines.push('');
-    lines.push(escapeHtml(notice));
+    lines.push('', escapeHtml(notice));
   }
 
   return lines.join('\n');
@@ -1648,11 +1663,125 @@ export function renderInviteKeyboard({ inviteState = null } = {}) {
   if (inviteState?.persistenceEnabled && inviteState?.inviteLink) {
     rows.push([{ text: '📨 Share invite', switch_inline_query: inviteState.shareInlineQuery || 'invite' }]);
     rows.push([
-      { text: '🔗 Show link', callback_data: 'invite:show_link' },
-      { text: '🧾 Get invite card', callback_data: 'invite:send_card' }
+      { text: '🔗 Link + copy', callback_data: 'invite:show_link' },
+      { text: '🧾 Invite card', callback_data: 'invite:send_card' }
     ]);
+    const detailRow = [{ text: '📊 Performance', callback_data: 'invite:perf' }];
+    if (Number(inviteState?.invitedCount || 0) > 0) {
+      detailRow.push({ text: '📋 Invite history', callback_data: 'invite:hist:1' });
+    }
+    rows.push(detailRow);
     rows.push([{ text: '🔄 Refresh', callback_data: 'invite:root' }]);
   }
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderInvitePerformanceText({ inviteState = null, notice = null } = {}) {
+  const invitedCount = Number(inviteState?.invitedCount || 0) || 0;
+  const activatedCount = Number(inviteState?.activatedCount || 0) || 0;
+  const lines = [
+    '📊 Invite performance',
+    '',
+    'Review invite quality without overloading the main invite hub.',
+    '',
+    '<b>Summary</b>',
+    `• Invited: ${invitedCount}`,
+    `• Activated: ${activatedCount}`,
+    `• Activation rate: ${getInviteActivationRate(invitedCount, activatedCount)}`
+  ];
+
+  if (inviteState?.activationHint) {
+    lines.push(`• Activation rule: ${escapeHtml(inviteState.activationHint)}`);
+  }
+
+  lines.push('', '<b>Setup</b>');
+  lines.push(`• Invite code: <code>${escapeHtml(inviteState?.inviteCode || '—')}</code>`);
+  if (inviteState?.invitedBy?.displayName) {
+    lines.push(`• Joined from: ${escapeHtml(inviteState.invitedBy.displayName)}`);
+  }
+
+  lines.push('', '<b>Recent invited contacts</b>');
+  if (Array.isArray(inviteState?.invited) && inviteState.invited.length) {
+    inviteState.invited.slice(0, 3).forEach((item, index) => lines.push(escapeHtml(renderInviteFriendLine(item, index))));
+    if (inviteState.hasMoreInvites) {
+      lines.push('• Open Invite history for the full paged list.');
+    }
+  } else {
+    lines.push('• No invited contacts yet.');
+  }
+
+  if (notice) {
+    lines.push('', escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderInvitePerformanceKeyboard({ inviteState = null } = {}) {
+  const rows = [];
+  if (Number(inviteState?.invitedCount || 0) > 0) {
+    rows.push([{ text: '📋 Invite history', callback_data: 'invite:hist:1' }]);
+  }
+  rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderInviteHistoryText({ inviteState = null, historyState = null, notice = null } = {}) {
+  const totalCount = Number(historyState?.totalCount || 0) || 0;
+  const currentPage = Number(historyState?.page || 1) || 1;
+  const totalPages = Number(historyState?.totalPages || 1) || 1;
+  const startIndex = Number(historyState?.startIndex || 0) || 0;
+  const endIndex = Number(historyState?.endIndex || 0) || 0;
+  const lines = [
+    '📋 Invite history',
+    '',
+    'Review the invited contacts behind your summary without overloading the main invite hub.',
+    '',
+    '<b>Summary</b>',
+    `• Invited: ${Number(inviteState?.invitedCount || 0) || 0}`,
+    `• Activated: ${Number(inviteState?.activatedCount || 0) || 0}`,
+    `• Activation rate: ${getInviteActivationRate(inviteState?.invitedCount, inviteState?.activatedCount)}`,
+    '',
+    '<b>History window</b>'
+  ];
+
+  if (totalCount > 0) {
+    lines.push(`• Showing: ${startIndex + 1}–${endIndex} of ${totalCount}`);
+    lines.push(`• Page: ${currentPage}/${totalPages}`);
+  } else {
+    lines.push('• No invited contacts yet.');
+  }
+
+  if (Array.isArray(historyState?.items) && historyState.items.length > 0) {
+    lines.push('', '<b>Contacts</b>');
+    historyState.items.forEach((item, index) => lines.push(escapeHtml(renderInviteHistoryLine(item, index, startIndex))));
+  }
+
+  if (notice) {
+    lines.push('', escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderInviteHistoryKeyboard({ inviteState = null, historyState = null } = {}) {
+  const rows = [];
+  const navRow = [];
+  if (historyState?.hasPrev) {
+    navRow.push({ text: '⬅️ Prev', callback_data: `invite:hist:${Math.max(1, Number(historyState?.page || 1) - 1)}` });
+  }
+  if (historyState?.hasNext) {
+    navRow.push({ text: 'Next ➡️', callback_data: `invite:hist:${Math.max(1, Number(historyState?.page || 1) + 1)}` });
+  }
+  if (navRow.length) {
+    rows.push(navRow);
+  }
+  rows.push([
+    { text: '📨 Invite contacts', callback_data: 'invite:root' },
+    { text: '📊 Performance', callback_data: 'invite:perf' }
+  ]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
@@ -1751,6 +1880,61 @@ export function buildInlineInviteResult({ inviteState = null } = {}) {
     },
     reply_markup: replyMarkup
   };
+}
+
+
+export function renderAdminInviteSnapshotText({ state = null, notice = null } = {}) {
+  const summary = state?.snapshot?.summary || {};
+  const topInviters = Array.isArray(state?.snapshot?.topInviters) ? state.snapshot.topInviters : [];
+  const recentInvites = Array.isArray(state?.snapshot?.recentInvites) ? state.snapshot.recentInvites : [];
+  const lines = [
+    '📨 Инвайты',
+    '',
+    'Сводка invite-слоя и качества активации без rewards и redeem.',
+    '',
+    '<b>Сводка</b>',
+    `• Всего инвайтов: ${Number(summary.totalInvites || 0) || 0}`,
+    `• Активировано: ${Number(summary.activatedInvites || 0) || 0}`,
+    `• Конверсия: ${Number(summary.activationRate || 0) || 0}%`,
+    `• За 7д: ${Number(summary.joined7d || 0) || 0} joined • ${Number(summary.activated7d || 0) || 0} activated`,
+    '',
+    '<b>Источники</b>',
+    `• Inline share: ${Number(summary.inlineShareCount || 0) || 0}`,
+    `• Link: ${Number(summary.rawLinkCount || 0) || 0}`,
+    `• Invite card: ${Number(summary.inviteCardCount || 0) || 0}`
+  ];
+
+  if (state?.activationHint) {
+    lines.push('', `<b>Правило активации</b>`, `• ${escapeHtml(state.activationHint)}`);
+  }
+
+  lines.push('', '<b>Топ инвайтеры</b>');
+  if (topInviters.length) {
+    topInviters.forEach((item, index) => lines.push(escapeHtml(renderAdminInviteTopLine(item, index))));
+  } else {
+    lines.push('• Пока нет данных.');
+  }
+
+  lines.push('', '<b>Последние инвайты</b>');
+  if (recentInvites.length) {
+    recentInvites.forEach((item, index) => lines.push(escapeHtml(renderAdminInviteRecentLine(item, index))));
+  } else {
+    lines.push('• Пока нет данных.');
+  }
+
+  if (notice) {
+    lines.push('', escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderAdminInviteSnapshotKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '🔄 Обновить', callback_data: 'adm:invite' }],
+    [{ text: '↩️ Назад в Операции', callback_data: 'adm:ops' }],
+    [{ text: '🏠 Главная', callback_data: 'home:root' }]
+  ]);
 }
 
 export function renderOperatorDiagnosticsText({
