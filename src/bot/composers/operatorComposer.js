@@ -971,8 +971,8 @@ export function createOperatorComposer({
     }).catch((error) => ({ persistenceEnabled: true, changed: false, blocked: true, reason: String(error?.message || error) }));
 
     const notice = result.changed
-      ? `Mode updated: ${result.previousMode || 'off'} → ${result.mode || toMode}`
-      : `Mode unchanged: ${result.mode || toMode}`;
+      ? `Режим обновлён: ${result.previousMode || 'off'} → ${result.mode || toMode}. Экран ниже уже показывает новое состояние.`
+      : `Режим не изменился: ${result.mode || toMode}.`;
     await renderAdminInvite(ctx, { notice, view: 'rewards' }, 'edit');
   });
 
@@ -1000,14 +1000,14 @@ export function createOperatorComposer({
 
     const run = result?.run || null;
     const notice = result?.blocked
-      ? (result.reason === 'settlement_blocked_in_paused' ? 'Settlement blocked: rewards mode is paused.' : `Settlement blocked: ${result.reason || 'unknown reason'}`)
-      : `Settlement run ${run?.settlementRunId || 'n/a'} • processed ${run?.processedCount || 0} • confirmed ${run?.confirmedCount || 0} • rejected ${run?.rejectedCount || 0} • skipped ${run?.skippedCount || 0}`;
+      ? (result.reason === 'settlement_blocked_in_paused' ? 'Batch не запущен: rewards-программа сейчас на паузе.' : `Batch не запущен: ${result.reason || 'unknown reason'}`)
+      : `Batch ${run?.settlementRunId || 'n/a'} завершён • обработано ${run?.processedCount || 0} • confirmed ${run?.confirmedCount || 0} • rejected ${run?.rejectedCount || 0} • skipped ${run?.skippedCount || 0}`;
     await renderAdminInvite(ctx, { notice, view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:invite:settlement:reconcile', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminInvite(ctx, { notice: 'Reconciliation warnings and completed redemption counters are shown below.', view: 'settlement' }, 'edit');
+    await renderAdminInvite(ctx, { notice: 'Ниже показаны предупреждения по сверке и число завершённых redeem-операций.', view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:comms', async (ctx) => {

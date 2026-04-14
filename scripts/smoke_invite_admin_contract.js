@@ -49,7 +49,7 @@ const rewardsSurface = await builders.buildAdminInviteSurface({
   },
   view: 'rewards'
 });
-if (!rewardsSurface.text.includes('Reward-программа без шума') || !JSON.stringify(rewardsSurface.reply_markup.inline_keyboard).includes('adm:invite:mode:live')) {
+if (!rewardsSurface.text.includes('Экран режима и балансов rewards-программы') || !JSON.stringify(rewardsSurface.reply_markup.inline_keyboard).includes('adm:invite:mode:live')) {
   throw new Error('Admin invite rewards view must expose focused rewards text and mode controls');
 }
 

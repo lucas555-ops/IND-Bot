@@ -4,10 +4,10 @@
 Intro Deck
 
 ## Current source baseline
-STEP052.7 — Invite Rewards Ops Polish
+STEP052.8.1 — Admin Invite Copy + Mode Clarity Hotfix
 
 ## Layer
-Product hardening / invite expansion / rewards ops polish
+Product hardening / invite expansion / rewards admin clarity polish
 
 ## Source-confirmed
 - Invite layer remains a bounded module:
@@ -145,3 +145,15 @@ STEP052.8 — Admin / Invite Deep-Surface Navigation Polish if manual founder pa
 Founder manual pass on the nested admin and invite screens, then either:
 - one narrow callback/dead-end hotfix if any real navigation edge remains, or
 - broader STEP053 continuation if the 052 corridor is now operationally clean
+
+
+## STEP052.8.1 copy hotfix additions now in source
+- admin invite deep views no longer leak raw `<b>` markup into Telegram
+- invite admin screens now explain the current mode effect directly
+- rewards / settlement / audit views now use clearer Russian admin labels and next-action hints
+- mode switch notices now state that the screen already reflects the new state
+- settlement notices now read cleanly for operators
+- user invite copy is slightly tighter and more action-first without changing mechanics
+
+## Next recommended step
+Founder manual pass in Telegram on nested invite/admin views, then only a real micro-hotfix if one more dead-end or unclear label still appears.

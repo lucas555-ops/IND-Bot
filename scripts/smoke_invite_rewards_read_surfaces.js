@@ -52,7 +52,7 @@ for (const token of ['export async function listInviteRewardEventsByUserId', 'ex
 }
 
 const adminSurfaces = readFileSync(adminSurfacesPath, 'utf8');
-for (const token of ['Обзор invite-потока', 'Reward-программа без шума', 'Settlement и reconciliation']) {
+for (const token of ['Главный обзор invite-потока', 'Экран режима и балансов rewards-программы', 'Экран подтверждения pending-наград']) {
   if (!adminSurfaces.includes(token)) {
     throw new Error(`Admin invite read truth missing token: ${token}`);
   }

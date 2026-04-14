@@ -1627,11 +1627,11 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
   const lines = [
     '📨 Invite & rewards',
     '',
-    'Choose the share format that fits the chat: quick share, a ready card, or a raw link.',
+    'Use this screen to share your personal invite in the format that fits the chat best.',
     '',
-    '<b>How to use this screen</b>',
-    '• Share invite — opens Telegram share with your personal invite.',
-    '• Invite card — sends a ready-made card you can forward.',
+    '<b>Share options</b>',
+    '• Share invite — opens Telegram share with your personal invite already attached.',
+    '• Invite card — sends a ready-made card you can forward as-is.',
     '• Link + copy — shows the raw invite link for manual sharing.'
   ];
 
@@ -1658,8 +1658,8 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
     }
 
     lines.push('', '<b>Open next</b>');
-    lines.push('• Performance — quality, sources, and recent 7-day movement.');
-    lines.push('• Invite history — everyone who joined from your invite.');
+    lines.push('• Performance — totals, sources, and the last 7 days.');
+    lines.push('• Invite history — everyone who actually joined from your invite.');
     lines.push('• Points — pending, available, redeemed, and redeem status.');
   }
 
@@ -1697,7 +1697,7 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
   const lines = [
     '📊 Invite performance',
     '',
-    'This is the quality view for your invite activity: totals, sources, and recent 7-day movement.',
+    'This screen shows how your invite is performing: totals, sources, and recent 7-day movement.',
     '',
     '<b>All-time</b>',
     `• Invited: ${invitedCount}`,
@@ -1721,7 +1721,7 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
 
   if (!(invitedCount > 0)) {
     lines.push('', '<b>No invite activity yet</b>');
-    lines.push('• Start with Share invite, Invite card, or Link + copy. Performance will fill in automatically.');
+    lines.push('• Start with Share invite, Invite card, or Link + copy. Your performance data will fill in automatically.');
   }
 
   if (notice) {
@@ -1754,7 +1754,7 @@ export function renderInviteHistoryText({ inviteState = null, historyState = nul
   const lines = [
     '📋 Invite history',
     '',
-    'Everyone who joined from your invite appears here. Use this screen to confirm who actually came in.',
+    'Everyone who joined from your invite appears here. Use this screen to confirm who actually came in and when.',
     '',
     '<b>Summary</b>',
     `• Invited: ${Number(inviteState?.invitedCount || 0) || 0}`,
@@ -1853,18 +1853,19 @@ export function renderInviteRewardsText({ rewardsState = null, notice = null } =
     '<b>How it works</b>',
     `• Activation signal: ${escapeHtml(rewardsState?.activationHint || 'the invited member connected LinkedIn and reached listed-ready state')}.`,
     `• Pending confirms after ${Number(summary?.config?.activationConfirmHours || 24) || 24}h if the activation still holds.`,
-    '• Self-invites, existing users, and raw opens do not earn points.'
+    '• Self-invites, existing users, and raw opens do not earn points.',
+    '• What changes by mode is shown below.'
   ];
 
   lines.push('', '<b>Redeem status</b>');
   if (mode === 'live') {
     lines.push('• Redeem for Pro is live now. Spend from Available only.');
   } else if (mode === 'earn_only') {
-    lines.push('• You can earn and track points now. Redeem is not live yet.');
+    lines.push('• Earning is on and tracking is live. Redeem is not available yet.');
   } else if (mode === 'paused') {
-    lines.push('• Rewards are paused right now. Existing balances stay visible.');
+    lines.push('• Rewards are paused right now. Existing balances stay visible, but no new actions go through.');
   } else {
-    lines.push('• Rewards program is off right now. Existing balances stay visible.');
+    lines.push('• Rewards program is off right now. Existing balances stay visible, but no new actions go through.');
   }
 
   lines.push('', '<b>Recent reward events</b>');
@@ -1998,7 +1999,7 @@ export function renderInviteLinkText({ inviteState = null } = {}) {
   return [
     '🔗 <b>Your invite link</b>',
     '',
-    'Copy this link and drop it into any chat if you prefer a raw link over inline share.',
+    'Copy this link into any chat when you want to share manually instead of using the Telegram share flow.',
     '',
     `<code>${escapeHtml(inviteState?.inviteLink || '—')}</code>`
   ].join('\n');
@@ -2015,7 +2016,7 @@ export function renderInviteCardText({ inviteState = null } = {}) {
   return [
     '🤝 <b>Join me on Intro Deck</b>',
     '',
-    'Forward this card or open Intro Deck directly from the button below.',
+    'Forward this card as-is or open Intro Deck directly from the button below.',
     '',
     buildJoinIntroDeckAnchor(inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink)
   ].join('\n');
