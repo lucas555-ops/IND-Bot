@@ -104,7 +104,7 @@ const inviteText = renderInviteText({
     invited: [{ displayName: 'Alice', headlineUser: 'Founder', joinedAt: '2026-04-10T10:00:00Z', source: 'inline_share', status: 'activated' }]
   }
 });
-if (!inviteText.includes('Snapshot') || !inviteText.includes('Next step')) {
+if (!inviteText.includes('Your snapshot') || !inviteText.includes('Open next')) {
   throw new Error('Invite root text must include snapshot and next-step guidance');
 }
 
@@ -154,7 +154,7 @@ const emptyHistoryText = renderInviteHistoryText({
   inviteState: { invitedCount: 0, activatedCount: 0, shareInlineQuery: 'invite' },
   historyState: { totalCount: 0, page: 1, totalPages: 1, startIndex: 0, endIndex: 0, items: [] }
 });
-if (!emptyHistoryText.includes('No invited contacts yet.') || !emptyHistoryText.includes('Share invite')) {
+if (!emptyHistoryText.includes('No invited contacts yet.') || !emptyHistoryText.includes('first joined contact')) {
   throw new Error('Invite history must expose a product empty-state when no invited contacts exist');
 }
 
@@ -167,8 +167,8 @@ if (!historyKeyboard.includes('invite:perf') || !historyKeyboard.includes('invit
 }
 
 const cardKeyboard = JSON.stringify(renderInviteCardKeyboard({ inviteState: { inviteCardLink: inviteUrl } }).inline_keyboard);
-if (!cardKeyboard.includes('Open Intro Deck')) {
-  throw new Error('Invite card keyboard must expose Open Intro Deck URL button');
+if (!cardKeyboard.includes('Open Intro Deck') || !cardKeyboard.includes('invite:root')) {
+  throw new Error('Invite card keyboard must expose Open Intro Deck plus navigation back to invite root');
 }
 
 const inlineShareText = renderInlineInviteShareText({ inviteState: { inlineInviteLink: inviteUrl } });

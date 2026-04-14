@@ -52,7 +52,7 @@ for (const token of ['export async function listInviteRewardEventsByUserId', 'ex
 }
 
 const adminSurfaces = readFileSync(adminSurfacesPath, 'utf8');
-for (const token of ['Rewards:', 'Топ по rewards:', 'Последние reward events:']) {
+for (const token of ['Обзор invite-потока', 'Reward-программа без шума', 'Settlement и reconciliation']) {
   if (!adminSurfaces.includes(token)) {
     throw new Error(`Admin invite read truth missing token: ${token}`);
   }
@@ -108,7 +108,7 @@ const rewardsText = renderInviteRewardsText({
     recentEvents: [{ invitedDisplayName: 'Alice', points: 10, status: 'pending', confirmAfter: '2026-04-15T10:00:00Z' }]
   }
 });
-for (const token of ['Pending is not spendable yet', 'Mode: earn only', 'Recent reward events']) {
+for (const token of ['Only available points can be spent', 'Mode: earn only', 'Recent reward events']) {
   if (!rewardsText.includes(token)) {
     throw new Error(`Points text missing token: ${token}`);
   }
@@ -124,7 +124,7 @@ const inviteText = renderInviteText({
     rewardsSummary: { mode: 'earn_only', pendingPoints: 10, availablePoints: 0 }
   }
 });
-if (!inviteText.includes('<b>Points</b>') || !inviteText.includes('Open Points')) {
+if (!inviteText.includes('<b>Points preview</b>') || !inviteText.includes('Points — pending, available, redeemed')) {
   throw new Error('Invite root text must preview points and link users to the read surface');
 }
 

@@ -1625,10 +1625,14 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
 
 export function renderInviteText({ inviteState = null, notice = null } = {}) {
   const lines = [
-    '📨 Invite contacts',
+    '📨 Invite & rewards',
     '',
-    'Share your personal Intro Deck invite straight into any chat.',
-    'Keep sharing, performance, and invite history together here without overloading Home.'
+    'Choose the share format that fits the chat: quick share, a ready card, or a raw link.',
+    '',
+    '<b>How to use this screen</b>',
+    '• Share invite — opens Telegram share with your personal invite.',
+    '• Invite card — sends a ready-made card you can forward.',
+    '• Link + copy — shows the raw invite link for manual sharing.'
   ];
 
   if (!inviteState?.persistenceEnabled) {
@@ -1636,7 +1640,7 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
   } else {
     const invitedCount = Number(inviteState.invitedCount || 0) || 0;
     const activatedCount = Number(inviteState.activatedCount || 0) || 0;
-    lines.push('', '<b>Snapshot</b>');
+    lines.push('', '<b>Your snapshot</b>');
     lines.push(`• Invited: ${invitedCount}`);
     lines.push(`• Activated: ${activatedCount}`);
     lines.push(`• Activation rate: ${getInviteActivationRate(invitedCount, activatedCount)}`);
@@ -1647,16 +1651,16 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
 
     const rewardsSummary = inviteState?.rewardsSummary || null;
     if (rewardsSummary) {
-      lines.push('', '<b>Points</b>');
+      lines.push('', '<b>Points preview</b>');
       lines.push(`• Mode: ${escapeHtml(formatInviteRewardsModeLabel(rewardsSummary.mode))}`);
       lines.push(`• Pending: ${Number(rewardsSummary.pendingPoints || 0) || 0}`);
       lines.push(`• Available: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
     }
 
-    lines.push('', '<b>Next step</b>');
-    lines.push('• Open Performance for source split and recent 7-day quality.');
-    lines.push('• Open Invite history for the full paged list, even before your first invite arrives.');
-    lines.push('• Open Points to check pending, available, and redeemed rewards truth.');
+    lines.push('', '<b>Open next</b>');
+    lines.push('• Performance — quality, sources, and recent 7-day movement.');
+    lines.push('• Invite history — everyone who joined from your invite.');
+    lines.push('• Points — pending, available, redeemed, and redeem status.');
   }
 
   if (notice) {
@@ -1676,10 +1680,10 @@ export function renderInviteKeyboard({ inviteState = null } = {}) {
     ]);
     rows.push([
       { text: '📊 Performance', callback_data: 'invite:perf' },
-      { text: '🎯 Points', callback_data: 'invite:points' }
+      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
     ]);
     rows.push([
-      { text: '📋 Invite history', callback_data: 'invite:hist:1' },
+      { text: '🎯 Points', callback_data: 'invite:points' },
       { text: '🔄 Refresh', callback_data: 'invite:root' }
     ]);
   }
@@ -1693,7 +1697,7 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
   const lines = [
     '📊 Invite performance',
     '',
-    'See invite quality, source mix, and recent momentum without overloading the main invite hub.',
+    'This is the quality view for your invite activity: totals, sources, and recent 7-day movement.',
     '',
     '<b>All-time</b>',
     `• Invited: ${invitedCount}`,
@@ -1716,8 +1720,8 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
   }
 
   if (!(invitedCount > 0)) {
-    lines.push('', '<b>Nothing to measure yet</b>');
-    lines.push('• No invited contacts yet. Use Share invite, Link + copy, or Invite card to start your first invite flow.');
+    lines.push('', '<b>No invite activity yet</b>');
+    lines.push('• Start with Share invite, Invite card, or Link + copy. Performance will fill in automatically.');
   }
 
   if (notice) {
@@ -1729,10 +1733,14 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
 
 export function renderInvitePerformanceKeyboard({ inviteState = null } = {}) {
   const rows = [
-    [{ text: '🎯 Points', callback_data: 'invite:points' }],
-    [{ text: '📋 Invite history', callback_data: 'invite:hist:1' }],
-    [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '📨 Invite & rewards', callback_data: 'invite:root' },
+      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
+    ],
+    [
+      { text: '🎯 Points', callback_data: 'invite:points' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ];
   return buildInlineKeyboard(rows);
 }
@@ -1746,7 +1754,7 @@ export function renderInviteHistoryText({ inviteState = null, historyState = nul
   const lines = [
     '📋 Invite history',
     '',
-    'Every invited contact appears here. The list stays available even before your first invite arrives.',
+    'Everyone who joined from your invite appears here. Use this screen to confirm who actually came in.',
     '',
     '<b>Summary</b>',
     `• Invited: ${Number(inviteState?.invitedCount || 0) || 0}`,
@@ -1763,7 +1771,7 @@ export function renderInviteHistoryText({ inviteState = null, historyState = nul
     historyState.items.forEach((item, index) => lines.push(escapeHtml(renderInviteHistoryLine(item, index, startIndex))));
   } else {
     lines.push('• No invited contacts yet.');
-    lines.push('• Use Share invite, Link + copy, or Invite card to bring your first invited contacts here.');
+    lines.push('• Your first joined contact will appear here automatically.');
   }
 
   if (notice) {
@@ -1786,17 +1794,19 @@ export function renderInviteHistoryKeyboard({ inviteState = null, historyState =
     rows.push(navRow);
   }
   rows.push([
-    { text: '📨 Invite contacts', callback_data: 'invite:root' },
+    { text: '📨 Invite & rewards', callback_data: 'invite:root' },
     { text: '📊 Performance', callback_data: 'invite:perf' }
   ]);
-  rows.push([{ text: '🎯 Points', callback_data: 'invite:points' }]);
+  rows.push([
+    { text: '🎯 Points', callback_data: 'invite:points' },
+    { text: '🏠 Home', callback_data: 'home:root' }
+  ]);
   if (!(Number(inviteState?.invitedCount || 0) > 0)) {
     rows.push([
       { text: '📨 Share invite', switch_inline_query: inviteState?.shareInlineQuery || 'invite' },
       { text: '🔗 Link + copy', callback_data: 'invite:show_link' }
     ]);
   }
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1832,25 +1842,25 @@ export function renderInviteRewardsText({ rewardsState = null, notice = null } =
   const lines = [
     '🎯 Points',
     '',
-    'Read-only rewards truth for your invite activity. Pending is not spendable yet.',
+    'This screen shows your invite rewards status. Only available points can be spent.',
     '',
-    '<b>Status</b>',
+    '<b>Your balance</b>',
     `• Mode: ${escapeHtml(formatInviteRewardsModeLabel(mode))}`,
     `• Pending: ${Number(summary.pendingPoints || 0) || 0}`,
     `• Available: ${Number(summary.availablePoints || 0) || 0}`,
     `• Redeemed: ${Number(summary.redeemedPoints || 0) || 0}`,
     '',
-    '<b>Program rule</b>',
-    `• Current signal: ${escapeHtml(rewardsState?.activationHint || 'the invited member connected LinkedIn and reached listed-ready state')}.`,
-    `• Pending confirms after ${Number(summary?.config?.activationConfirmHours || 24) || 24}h when the activation still holds.`,
+    '<b>How it works</b>',
+    `• Activation signal: ${escapeHtml(rewardsState?.activationHint || 'the invited member connected LinkedIn and reached listed-ready state')}.`,
+    `• Pending confirms after ${Number(summary?.config?.activationConfirmHours || 24) || 24}h if the activation still holds.`,
     '• Self-invites, existing users, and raw opens do not earn points.'
   ];
 
-  lines.push('', '<b>Redeem</b>');
+  lines.push('', '<b>Redeem status</b>');
   if (mode === 'live') {
-    lines.push('• Redeem for Pro is live. Only available points can be spent.');
+    lines.push('• Redeem for Pro is live now. Spend from Available only.');
   } else if (mode === 'earn_only') {
-    lines.push('• Redeem is not live yet. You can keep earning and tracking points.');
+    lines.push('• You can earn and track points now. Redeem is not live yet.');
   } else if (mode === 'paused') {
     lines.push('• Rewards are paused right now. Existing balances stay visible.');
   } else {
@@ -1861,7 +1871,8 @@ export function renderInviteRewardsText({ rewardsState = null, notice = null } =
   if (recentEvents.length > 0) {
     recentEvents.forEach((event, index) => lines.push(escapeHtml(renderInviteRewardEventLine(event, index))));
   } else {
-    lines.push('• No reward events yet. Invite quality still has to reach the listed-ready threshold.');
+    lines.push('• No reward events yet.');
+    lines.push('• Once a qualified invite confirms, it will appear here.');
   }
 
   if (notice) {
@@ -1884,10 +1895,12 @@ export function renderInviteRewardsKeyboard({ rewardsState = null } = {}) {
     [{ text: redeemLabel, callback_data: 'invite:redeem' }],
     [
       { text: '📨 Invite & rewards', callback_data: 'invite:root' },
-      { text: '📊 Performance', callback_data: 'invite:perf' }
+      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
     ],
-    [{ text: '📋 Invite history', callback_data: 'invite:hist:1' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [
+      { text: '📊 Performance', callback_data: 'invite:perf' },
+      { text: '🏠 Home', callback_data: 'home:root' }
+    ]
   ]);
 }
 
@@ -1946,8 +1959,10 @@ export function renderInviteRedeemKeyboard({ redeemState = null } = {}) {
     });
   }
 
-  rows.push([{ text: '🎯 Points', callback_data: 'invite:points' }]);
-  rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+  rows.push([
+    { text: '🎯 Points', callback_data: 'invite:points' },
+    { text: '📨 Invite & rewards', callback_data: 'invite:root' }
+  ]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
@@ -1991,7 +2006,7 @@ export function renderInviteLinkText({ inviteState = null } = {}) {
 
 export function renderInviteLinkKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
+    [{ text: '📨 Invite & rewards', callback_data: 'invite:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -2000,7 +2015,7 @@ export function renderInviteCardText({ inviteState = null } = {}) {
   return [
     '🤝 <b>Join me on Intro Deck</b>',
     '',
-    'Discover people, request intros, or unlock direct contact in Telegram.',
+    'Forward this card or open Intro Deck directly from the button below.',
     '',
     buildJoinIntroDeckAnchor(inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink)
   ].join('\n');
@@ -2009,6 +2024,11 @@ export function renderInviteCardText({ inviteState = null } = {}) {
 export function renderInviteCardKeyboard({ inviteState = null } = {}) {
   const inviteUrl = inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink;
   const rows = inviteUrl ? [[{ text: 'Open Intro Deck', url: inviteUrl }]] : [];
+  rows.push([
+    { text: '📨 Invite & rewards', callback_data: 'invite:root' },
+    { text: '🎯 Points', callback_data: 'invite:points' }
+  ]);
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 

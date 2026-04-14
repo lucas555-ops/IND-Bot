@@ -42,8 +42,19 @@ if (!surface.text.includes('Всего инвайтов') || !surface.text.inclu
   throw new Error('Admin invite surface text must expose summary, top inviters, and recent invites');
 }
 
+const rewardsSurface = await builders.buildAdminInviteSurface({
+  state: {
+    snapshot: { summary: { totalInvites: 9, activatedInvites: 4, activationRate: 44.4, inlineShareCount: 5, rawLinkCount: 3, inviteCardCount: 1, joined7d: 3, activated7d: 2 }, topInviters: [], recentInvites: [] },
+    rewards: { mode: 'live', totals: { pendingPoints: 10, pendingEntries: 1, availablePoints: 20, availableEntries: 2, redeemedPoints: 30, redeemedEntries: 3, pendingCandidates: 1, pendingDue: 0 }, topRewardInviters: [], recentRewardEvents: [] }
+  },
+  view: 'rewards'
+});
+if (!rewardsSurface.text.includes('Reward-программа без шума') || !JSON.stringify(rewardsSurface.reply_markup.inline_keyboard).includes('adm:invite:mode:live')) {
+  throw new Error('Admin invite rewards view must expose focused rewards text and mode controls');
+}
+
 const keyboard = JSON.stringify(surface.reply_markup.inline_keyboard);
-for (const token of ['adm:invite', 'adm:ops', 'home:root']) {
+for (const token of ['adm:invite:overview', 'adm:ops', 'home:root']) {
   if (!keyboard.includes(token)) {
     throw new Error(`Admin invite keyboard missing ${token}`);
   }

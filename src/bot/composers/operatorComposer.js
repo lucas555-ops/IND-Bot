@@ -170,7 +170,7 @@ export function createOperatorComposer({
 
 
 
-  async function renderAdminInvite(ctx, { notice = null } = {}, method = 'edit') {
+  async function renderAdminInvite(ctx, { notice = null, view = 'overview' } = {}, method = 'edit') {
     if (!isOperatorTelegramUser(ctx.from.id)) {
       await renderOperatorOnly(ctx, method);
       return;
@@ -228,7 +228,7 @@ export function createOperatorComposer({
       reason: String(error?.message || error)
     }));
 
-    const surface = await buildAdminInviteSurface({ state, notice });
+    const surface = await buildAdminInviteSurface({ state, notice, view });
     await renderSurface(ctx, surface, method);
   }
 
@@ -942,7 +942,17 @@ export function createOperatorComposer({
 
   composer.callbackQuery('adm:invite', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminSurface(ctx, 'invite', 'edit');
+    await renderAdminInvite(ctx, { view: 'overview' }, 'edit');
+  });
+
+  composer.callbackQuery('adm:invite:overview', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderAdminInvite(ctx, { view: 'overview' }, 'edit');
+  });
+
+  composer.callbackQuery('adm:invite:rewards', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderAdminInvite(ctx, { view: 'rewards' }, 'edit');
   });
 
   composer.callbackQuery(/^adm:invite:mode:(off|earn_only|live|paused)$/, async (ctx) => {
@@ -963,17 +973,17 @@ export function createOperatorComposer({
     const notice = result.changed
       ? `Mode updated: ${result.previousMode || 'off'} → ${result.mode || toMode}`
       : `Mode unchanged: ${result.mode || toMode}`;
-    await renderAdminInvite(ctx, { notice }, 'edit');
+    await renderAdminInvite(ctx, { notice, view: 'rewards' }, 'edit');
   });
 
   composer.callbackQuery('adm:invite:audit', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminInvite(ctx, { notice: 'Showing recent mode audit entries below the rewards summary.' }, 'edit');
+    await renderAdminInvite(ctx, { view: 'audit' }, 'edit');
   });
 
   composer.callbackQuery('adm:invite:settlement', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminInvite(ctx, { notice: 'Showing settlement status, last run summary, and reconciliation warnings below the rewards summary.' }, 'edit');
+    await renderAdminInvite(ctx, { view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:invite:settlement:run', async (ctx) => {
@@ -992,12 +1002,12 @@ export function createOperatorComposer({
     const notice = result?.blocked
       ? (result.reason === 'settlement_blocked_in_paused' ? 'Settlement blocked: rewards mode is paused.' : `Settlement blocked: ${result.reason || 'unknown reason'}`)
       : `Settlement run ${run?.settlementRunId || 'n/a'} • processed ${run?.processedCount || 0} • confirmed ${run?.confirmedCount || 0} • rejected ${run?.rejectedCount || 0} • skipped ${run?.skippedCount || 0}`;
-    await renderAdminInvite(ctx, { notice }, 'edit');
+    await renderAdminInvite(ctx, { notice, view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:invite:settlement:reconcile', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminInvite(ctx, { notice: 'Showing reconciliation warnings and live-verification counters below the rewards summary.' }, 'edit');
+    await renderAdminInvite(ctx, { notice: 'Reconciliation warnings and completed redemption counters are shown below.', view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:comms', async (ctx) => {

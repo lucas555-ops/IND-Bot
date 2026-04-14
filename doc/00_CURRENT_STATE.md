@@ -127,3 +127,21 @@ STEP052.7 — Invite Rewards Ops Polish or broader STEP053 monetization/ops cont
 
 ## Next recommended step
 STEP052.8 — Admin / Invite Deep-Surface Navigation Polish if manual founder pass still finds dead-ends or inconsistent drilldown routing
+
+## STEP052.8 navigation polish additions now in source
+- `📨 Инвайты` is now split into focused deep views:
+  - overview
+  - rewards
+  - settlement
+  - mode audit
+- each invite admin deep view now keeps its own keyboard navigation and clear return path to `🧰 Операции`
+- mode switches stay on the focused rewards view instead of being mixed into every invite screen
+- settlement actions stay on the focused settlement view with a clear batch/reconcile grouping
+- user invite root now explains the three share actions more clearly
+- user invite card message now includes navigation back to invite root and points, so it no longer hangs as a dead-end message
+- invite link, points, performance, and history screens now follow a more consistent bottom navigation pattern
+
+## Next recommended step
+Founder manual pass on the nested admin and invite screens, then either:
+- one narrow callback/dead-end hotfix if any real navigation edge remains, or
+- broader STEP053 continuation if the 052 corridor is now operationally clean

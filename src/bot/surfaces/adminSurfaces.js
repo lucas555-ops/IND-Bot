@@ -257,7 +257,31 @@ function buildOperationsHubKeyboard({ summary = null } = {}) {
     buildBackHomeRow('↩️ Назад в Админку', 'adm:home')
   ]);
 }
-function buildAdminInviteText({ state = null, notice = null } = {}) {
+function normalizeAdminInviteView(view = 'overview') {
+  const normalized = typeof view === 'string' ? view.trim().toLowerCase() : 'overview';
+  if (['overview', 'rewards', 'settlement', 'audit'].includes(normalized)) {
+    return normalized;
+  }
+  return 'overview';
+}
+function adminInviteModeLabel(mode = 'off') {
+  switch (String(mode || 'off').trim().toLowerCase()) {
+    case 'earn_only':
+      return '🟡 Earn only';
+    case 'live':
+      return '🟢 Live';
+    case 'paused':
+      return '⏸️ Paused';
+    case 'off':
+    default:
+      return '🔴 Off';
+  }
+}
+function adminInviteModeButtonText(currentMode = 'off', targetMode = 'off', baseLabel = 'Off') {
+  return `${String(currentMode || 'off').trim().toLowerCase() === String(targetMode || 'off').trim().toLowerCase() ? '✅' : '▫️'} ${baseLabel}`;
+}
+function buildAdminInviteText({ state = null, notice = null, view = 'overview' } = {}) {
+  const currentView = normalizeAdminInviteView(view);
   const summary = state?.snapshot?.summary || {};
   const topInviters = Array.isArray(state?.snapshot?.topInviters) ? state.snapshot.topInviters : [];
   const recentInvites = Array.isArray(state?.snapshot?.recentInvites) ? state.snapshot.recentInvites : [];
@@ -269,108 +293,169 @@ function buildAdminInviteText({ state = null, notice = null } = {}) {
   const settlement = rewards?.lastSettlementRun || null;
   const reconciliation = rewards?.reconciliation || {};
   const sampleWarnings = Array.isArray(reconciliation?.sampleWarnings) ? reconciliation.sampleWarnings : [];
-  const lines = [
-    '📨 Инвайты',
-    '',
-    'Сводка invite-слоя, rewards read-truth, redeem foundation и founder/operator mode controls.',
-    '',
-    'Сводка:',
-    countLine('Всего инвайтов', summary.totalInvites || 0),
-    countLine('Активировано', summary.activatedInvites || 0),
-    countLine('Конверсия', `${summary.activationRate || 0}%`),
-    countLine('Инвайтов за 7д', summary.joined7d || 0),
-    countLine('Активаций за 7д', summary.activated7d || 0),
-    '',
-    'Источники:',
-    `Inline share: ${summary.inlineShareCount || 0}`,
-    `Link: ${summary.rawLinkCount || 0}`,
-    `Invite card: ${summary.inviteCardCount || 0}`
-  ];
-  if (state?.activationHint) {
-    lines.push('', `Правило активации: ${state.activationHint}`);
-  }
-  lines.push('', 'Rewards:');
-  lines.push(`Mode: ${formatShortStatus(rewards?.mode, 'off')}`);
-  lines.push(`Pending: ${rewardsTotals.pendingPoints || 0} pts • ${rewardsTotals.pendingEntries || 0} entries`);
-  lines.push(`Available: ${rewardsTotals.availablePoints || 0} pts • ${rewardsTotals.availableEntries || 0} entries`);
-  lines.push(`Redeemed: ${rewardsTotals.redeemedPoints || 0} pts • ${rewardsTotals.redeemedEntries || 0} entries`);
-  lines.push(`Кандидаты на confirm: ${rewardsTotals.pendingCandidates || 0} • overdue: ${rewardsTotals.pendingDue || 0}`);
-  lines.push(`Сегодня: confirmed ${rewardsTotals.confirmedToday || 0} • rejected ${rewardsTotals.rejectedToday || 0}`);
-  if (rewards?.config) {
-    lines.push(`Конфиг: ${rewards.config.activationPoints || 0} pts • окно ${rewards.config.activationConfirmHours || 24}h`);
-  }
-  lines.push('', 'Топ инвайтеры:');
-  if (topInviters.length) {
-    topInviters.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.invitedCount || 0} invited • ${item.activatedCount || 0} activated • ${item.activationRate || 0}%`));
+  const mode = String(rewards?.mode || 'off').trim().toLowerCase();
+  const lines = ['📨 Инвайты', ''];
+
+  if (currentView === 'overview') {
+    lines.push('Обзор invite-потока: сначала вход, потом rewards, затем settlement и audit.');
+    lines.push('');
+    lines.push('<b>Сейчас</b>');
+    lines.push(`• Режим rewards: ${adminInviteModeLabel(mode)}`);
+    lines.push(`• Всего инвайтов: ${summary.totalInvites || 0}`);
+    lines.push(`• Активировано: ${summary.activatedInvites || 0}`);
+    lines.push(`• Конверсия: ${summary.activationRate || 0}%`);
+    lines.push(`• За 7д: ${summary.joined7d || 0} приглашено • ${summary.activated7d || 0} активировано`);
+    lines.push('');
+    lines.push('<b>Источники</b>');
+    lines.push(`• Inline share: ${summary.inlineShareCount || 0}`);
+    lines.push(`• Link + copy: ${summary.rawLinkCount || 0}`);
+    lines.push(`• Invite card: ${summary.inviteCardCount || 0}`);
+    if (state?.activationHint) {
+      lines.push('');
+      lines.push('<b>Правило активации</b>');
+      lines.push(`• ${state.activationHint}`);
+    }
+    lines.push('');
+    lines.push('<b>Топ инвайтеры</b>');
+    if (topInviters.length) {
+      topInviters.slice(0, 5).forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.invitedCount || 0} invited • ${item.activatedCount || 0} activated • ${item.activationRate || 0}%`));
+    } else {
+      lines.push('• Пока нет данных.');
+    }
+    lines.push('');
+    lines.push('<b>Последние инвайты</b>');
+    if (recentInvites.length) {
+      recentInvites.slice(0, 5).forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 24)} → ${truncate(item.displayName, 22)} • ${item.status === 'activated' ? 'activated' : 'joined'} • ${item.source === 'inline_share' ? 'inline' : item.source === 'invite_card' ? 'card' : 'link'} • ${formatDateTimeShort(item.joinedAt)}`));
+    } else {
+      lines.push('• Пока нет данных.');
+    }
+    lines.push('');
+    lines.push('<b>Дальше</b>');
+    lines.push('• Rewards — балансы, события и mode-switches.');
+    lines.push('• Settlement — confirm/reject batch и предупреждения.');
+    lines.push('• Mode audit — кто и когда менял режим.');
+  } else if (currentView === 'rewards') {
+    lines.push('Reward-программа без шума: состояние, балансы, recent events и mode controls.');
+    lines.push('');
+    lines.push('<b>Статус программы</b>');
+    lines.push(`• Mode: ${adminInviteModeLabel(mode)}`);
+    lines.push(`• Pending: ${rewardsTotals.pendingPoints || 0} pts • ${rewardsTotals.pendingEntries || 0} entries`);
+    lines.push(`• Available: ${rewardsTotals.availablePoints || 0} pts • ${rewardsTotals.availableEntries || 0} entries`);
+    lines.push(`• Redeemed: ${rewardsTotals.redeemedPoints || 0} pts • ${rewardsTotals.redeemedEntries || 0} entries`);
+    lines.push(`• Confirm candidates: ${rewardsTotals.pendingCandidates || 0} • overdue ${rewardsTotals.pendingDue || 0}`);
+    if (rewards?.config) {
+      lines.push(`• Конфиг: ${rewards.config.activationPoints || 0} pts • окно ${rewards.config.activationConfirmHours || 24}h`);
+    }
+    lines.push('');
+    lines.push('<b>Топ по rewards</b>');
+    if (topRewardInviters.length) {
+      topRewardInviters.slice(0, 5).forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.totalPoints || 0} pts • pending ${item.pendingPoints || 0} • available ${item.availablePoints || 0}`));
+    } else {
+      lines.push('• Пока нет данных.');
+    }
+    lines.push('');
+    lines.push('<b>Последние reward events</b>');
+    if (recentRewardEvents.length) {
+      recentRewardEvents.slice(0, 6).forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 18)} → ${truncate(item.invitedDisplayName, 18)} • ${item.status} • ${item.points || 0} pts • due ${formatDateTimeShort(item.confirmAfter)}`));
+    } else {
+      lines.push('• Пока нет reward events.');
+    }
+    lines.push('');
+    lines.push('<b>Что делать здесь</b>');
+    lines.push('• Переключай mode только осознанно.');
+    lines.push('• Settlement запускай уже из следующего экрана.');
+  } else if (currentView === 'settlement') {
+    lines.push('Settlement и reconciliation: confirm/reject batch, последний run и предупреждения.');
+    lines.push('');
+    lines.push('<b>Кандидаты</b>');
+    lines.push(`• Pending на confirm: ${rewardsTotals.pendingCandidates || 0}`);
+    lines.push(`• Overdue: ${rewardsTotals.pendingDue || 0}`);
+    lines.push(`• Сегодня confirmed: ${rewardsTotals.confirmedToday || 0}`);
+    lines.push(`• Сегодня rejected: ${rewardsTotals.rejectedToday || 0}`);
+    lines.push('');
+    lines.push('<b>Последний batch</b>');
+    if (settlement) {
+      lines.push(`• Run: ${truncate(settlement.settlementRunId, 30)}`);
+      lines.push(`• Status: ${settlement.status} • mode ${settlement.modeSnapshot}`);
+      lines.push(`• Processed ${settlement.processedCount || 0} • confirmed ${settlement.confirmedCount || 0} • rejected ${settlement.rejectedCount || 0} • skipped ${settlement.skippedCount || 0}`);
+      lines.push(`• Started: ${formatDateTimeShort(settlement.startedAt)}`);
+      lines.push(`• Finished: ${formatDateTimeShort(settlement.finishedAt)}`);
+    } else {
+      lines.push('• Batch ещё не запускался.');
+    }
+    lines.push('');
+    lines.push('<b>Reconciliation</b>');
+    lines.push(`• Warnings: ${reconciliation.warningCount || 0}`);
+    lines.push(`• Completed redemptions: ${reconciliation.completedRedemptions || 0}`);
+    if (sampleWarnings.length) {
+      sampleWarnings.slice(0, 3).forEach((item, index) => lines.push(`${index + 1}. ${item.warningType} • ${truncate(item.referrerDisplayName, 14)} → ${truncate(item.invitedDisplayName, 14)} • ${item.status}`));
+    } else {
+      lines.push('• Явных расхождений не найдено.');
+    }
+    lines.push('');
+    lines.push('<b>Что делать здесь</b>');
+    lines.push('• Run batch — ручной bounded прогон.');
+    lines.push('• Reconcile — перепроверить warnings и redemption truth.');
   } else {
-    lines.push('— пока нет данных');
+    lines.push('Аудит changes для rewards-mode и operator trail без лишнего шума.');
+    lines.push('');
+    lines.push('<b>Текущий режим</b>');
+    lines.push(`• ${adminInviteModeLabel(mode)}`);
+    lines.push('');
+    lines.push('<b>Последние изменения режима</b>');
+    if (modeAudit.length) {
+      modeAudit.slice(0, 8).forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.changedByDisplayName, 22)} • ${item.fromMode} → ${item.toMode} • ${formatDateTimeShort(item.createdAt)}`));
+    } else {
+      lines.push('• Пока нет записей.');
+    }
+    lines.push('');
+    lines.push('<b>Что делать здесь</b>');
+    lines.push('• Проверяй, кто менял режим и когда.');
+    lines.push('• Для live-решений возвращайся в Rewards или Settlement.');
   }
-  lines.push('', 'Топ по rewards:');
-  if (topRewardInviters.length) {
-    topRewardInviters.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.totalPoints || 0} pts • pending ${item.pendingPoints || 0} • available ${item.availablePoints || 0}`));
-  } else {
-    lines.push('— пока нет данных');
-  }
-  lines.push('', 'Последние инвайты:');
-  if (recentInvites.length) {
-    recentInvites.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 24)} → ${truncate(item.displayName, 22)} • ${item.status === 'activated' ? 'activated' : 'joined'} • ${item.source === 'inline_share' ? 'inline' : item.source === 'invite_card' ? 'card' : 'link'} • ${formatDateTimeShort(item.joinedAt)}`));
-  } else {
-    lines.push('— пока нет данных');
-  }
-  lines.push('', 'Последние reward events:');
-  if (recentRewardEvents.length) {
-    recentRewardEvents.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 20)} → ${truncate(item.invitedDisplayName, 20)} • ${item.status} • ${item.points || 0} pts • due ${formatDateTimeShort(item.confirmAfter)}`));
-  } else {
-    lines.push('— пока нет данных');
-  }
-  lines.push('', 'Settlement:');
-  if (settlement) {
-    lines.push(`Last run: ${truncate(settlement.settlementRunId, 26)} • ${settlement.status} • mode ${settlement.modeSnapshot}`);
-    lines.push(`Processed ${settlement.processedCount || 0} • confirmed ${settlement.confirmedCount || 0} • rejected ${settlement.rejectedCount || 0} • skipped ${settlement.skippedCount || 0}`);
-    lines.push(`Started: ${formatDateTimeShort(settlement.startedAt)}${settlement.finishedAt ? ` • finished ${formatDateTimeShort(settlement.finishedAt)}` : ''}`);
-  } else {
-    lines.push('— пока не запускался');
-  }
-  lines.push('', 'Reconciliation:');
-  lines.push(`Warnings: ${reconciliation.warningCount || 0} • completed redemptions ${reconciliation.completedRedemptions || 0}`);
-  if (sampleWarnings.length) {
-    sampleWarnings.slice(0, 3).forEach((item, index) => lines.push(`${index + 1}. ${item.warningType} • ${truncate(item.referrerDisplayName, 14)} → ${truncate(item.invitedDisplayName, 14)} • ${item.status}`));
-  } else {
-    lines.push('— явных расхождений не найдено');
-  }
-  lines.push('', 'Mode audit:');
-  if (modeAudit.length) {
-    modeAudit.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.changedByDisplayName, 22)} • ${item.fromMode} → ${item.toMode} • ${formatDateTimeShort(item.createdAt)}`));
-  } else {
-    lines.push('— пока нет записей');
-  }
+
   if (notice) {
     lines.push('', notice);
   }
   return lines.join('\n');
 }
-function buildAdminInviteKeyboard({ state = null } = {}) {
-  return buildInlineKeyboard([
-    [{ text: '🔄 Обновить', callback_data: 'adm:invite' }],
+function buildAdminInviteKeyboard({ state = null, view = 'overview' } = {}) {
+  const currentView = normalizeAdminInviteView(view);
+  const currentMode = String(state?.rewards?.mode || 'off').trim().toLowerCase();
+  const rows = [
+    [{ text: '🔄 Обновить', callback_data: `adm:invite:${currentView}` }],
     [
-      { text: '🧮 Settlement', callback_data: 'adm:invite:settlement' },
-      { text: '🧷 Reconcile', callback_data: 'adm:invite:settlement:reconcile' }
+      { text: `${currentView === 'overview' ? '✅' : '▫️'} Обзор`, callback_data: 'adm:invite:overview' },
+      { text: `${currentView === 'rewards' ? '✅' : '▫️'} Rewards`, callback_data: 'adm:invite:rewards' }
     ],
     [
+      { text: `${currentView === 'settlement' ? '✅' : '▫️'} Settlement`, callback_data: 'adm:invite:settlement' },
+      { text: `${currentView === 'audit' ? '✅' : '▫️'} Mode audit`, callback_data: 'adm:invite:audit' }
+    ]
+  ];
+
+  if (currentView === 'rewards') {
+    rows.push([
+      { text: adminInviteModeButtonText(currentMode, 'off', 'Off'), callback_data: 'adm:invite:mode:off' },
+      { text: adminInviteModeButtonText(currentMode, 'earn_only', 'Earn'), callback_data: 'adm:invite:mode:earn_only' }
+    ]);
+    rows.push([
+      { text: adminInviteModeButtonText(currentMode, 'live', 'Live'), callback_data: 'adm:invite:mode:live' },
+      { text: adminInviteModeButtonText(currentMode, 'paused', 'Pause'), callback_data: 'adm:invite:mode:paused' }
+    ]);
+  }
+
+  if (currentView === 'settlement') {
+    rows.push([
       { text: '✅ Run batch', callback_data: 'adm:invite:settlement:run' },
-      { text: '🧾 Mode audit', callback_data: 'adm:invite:audit' }
-    ],
-    [
-      { text: '🚫 Off', callback_data: 'adm:invite:mode:off' },
-      { text: '🟡 Earn', callback_data: 'adm:invite:mode:earn_only' }
-    ],
-    [
-      { text: '🟢 Live', callback_data: 'adm:invite:mode:live' },
-      { text: '⏸️ Pause', callback_data: 'adm:invite:mode:paused' }
-    ],
-    buildBackHomeRow('↩️ Назад в Операции', 'adm:ops')
-  ]);
+      { text: '🧷 Reconcile', callback_data: 'adm:invite:settlement:reconcile' }
+    ]);
+  }
+
+  rows.push(buildBackHomeRow('↩️ Назад в Операции', 'adm:ops'));
+  return buildInlineKeyboard(rows);
 }
+
 function buildCommunicationsHubText({ state = null, notice = null } = {}) {
   const lines = [
     '💬 Коммуникации',
@@ -1871,9 +1956,9 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP048.2' } = {}) {
       text: buildOperationsHubText({ summary }),
       reply_markup: buildOperationsHubKeyboard({ summary })
     }),
-    buildAdminInviteSurface: async ({ state = null, notice = null } = {}) => ({
-      text: buildAdminInviteText({ state, notice }),
-      reply_markup: buildAdminInviteKeyboard({ state })
+    buildAdminInviteSurface: async ({ state = null, notice = null, view = 'overview' } = {}) => ({
+      text: buildAdminInviteText({ state, notice, view }),
+      reply_markup: buildAdminInviteKeyboard({ state, view })
     }),
     buildAdminCommunicationsSurface: async ({ state = null, notice = null } = {}) => ({
       text: buildCommunicationsHubText({ state, notice }),
