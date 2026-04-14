@@ -491,6 +491,49 @@ const INVITE_REWARDS_DEFAULTS = {
   catalogVersion: 'v1'
 };
 
+const INVITE_REWARDS_CATALOG = Object.freeze([
+  { code: 'pro_7d', pointsCost: 100, proDays: 7, label: '7 days Pro' },
+  { code: 'pro_30d', pointsCost: 250, proDays: 30, label: '30 days Pro' }
+]);
+
+function normalizeInviteRewardsCatalogItem(item = null) {
+  if (!item) {
+    return null;
+  }
+
+  return {
+    code: String(item.code || '').trim().toLowerCase(),
+    pointsCost: Math.max(0, Number(item.pointsCost || item.points_cost || 0) || 0),
+    proDays: Math.max(0, Number(item.proDays || item.pro_days || 0) || 0),
+    label: String(item.label || '').trim() || null
+  };
+}
+
+function normalizeInviteRewardRedemptionRow(row = null) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    redemptionId: row.id,
+    userId: row.user_id,
+    catalogCode: row.catalog_code,
+    pointsCost: Number(row.points_cost || 0) || 0,
+    proDays: Number(row.pro_days || 0) || 0,
+    status: row.status,
+    rewardLedgerEntryId: row.reward_ledger_entry_id || null,
+    rewardEventId: row.reward_event_id || null,
+    subscriptionId: row.subscription_id || null,
+    receiptId: row.receipt_id || null,
+    requestedAt: row.requested_at || row.created_at || null,
+    completedAt: row.completed_at || null,
+    failedAt: row.failed_at || null,
+    failureReason: row.failure_reason || null,
+    meta: row.meta_json || {},
+    createdAt: row.created_at || null
+  };
+}
+
 function normalizeInviteRewardsMode(value = INVITE_REWARDS_DEFAULTS.mode) {
   const normalized = String(value || INVITE_REWARDS_DEFAULTS.mode).trim().toLowerCase();
   return ['off', 'earn_only', 'live', 'paused'].includes(normalized) ? normalized : INVITE_REWARDS_DEFAULTS.mode;
@@ -575,6 +618,15 @@ export async function ensureInviteRewardsDefaults(client) {
   };
 }
 
+export function getInviteRewardsCatalog() {
+  return INVITE_REWARDS_CATALOG.map((item) => normalizeInviteRewardsCatalogItem(item));
+}
+
+export function getRedeemCatalogItemByCode(catalogCode) {
+  const normalized = String(catalogCode || '').trim().toLowerCase();
+  return normalizeInviteRewardsCatalogItem(INVITE_REWARDS_CATALOG.find((item) => item.code === normalized) || null);
+}
+
 export async function getInviteRewardsMode(client) {
   await ensureInviteRewardsDefaults(client);
   const result = await client.query(
@@ -589,7 +641,65 @@ export async function getInviteRewardsMode(client) {
   return normalizeInviteRewardsMode(result.rows[0]?.value_json?.mode || INVITE_REWARDS_DEFAULTS.mode);
 }
 
-export async function setInviteRewardsMode(client, { mode, updatedBy = null }) {
+export async function appendInviteRewardsModeAudit(client, { changedByUserId, fromMode, toMode, reason = null, meta = null } = {}) {
+  const result = await client.query(
+    `
+      insert into invite_program_mode_audit (
+        changed_by_user_id,
+        from_mode,
+        to_mode,
+        reason,
+        meta_json,
+        created_at
+      )
+      values ($1, $2, $3, $4, $5::jsonb, now())
+      returning *
+    `,
+    [changedByUserId, normalizeInviteRewardsMode(fromMode), normalizeInviteRewardsMode(toMode), reason, JSON.stringify(meta || {})]
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function getRecentInviteRewardsModeAudit(client, { limit = 5 } = {}) {
+  const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Math.min(20, Number(limit)) : 5;
+  const result = await client.query(
+    `
+      select
+        audit.*,
+        u.telegram_user_id,
+        u.telegram_username,
+        la.full_name as linkedin_name,
+        mp.display_name
+      from invite_program_mode_audit audit
+      join users u on u.id = audit.changed_by_user_id
+      left join linkedin_accounts la on la.user_id = u.id
+      left join member_profiles mp on mp.user_id = u.id
+      order by audit.created_at desc, audit.id desc
+      limit $1
+    `,
+    [safeLimit]
+  );
+
+  return (result.rows || []).map((row) => ({
+    auditId: row.id,
+    changedByUserId: row.changed_by_user_id,
+    changedByDisplayName: buildMemberLabel({
+      display_name: row.display_name,
+      linkedin_name: row.linkedin_name,
+      telegram_username: row.telegram_username,
+      telegram_user_id: row.telegram_user_id
+    }),
+    fromMode: normalizeInviteRewardsMode(row.from_mode),
+    toMode: normalizeInviteRewardsMode(row.to_mode),
+    reason: row.reason || null,
+    meta: row.meta_json || {},
+    createdAt: row.created_at
+  }));
+}
+
+export async function setInviteRewardsMode(client, { mode, updatedBy = null, changedByUserId = null, reason = null, meta = null } = {}) {
+  const previousMode = await getInviteRewardsMode(client);
   const normalizedMode = normalizeInviteRewardsMode(mode);
   const row = await upsertInviteProgramSetting(client, {
     key: 'invite_rewards_mode',
@@ -597,7 +707,20 @@ export async function setInviteRewardsMode(client, { mode, updatedBy = null }) {
     updatedBy
   });
 
+  const changed = previousMode !== normalizedMode;
+  if (changed && changedByUserId) {
+    await appendInviteRewardsModeAudit(client, {
+      changedByUserId,
+      fromMode: previousMode,
+      toMode: normalizedMode,
+      reason,
+      meta
+    });
+  }
+
   return {
+    changed,
+    previousMode,
     mode: normalizeInviteRewardsMode(row?.value_json?.mode || normalizedMode),
     updatedAt: row?.updated_at || null,
     updatedBy: row?.updated_by || null
@@ -923,6 +1046,125 @@ export async function listPendingInviteRewardConfirmationCandidates(client, { li
   }));
 }
 
+export async function getSpendableInviteRewardBalance(client, { userId }) {
+  const result = await client.query(
+    `
+      select coalesce(sum(points_delta), 0)::int as available_points
+      from invite_reward_ledger
+      where user_id = $1
+        and balance_bucket = 'available'
+    `,
+    [userId]
+  );
+
+  return Number(result.rows[0]?.available_points || 0) || 0;
+}
+
+export async function createInviteRewardRedemptionRequest(client, { userId, catalogCode, pointsCost, proDays, meta = null } = {}) {
+  const result = await client.query(
+    `
+      insert into invite_reward_redemptions (
+        user_id,
+        catalog_code,
+        points_cost,
+        pro_days,
+        status,
+        meta_json,
+        requested_at,
+        created_at
+      )
+      values ($1, $2, $3, $4, 'requested', $5::jsonb, now(), now())
+      returning *
+    `,
+    [userId, String(catalogCode || '').trim().toLowerCase(), Number(pointsCost || 0) || 0, Number(proDays || 0) || 0, JSON.stringify(meta || {})]
+  );
+
+  return normalizeInviteRewardRedemptionRow(result.rows[0] || null);
+}
+
+export async function getInviteRewardRedemptionById(client, { redemptionId, userId = null, forUpdate = false } = {}) {
+  const params = [redemptionId];
+  const clauses = ['id = $1'];
+  if (userId) {
+    params.push(userId);
+    clauses.push(`user_id = $${params.length}`);
+  }
+  const result = await client.query(
+    `
+      select *
+      from invite_reward_redemptions
+      where ${clauses.join(' and ')}
+      limit 1
+      ${forUpdate ? 'for update' : ''}
+    `,
+    params
+  );
+
+  return normalizeInviteRewardRedemptionRow(result.rows[0] || null);
+}
+
+export async function createRedeemDebitLedgerEntry(client, { userId, rewardEventId = null, pointsCost, meta = null } = {}) {
+  const result = await client.query(
+    `
+      insert into invite_reward_ledger (
+        user_id,
+        reward_event_id,
+        entry_type,
+        points_delta,
+        balance_bucket,
+        meta_json,
+        created_at
+      )
+      values ($1, $2, 'redeem_debit', $3, 'redeemed', $4::jsonb, now())
+      returning *
+    `,
+    [userId, rewardEventId, -Math.abs(Number(pointsCost || 0) || 0), JSON.stringify(meta || {})]
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function completeInviteRewardRedemption(client, { redemptionId, rewardLedgerEntryId = null, rewardEventId = null, subscriptionId = null, receiptId = null, meta = null } = {}) {
+  const result = await client.query(
+    `
+      update invite_reward_redemptions
+      set
+        status = 'completed',
+        reward_ledger_entry_id = coalesce($2, reward_ledger_entry_id),
+        reward_event_id = coalesce($3, reward_event_id),
+        subscription_id = coalesce($4, subscription_id),
+        receipt_id = coalesce($5, receipt_id),
+        completed_at = now(),
+        failed_at = null,
+        failure_reason = null,
+        meta_json = coalesce(meta_json, '{}'::jsonb) || $6::jsonb
+      where id = $1
+      returning *
+    `,
+    [redemptionId, rewardLedgerEntryId, rewardEventId, subscriptionId, receiptId, JSON.stringify(meta || {})]
+  );
+
+  return normalizeInviteRewardRedemptionRow(result.rows[0] || null);
+}
+
+export async function failInviteRewardRedemption(client, { redemptionId, failureReason = null, meta = null } = {}) {
+  const result = await client.query(
+    `
+      update invite_reward_redemptions
+      set
+        status = 'failed',
+        failed_at = now(),
+        failure_reason = $2,
+        meta_json = coalesce(meta_json, '{}'::jsonb) || $3::jsonb
+      where id = $1
+      returning *
+    `,
+    [redemptionId, failureReason, JSON.stringify(meta || {})]
+  );
+
+  return normalizeInviteRewardRedemptionRow(result.rows[0] || null);
+}
+
 export async function getAdminInviteRewardsSnapshot(client, { topLimit = 5, recentLimit = 5 } = {}) {
   await ensureInviteRewardsDefaults(client);
   const safeTopLimit = Number.isFinite(Number(topLimit)) && Number(topLimit) > 0 ? Math.min(20, Number(topLimit)) : 5;
@@ -1047,6 +1289,7 @@ export async function getAdminInviteRewardsSnapshot(client, { topLimit = 5, rece
         telegram_username: row.invited_telegram_username,
         telegram_user_id: row.invited_telegram_user_id
       })
-    }))
+    })),
+    modeAudit: await getRecentInviteRewardsModeAudit(client, { limit: 5 })
   };
 }

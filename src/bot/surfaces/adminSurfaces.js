@@ -265,10 +265,11 @@ function buildAdminInviteText({ state = null, notice = null } = {}) {
   const rewardsTotals = rewards?.totals || {};
   const topRewardInviters = Array.isArray(rewards?.topRewardInviters) ? rewards.topRewardInviters : [];
   const recentRewardEvents = Array.isArray(rewards?.recentRewardEvents) ? rewards.recentRewardEvents : [];
+  const modeAudit = Array.isArray(rewards?.modeAudit) ? rewards.modeAudit : [];
   const lines = [
     '📨 Инвайты',
     '',
-    'Сводка invite-слоя, rewards read-truth и качества активации без founder write-controls.',
+    'Сводка invite-слоя, rewards read-truth, redeem foundation и founder/operator mode controls.',
     '',
     'Сводка:',
     countLine('Всего инвайтов', summary.totalInvites || 0),
@@ -318,14 +319,29 @@ function buildAdminInviteText({ state = null, notice = null } = {}) {
   } else {
     lines.push('— пока нет данных');
   }
+  lines.push('', 'Mode audit:');
+  if (modeAudit.length) {
+    modeAudit.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.changedByDisplayName, 22)} • ${item.fromMode} → ${item.toMode} • ${formatDateTimeShort(item.createdAt)}`));
+  } else {
+    lines.push('— пока нет записей');
+  }
   if (notice) {
     lines.push('', notice);
   }
   return lines.join('\n');
 }
-function buildAdminInviteKeyboard() {
+function buildAdminInviteKeyboard({ state = null } = {}) {
   return buildInlineKeyboard([
     [{ text: '🔄 Обновить', callback_data: 'adm:invite' }],
+    [
+      { text: '🚫 Off', callback_data: 'adm:invite:mode:off' },
+      { text: '🟡 Earn', callback_data: 'adm:invite:mode:earn_only' }
+    ],
+    [
+      { text: '🟢 Live', callback_data: 'adm:invite:mode:live' },
+      { text: '⏸️ Pause', callback_data: 'adm:invite:mode:paused' }
+    ],
+    [{ text: '🧾 Mode audit', callback_data: 'adm:invite:audit' }],
     buildBackHomeRow('↩️ Назад в Операции', 'adm:ops')
   ]);
 }
@@ -1831,7 +1847,7 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP048.2' } = {}) {
     }),
     buildAdminInviteSurface: async ({ state = null, notice = null } = {}) => ({
       text: buildAdminInviteText({ state, notice }),
-      reply_markup: buildAdminInviteKeyboard()
+      reply_markup: buildAdminInviteKeyboard({ state })
     }),
     buildAdminCommunicationsSurface: async ({ state = null, notice = null } = {}) => ({
       text: buildCommunicationsHubText({ state, notice }),

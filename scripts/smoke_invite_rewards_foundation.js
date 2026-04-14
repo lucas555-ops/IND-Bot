@@ -66,7 +66,7 @@ if (!profileEditStore.includes('inviteRewardResult')) {
 }
 
 const currentState = readFileSync(currentStatePath, 'utf8');
-if (!currentState.includes('STEP052.3 — Invite Rewards Foundation') && !currentState.includes('STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth')) {
+if (!currentState.includes('STEP052.3 — Invite Rewards Foundation') && !currentState.includes('STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth') && !currentState.includes('STEP052.5 — Invite Rewards Redeem Foundation + Founder Mode Controls')) {
   throw new Error('Current state doc must remain on STEP052.3+ rewards corridor');
 }
 

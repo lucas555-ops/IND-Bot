@@ -1,21 +1,33 @@
 import { withDbClient, withDbTransaction, isDatabaseConfigured } from '../../db/pool.js';
 import {
-  getAdminInviteRewardsSnapshot,
+  appendInviteRewardsModeAudit,
   createInviteAttribution,
+  createInviteRewardRedemptionRequest,
   createPendingInviteActivationReward,
+  createRedeemDebitLedgerEntry,
   ensureInviteRewardsDefaults,
+  failInviteRewardRedemption,
+  getAdminInviteRewardsSnapshot,
   getInviteAttributionByInvitedUserId,
   getInviteRewardActivationStateByInvitedUserId,
+  getInviteRewardRedemptionById,
   getInviteRewardSummaryByUserId,
+  getInviteRewardsCatalog,
   getInviteRewardsConfig,
   getInviteRewardsMode,
+  getRecentInviteRewardsModeAudit,
+  getRedeemCatalogItemByCode,
+  getSpendableInviteRewardBalance,
   getUserByTelegramUserId,
   listInviteRewardEventsByUserId,
   loadAdminInviteSnapshot,
   loadInviteHistoryByUserId,
   loadInviteSnapshotByUserId,
-  parseInviteStartParam
+  parseInviteStartParam,
+  setInviteRewardsMode,
+  completeInviteRewardRedemption
 } from '../../db/inviteRepo.js';
+import { activateOrExtendProSubscription } from '../../db/monetizationRepo.js';
 import { upsertTelegramUser } from '../../db/usersRepo.js';
 import { getTelegramConfig } from '../../config/env.js';
 
@@ -41,6 +53,34 @@ function emptyInviteRewardsSummary(reason = 'DATABASE_URL is not configured') {
       redeemedEntries: 0
     },
     activationHint: INTRO_DECK_REWARDS_ACTIVATION_HINT,
+    reason
+  };
+}
+
+
+function emptyInviteRedeemState(reason = 'DATABASE_URL is not configured') {
+  return {
+    persistenceEnabled: false,
+    mode: 'off',
+    canRedeem: false,
+    blockedReason: reason,
+    catalog: getInviteRewardsCatalog(),
+    rewardsSummary: {
+      mode: 'off',
+      config: {
+        activationPoints: 10,
+        activationConfirmHours: 24,
+        activationRuleVersion: 'introdeck_listed_ready_v1',
+        catalogVersion: 'v1'
+      },
+      availablePoints: 0,
+      pendingPoints: 0,
+      redeemedPoints: 0,
+      availableEntries: 0,
+      pendingEntries: 0,
+      redeemedEntries: 0
+    },
+    latestRedemption: null,
     reason
   };
 }
@@ -372,6 +412,228 @@ export async function recordInviteRewardableActivationForUserId({ userId }) {
     persistenceEnabled: true,
     ...(await maybeCreatePendingInviteRewardForActivationWithClient(client, { userId }))
   }));
+}
+
+
+export async function loadInviteRedeemReadModel({ telegramUserId, telegramUsername = null }) {
+  if (!isDatabaseConfigured()) {
+    return emptyInviteRedeemState();
+  }
+
+  return withDbClient(async (client) => {
+    const user = await upsertTelegramUser(client, {
+      telegramUserId,
+      telegramUsername
+    });
+
+    const [mode, rewardsSummary, recentEvents] = await Promise.all([
+      getInviteRewardsMode(client),
+      getInviteRewardSummaryByUserId(client, { userId: user.id }),
+      listInviteRewardEventsByUserId(client, { userId: user.id, limit: 5 })
+    ]);
+
+    const catalog = getInviteRewardsCatalog().map((item) => ({
+      ...item,
+      affordable: (Number(rewardsSummary.availablePoints || 0) || 0) >= item.pointsCost
+    }));
+
+    return {
+      persistenceEnabled: true,
+      userId: user.id,
+      mode,
+      canRedeem: mode === 'live',
+      blockedReason: mode === 'earn_only' ? 'redeem_not_live_in_earn_only' : (mode === 'paused' ? 'rewards_paused' : (mode === 'off' ? 'rewards_off' : null)),
+      catalog,
+      rewardsSummary,
+      recentEvents,
+      activationHint: INTRO_DECK_REWARDS_ACTIVATION_HINT,
+      reason: 'invite_redeem_read_model_loaded'
+    };
+  });
+}
+
+export async function beginInviteRewardRedemptionForTelegramUser({ telegramUserId, telegramUsername = null, catalogCode }) {
+  if (!isDatabaseConfigured()) {
+    return {
+      persistenceEnabled: false,
+      created: false,
+      blocked: true,
+      reason: 'DATABASE_URL is not configured'
+    };
+  }
+
+  return withDbTransaction(async (client) => {
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const mode = await getInviteRewardsMode(client);
+    if (mode !== 'live') {
+      return { persistenceEnabled: true, created: false, blocked: true, mode, reason: `redeem_not_available_in_${mode}` };
+    }
+
+    const catalogItem = getRedeemCatalogItemByCode(catalogCode);
+    if (!catalogItem) {
+      return { persistenceEnabled: true, created: false, blocked: true, mode, reason: 'catalog_item_not_found' };
+    }
+
+    const summary = await getInviteRewardSummaryByUserId(client, { userId: user.id });
+    if ((Number(summary.availablePoints || 0) || 0) < catalogItem.pointsCost) {
+      return { persistenceEnabled: true, created: false, blocked: true, mode, summary, catalogItem, reason: 'insufficient_available_points' };
+    }
+
+    const redemption = await createInviteRewardRedemptionRequest(client, {
+      userId: user.id,
+      catalogCode: catalogItem.code,
+      pointsCost: catalogItem.pointsCost,
+      proDays: catalogItem.proDays,
+      meta: { source: 'telegram_invite_rewards', stage: 'confirm_pending' }
+    });
+
+    return {
+      persistenceEnabled: true,
+      created: true,
+      blocked: false,
+      mode,
+      summary,
+      catalogItem,
+      redemption,
+      reason: 'invite_reward_redemption_requested'
+    };
+  });
+}
+
+export async function confirmInviteRewardRedemptionForTelegramUser({ telegramUserId, telegramUsername = null, redemptionId }) {
+  if (!isDatabaseConfigured()) {
+    return {
+      persistenceEnabled: false,
+      changed: false,
+      blocked: true,
+      reason: 'DATABASE_URL is not configured'
+    };
+  }
+
+  return withDbTransaction(async (client) => {
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    await client.query('select pg_advisory_xact_lock($1)', [Number(user.id)]);
+
+    const redemption = await getInviteRewardRedemptionById(client, { redemptionId, userId: user.id, forUpdate: true });
+    if (!redemption) {
+      return { persistenceEnabled: true, changed: false, blocked: true, reason: 'redemption_not_found' };
+    }
+
+    if (redemption.status === 'completed') {
+      return { persistenceEnabled: true, changed: false, duplicate: true, blocked: false, redemption, reason: 'redemption_already_completed' };
+    }
+
+    if (redemption.status === 'failed') {
+      return { persistenceEnabled: true, changed: false, blocked: true, redemption, reason: redemption.failureReason || 'redemption_already_failed' };
+    }
+
+    const mode = await getInviteRewardsMode(client);
+    if (mode !== 'live') {
+      const failed = await failInviteRewardRedemption(client, {
+        redemptionId: redemption.redemptionId,
+        failureReason: `redeem_not_available_in_${mode}`,
+        meta: { stage: 'confirm', mode }
+      });
+      return { persistenceEnabled: true, changed: false, blocked: true, mode, redemption: failed, reason: `redeem_not_available_in_${mode}` };
+    }
+
+    const catalogItem = getRedeemCatalogItemByCode(redemption.catalogCode);
+    if (!catalogItem) {
+      const failed = await failInviteRewardRedemption(client, {
+        redemptionId: redemption.redemptionId,
+        failureReason: 'catalog_item_not_found',
+        meta: { stage: 'confirm' }
+      });
+      return { persistenceEnabled: true, changed: false, blocked: true, redemption: failed, reason: 'catalog_item_not_found' };
+    }
+
+    const availablePoints = await getSpendableInviteRewardBalance(client, { userId: user.id });
+    if (availablePoints < catalogItem.pointsCost) {
+      const failed = await failInviteRewardRedemption(client, {
+        redemptionId: redemption.redemptionId,
+        failureReason: 'insufficient_available_points',
+        meta: { stage: 'confirm', availablePoints }
+      });
+      return { persistenceEnabled: true, changed: false, blocked: true, redemption: failed, reason: 'insufficient_available_points', availablePoints };
+    }
+
+    const ledgerEntry = await createRedeemDebitLedgerEntry(client, {
+      userId: user.id,
+      pointsCost: catalogItem.pointsCost,
+      meta: {
+        source: 'invite_rewards_redeem',
+        catalogCode: catalogItem.code,
+        proDays: catalogItem.proDays,
+        redemptionId: redemption.redemptionId
+      }
+    });
+
+    const subscription = await activateOrExtendProSubscription(client, {
+      userId: user.id,
+      durationDays: catalogItem.proDays,
+      source: 'invite_rewards',
+      telegramPaymentChargeId: null,
+      providerPaymentChargeId: null,
+      lastReceiptId: null,
+      planCode: 'pro_monthly'
+    });
+
+    const completed = await completeInviteRewardRedemption(client, {
+      redemptionId: redemption.redemptionId,
+      rewardLedgerEntryId: ledgerEntry?.id || null,
+      subscriptionId: subscription?.subscriptionId || null,
+      receiptId: null,
+      meta: {
+        catalogCode: catalogItem.code,
+        proDays: catalogItem.proDays,
+        source: 'invite_rewards_redeem'
+      }
+    });
+
+    const rewardsSummary = await getInviteRewardSummaryByUserId(client, { userId: user.id });
+
+    return {
+      persistenceEnabled: true,
+      changed: true,
+      blocked: false,
+      duplicate: false,
+      mode,
+      redemption: completed,
+      catalogItem,
+      subscription,
+      rewardsSummary,
+      reason: 'invite_reward_redemption_completed'
+    };
+  });
+}
+
+export async function changeInviteRewardsModeForTelegramUser({ telegramUserId, telegramUsername = null, toMode, reason = null }) {
+  if (!isDatabaseConfigured()) {
+    return {
+      persistenceEnabled: false,
+      changed: false,
+      blocked: true,
+      reason: 'DATABASE_URL is not configured'
+    };
+  }
+
+  return withDbTransaction(async (client) => {
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const result = await setInviteRewardsMode(client, {
+      mode: toMode,
+      updatedBy: `tg:${user.telegram_user_id}`,
+      changedByUserId: user.id,
+      reason,
+      meta: { source: 'telegram_admin_invite_controls' }
+    });
+
+    return {
+      persistenceEnabled: true,
+      ...result,
+      modeAudit: await getRecentInviteRewardsModeAudit(client, { limit: 5 }),
+      reason: result.changed ? 'invite_rewards_mode_changed' : 'invite_rewards_mode_unchanged'
+    };
+  });
 }
 
 export async function loadInviteRewardsSummaryState({ telegramUserId, telegramUsername = null }) {

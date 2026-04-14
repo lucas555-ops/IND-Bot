@@ -1826,13 +1826,14 @@ function renderInviteRewardEventLine(event = null, index = 0) {
 export function renderInviteRewardsText({ rewardsState = null, notice = null } = {}) {
   const summary = rewardsState?.rewardsSummary || {};
   const recentEvents = Array.isArray(rewardsState?.recentEvents) ? rewardsState.recentEvents : [];
+  const mode = String(summary.mode || rewardsState?.mode || 'off').trim().toLowerCase();
   const lines = [
     '🎯 Points',
     '',
     'Read-only rewards truth for your invite activity. Pending is not spendable yet.',
     '',
     '<b>Status</b>',
-    `• Mode: ${escapeHtml(formatInviteRewardsModeLabel(summary.mode || 'off'))}`,
+    `• Mode: ${escapeHtml(formatInviteRewardsModeLabel(mode))}`,
     `• Pending: ${Number(summary.pendingPoints || 0) || 0}`,
     `• Available: ${Number(summary.availablePoints || 0) || 0}`,
     `• Redeemed: ${Number(summary.redeemedPoints || 0) || 0}`,
@@ -1842,6 +1843,17 @@ export function renderInviteRewardsText({ rewardsState = null, notice = null } =
     `• Pending confirms after ${Number(summary?.config?.activationConfirmHours || 24) || 24}h when the activation still holds.`,
     '• Self-invites, existing users, and raw opens do not earn points.'
   ];
+
+  lines.push('', '<b>Redeem</b>');
+  if (mode === 'live') {
+    lines.push('• Redeem for Pro is live. Only available points can be spent.');
+  } else if (mode === 'earn_only') {
+    lines.push('• Redeem is not live yet. You can keep earning and tracking points.');
+  } else if (mode === 'paused') {
+    lines.push('• Rewards are paused right now. Existing balances stay visible.');
+  } else {
+    lines.push('• Rewards program is off right now. Existing balances stay visible.');
+  }
 
   lines.push('', '<b>Recent reward events</b>');
   if (recentEvents.length > 0) {
@@ -1857,14 +1869,111 @@ export function renderInviteRewardsText({ rewardsState = null, notice = null } =
   return lines.join('\n');
 }
 
-export function renderInviteRewardsKeyboard() {
+export function renderInviteRewardsKeyboard({ rewardsState = null } = {}) {
+  const mode = String(rewardsState?.rewardsSummary?.mode || rewardsState?.mode || 'off').trim().toLowerCase();
+  const redeemLabel = mode === 'live'
+    ? '✨ Redeem for Pro'
+    : mode === 'earn_only'
+      ? '🔒 Redeem for Pro'
+      : mode === 'paused'
+        ? '⏸️ Redeem paused'
+        : '🚫 Redeem off';
   return buildInlineKeyboard([
+    [{ text: redeemLabel, callback_data: 'invite:redeem' }],
     [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
     [
       { text: '📊 Performance', callback_data: 'invite:perf' },
       { text: '📋 Invite history', callback_data: 'invite:hist:1' }
     ],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ]);
+}
+
+export function renderInviteRedeemText({ redeemState = null, notice = null } = {}) {
+  const summary = redeemState?.rewardsSummary || {};
+  const catalog = Array.isArray(redeemState?.catalog) ? redeemState.catalog : [];
+  const lines = [
+    '✨ Redeem for Pro',
+    '',
+    'Exchange available invite points for Intro Deck Pro.',
+    '',
+    '<b>Status</b>',
+    `• Mode: ${escapeHtml(formatInviteRewardsModeLabel(redeemState?.mode || summary.mode || 'off'))}`,
+    `• Available: ${Number(summary.availablePoints || 0) || 0}`,
+    `• Pending: ${Number(summary.pendingPoints || 0) || 0}`,
+    `• Redeemed: ${Number(summary.redeemedPoints || 0) || 0}`,
+    '',
+    '<b>Catalog</b>'
+  ];
+
+  if (catalog.length) {
+    catalog.forEach((item) => {
+      lines.push(`• ${escapeHtml(item.label || item.code)} — ${Number(item.pointsCost || 0) || 0} pts`);
+    });
+  } else {
+    lines.push('• No redeem catalog is configured right now.');
+  }
+
+  if (redeemState?.blockedReason === 'redeem_not_live_in_earn_only') {
+    lines.push('', 'Redeem is not live yet. Earn-only mode keeps balances visible without spending.');
+  } else if (redeemState?.blockedReason === 'rewards_paused') {
+    lines.push('', 'Rewards are paused right now. No new redeem actions can be completed.');
+  } else if (redeemState?.blockedReason === 'rewards_off') {
+    lines.push('', 'Rewards program is off right now.');
+  } else {
+    lines.push('', 'Only available points can be spent. Pending stays locked until confirmation.');
+  }
+
+  if (notice) {
+    lines.push('', escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderInviteRedeemKeyboard({ redeemState = null } = {}) {
+  const rows = [];
+  const mode = String(redeemState?.mode || redeemState?.rewardsSummary?.mode || 'off').trim().toLowerCase();
+  const availablePoints = Number(redeemState?.rewardsSummary?.availablePoints || 0) || 0;
+  const catalog = Array.isArray(redeemState?.catalog) ? redeemState.catalog : [];
+
+  if (mode === 'live') {
+    catalog.forEach((item) => {
+      const affordable = availablePoints >= (Number(item.pointsCost || 0) || 0);
+      rows.push([{ text: `${affordable ? '✅' : '🔒'} ${item.label || item.code} • ${item.pointsCost} pts`, callback_data: `invite:redeem_item:${item.code}` }]);
+    });
+  }
+
+  rows.push([{ text: '🎯 Points', callback_data: 'invite:points' }]);
+  rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderInviteRedeemConfirmText({ catalogItem = null, rewardsSummary = null, notice = null } = {}) {
+  const itemLabel = catalogItem?.label || catalogItem?.code || 'selected item';
+  const cost = Number(catalogItem?.pointsCost || 0) || 0;
+  const proDays = Number(catalogItem?.proDays || 0) || 0;
+  const available = Number(rewardsSummary?.availablePoints || 0) || 0;
+  return [
+    '✅ Confirm redeem',
+    '',
+    `Redeem <b>${escapeHtml(itemLabel)}</b>?`,
+    '',
+    `• Cost: ${cost} pts`,
+    `• Result: ${proDays} days Pro`,
+    `• Available now: ${available}`,
+    '',
+    'This spends available points only and applies Pro through the existing subscription rail.',
+    ...(notice ? ['', escapeHtml(notice)] : [])
+  ].join('\n');
+}
+
+export function renderInviteRedeemConfirmKeyboard({ redemptionId = null } = {}) {
+  return buildInlineKeyboard([
+    [{ text: '✅ Confirm', callback_data: `invite:redeem_confirm:${redemptionId}` }],
+    [{ text: '↩️ Back to redeem', callback_data: 'invite:redeem' }],
+    [{ text: '🎯 Points', callback_data: 'invite:points' }]
   ]);
 }
 

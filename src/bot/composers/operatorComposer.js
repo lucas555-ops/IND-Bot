@@ -54,7 +54,7 @@ import {
 } from '../../lib/storage/adminStore.js';
 import { normalizeAdminAuditSegment, normalizeAdminDeliverySegment, normalizeAdminIntroSegment, normalizeAdminQualitySegment, normalizeAdminUserSegment } from '../../db/adminRepo.js';
 import { formatUserFacingError } from '../utils/notices.js';
-import { loadAdminInviteSnapshotState } from '../../lib/storage/inviteStore.js';
+import { changeInviteRewardsModeForTelegramUser, loadAdminInviteSnapshotState } from '../../lib/storage/inviteStore.js';
 
 function parseOpsIntroRequestId(text = '') {
   const match = String(text).match(/^\/ops(?:@\w+)?(?:\s+(\d+))?/);
@@ -212,7 +212,8 @@ export function createOperatorComposer({
           pendingDue: 0
         },
         topRewardInviters: [],
-        recentRewardEvents: []
+        recentRewardEvents: [],
+        modeAudit: []
       },
       activationHint: 'connected LinkedIn or started a profile',
       reason: String(error?.message || error)
@@ -933,6 +934,32 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:invite', async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderAdminSurface(ctx, 'invite', 'edit');
+  });
+
+  composer.callbackQuery(/^adm:invite:mode:(off|earn_only|live|paused)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    if (!isOperatorTelegramUser(ctx.from.id)) {
+      await renderOperatorOnly(ctx, 'edit');
+      return;
+    }
+
+    const toMode = ctx.match?.[1] || 'off';
+    const result = await changeInviteRewardsModeForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      toMode,
+      reason: 'telegram_admin_invite_mode_control'
+    }).catch((error) => ({ persistenceEnabled: true, changed: false, blocked: true, reason: String(error?.message || error) }));
+
+    const notice = result.changed
+      ? `Mode updated: ${result.previousMode || 'off'} → ${result.mode || toMode}`
+      : `Mode unchanged: ${result.mode || toMode}`;
+    await renderAdminInvite(ctx, { notice }, 'edit');
+  });
+
+  composer.callbackQuery('adm:invite:audit', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderAdminInvite(ctx, { notice: 'Showing recent mode audit entries below the rewards summary.' }, 'edit');
   });
 
   composer.callbackQuery('adm:comms', async (ctx) => {

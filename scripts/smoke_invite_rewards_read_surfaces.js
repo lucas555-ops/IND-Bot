@@ -129,8 +129,8 @@ if (!inviteText.includes('<b>Points</b>') || !inviteText.includes('Open Points')
 }
 
 const currentState = readFileSync(currentStatePath, 'utf8');
-if (!currentState.includes('STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth')) {
-  throw new Error('Current state doc must be updated to STEP052.4');
+if (!currentState.includes('STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth') && !currentState.includes('STEP052.5 — Invite Rewards Redeem Foundation + Founder Mode Controls')) {
+  throw new Error('Current state doc must remain on STEP052.4+ rewards corridor');
 }
 
 if (!existsSync(specPath)) {

@@ -4,10 +4,10 @@
 Intro Deck
 
 ## Current source baseline
-STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth
+STEP052.5 — Invite Rewards Redeem Foundation + Founder Mode Controls
 
 ## Layer
-Product hardening / invite expansion / rewards read truth
+Product hardening / invite expansion / rewards redeem truth + founder/operator controls
 
 ## Source-confirmed
 - Invite layer remains a bounded module:
@@ -23,13 +23,9 @@ Product hardening / invite expansion / rewards read truth
   - `🎯 Points` read screen inside invite layer
   - invite root points preview
   - performance/history navigation into points
-- Founder/admin invite read truth is now expanded with:
-  - current rewards mode
-  - rewards totals
-  - top reward inviters
-  - recent reward events
-  - pending confirmation counts
-- Runtime accrual is intentionally mode-gated.
+- Founder/admin invite read truth now includes mode audit and mode-switch controls on the existing admin invite surface.
+- User redeem path is now implemented inside invite rewards surfaces.
+- Runtime accrual remains mode-gated.
 - Safe default remains `off` until manual verification.
 
 ## Rewards activation truth
@@ -62,10 +58,9 @@ Pending reward accrual check is now re-run after:
 - visibility toggle
 
 ## What this step still does not do
-- no user-facing redeem runtime
-- no founder mode controls
 - no settlement job
 - no pending -> available transition yet
+- no reconciliation / live verification hardening yet
 
 ## What must not break
 - LinkedIn OIDC truth
@@ -80,5 +75,23 @@ Pending reward accrual check is now re-run after:
 - live-confirmed: no
 - live status not confirmed — manual verification required
 
+## Redeem truth now in source
+- starter catalog:
+  - `100 points -> 7 days Pro`
+  - `250 points -> 30 days Pro`
+- redeem runs only from `available`
+- redeem stays blocked in `off`, `earn_only`, and `paused`
+- successful redeem uses the canonical Pro subscription rail
+- repeated confirm on the same redemption request resolves safely without double-completing that request
+
+## Founder/operator controls now in source
+- current mode remains visible in `👑 Админка -> 🧰 Операции -> 📨 Инвайты`
+- founder/operator allowlist can switch:
+  - `off`
+  - `earn_only`
+  - `live`
+  - `paused`
+- recent mode audit is visible in the same admin invite surface
+
 ## Next recommended step
-STEP052.5 — Invite Rewards Redeem Foundation + Founder Mode Controls
+STEP052.6 — Invite Rewards Settlement + Live Verification Hardening
