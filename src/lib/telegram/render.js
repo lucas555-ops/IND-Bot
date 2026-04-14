@@ -1645,9 +1645,18 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
       lines.push(`• Joined from: ${escapeHtml(inviteState.invitedBy.displayName)}`);
     }
 
+    const rewardsSummary = inviteState?.rewardsSummary || null;
+    if (rewardsSummary) {
+      lines.push('', '<b>Points</b>');
+      lines.push(`• Mode: ${escapeHtml(formatInviteRewardsModeLabel(rewardsSummary.mode))}`);
+      lines.push(`• Pending: ${Number(rewardsSummary.pendingPoints || 0) || 0}`);
+      lines.push(`• Available: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
+    }
+
     lines.push('', '<b>Next step</b>');
     lines.push('• Open Performance for source split and recent 7-day quality.');
     lines.push('• Open Invite history for the full paged list, even before your first invite arrives.');
+    lines.push('• Open Points to check pending, available, and redeemed rewards truth.');
   }
 
   if (notice) {
@@ -1669,6 +1678,7 @@ export function renderInviteKeyboard({ inviteState = null } = {}) {
       { text: '📊 Performance', callback_data: 'invite:perf' },
       { text: '📋 Invite history', callback_data: 'invite:hist:1' }
     ]);
+    rows.push([{ text: '🎯 Points', callback_data: 'invite:points' }]);
     rows.push([{ text: '🔄 Refresh', callback_data: 'invite:root' }]);
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
@@ -1717,6 +1727,7 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
 
 export function renderInvitePerformanceKeyboard({ inviteState = null } = {}) {
   const rows = [
+    [{ text: '🎯 Points', callback_data: 'invite:points' }],
     [{ text: '📋 Invite history', callback_data: 'invite:hist:1' }],
     [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
@@ -1776,6 +1787,7 @@ export function renderInviteHistoryKeyboard({ inviteState = null, historyState =
     { text: '📨 Invite contacts', callback_data: 'invite:root' },
     { text: '📊 Performance', callback_data: 'invite:perf' }
   ]);
+  rows.push([{ text: '🎯 Points', callback_data: 'invite:points' }]);
   if (!(Number(inviteState?.invitedCount || 0) > 0)) {
     rows.push([
       { text: '📨 Share invite', switch_inline_query: inviteState?.shareInlineQuery || 'invite' },
@@ -1784,6 +1796,76 @@ export function renderInviteHistoryKeyboard({ inviteState = null, historyState =
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
+}
+
+function formatInviteRewardsModeLabel(mode = 'off') {
+  switch (String(mode || 'off').trim().toLowerCase()) {
+    case 'earn_only':
+      return 'earn only';
+    case 'live':
+      return 'live';
+    case 'paused':
+      return 'paused';
+    case 'off':
+    default:
+      return 'off';
+  }
+}
+
+function renderInviteRewardEventLine(event = null, index = 0) {
+  if (!event) {
+    return `${index + 1}. —`;
+  }
+
+  const statusLabel = String(event.status || 'pending').replaceAll('_', ' ');
+  const dueLabel = event.confirmAfter ? formatDateTimeShort(event.confirmAfter) : '—';
+  const displayName = event.invitedDisplayName || 'Invited contact';
+  return `${index + 1}. ${displayName} • ${Number(event.points || 0) || 0} pts • ${statusLabel} • due ${dueLabel}`;
+}
+
+export function renderInviteRewardsText({ rewardsState = null, notice = null } = {}) {
+  const summary = rewardsState?.rewardsSummary || {};
+  const recentEvents = Array.isArray(rewardsState?.recentEvents) ? rewardsState.recentEvents : [];
+  const lines = [
+    '🎯 Points',
+    '',
+    'Read-only rewards truth for your invite activity. Pending is not spendable yet.',
+    '',
+    '<b>Status</b>',
+    `• Mode: ${escapeHtml(formatInviteRewardsModeLabel(summary.mode || 'off'))}`,
+    `• Pending: ${Number(summary.pendingPoints || 0) || 0}`,
+    `• Available: ${Number(summary.availablePoints || 0) || 0}`,
+    `• Redeemed: ${Number(summary.redeemedPoints || 0) || 0}`,
+    '',
+    '<b>Program rule</b>',
+    `• Current signal: ${escapeHtml(rewardsState?.activationHint || 'the invited member connected LinkedIn and reached listed-ready state')}.`,
+    `• Pending confirms after ${Number(summary?.config?.activationConfirmHours || 24) || 24}h when the activation still holds.`,
+    '• Self-invites, existing users, and raw opens do not earn points.'
+  ];
+
+  lines.push('', '<b>Recent reward events</b>');
+  if (recentEvents.length > 0) {
+    recentEvents.forEach((event, index) => lines.push(escapeHtml(renderInviteRewardEventLine(event, index))));
+  } else {
+    lines.push('• No reward events yet. Invite quality still has to reach the listed-ready threshold.');
+  }
+
+  if (notice) {
+    lines.push('', escapeHtml(notice));
+  }
+
+  return lines.join('\n');
+}
+
+export function renderInviteRewardsKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '📨 Invite contacts', callback_data: 'invite:root' }],
+    [
+      { text: '📊 Performance', callback_data: 'invite:perf' },
+      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
+    ],
+    [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ]);
 }
 
 export function renderInviteLinkText({ inviteState = null } = {}) {

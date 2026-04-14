@@ -261,10 +261,14 @@ function buildAdminInviteText({ state = null, notice = null } = {}) {
   const summary = state?.snapshot?.summary || {};
   const topInviters = Array.isArray(state?.snapshot?.topInviters) ? state.snapshot.topInviters : [];
   const recentInvites = Array.isArray(state?.snapshot?.recentInvites) ? state.snapshot.recentInvites : [];
+  const rewards = state?.rewards || {};
+  const rewardsTotals = rewards?.totals || {};
+  const topRewardInviters = Array.isArray(rewards?.topRewardInviters) ? rewards.topRewardInviters : [];
+  const recentRewardEvents = Array.isArray(rewards?.recentRewardEvents) ? rewards.recentRewardEvents : [];
   const lines = [
     '📨 Инвайты',
     '',
-    'Сводка invite-слоя и качества активации без rewards и redeem.',
+    'Сводка invite-слоя, rewards read-truth и качества активации без founder write-controls.',
     '',
     'Сводка:',
     countLine('Всего инвайтов', summary.totalInvites || 0),
@@ -281,15 +285,36 @@ function buildAdminInviteText({ state = null, notice = null } = {}) {
   if (state?.activationHint) {
     lines.push('', `Правило активации: ${state.activationHint}`);
   }
+  lines.push('', 'Rewards:');
+  lines.push(`Mode: ${formatShortStatus(rewards?.mode, 'off')}`);
+  lines.push(`Pending: ${rewardsTotals.pendingPoints || 0} pts • ${rewardsTotals.pendingEntries || 0} entries`);
+  lines.push(`Available: ${rewardsTotals.availablePoints || 0} pts • ${rewardsTotals.availableEntries || 0} entries`);
+  lines.push(`Redeemed: ${rewardsTotals.redeemedPoints || 0} pts • ${rewardsTotals.redeemedEntries || 0} entries`);
+  lines.push(`Кандидаты на confirm: ${rewardsTotals.pendingCandidates || 0} • overdue: ${rewardsTotals.pendingDue || 0}`);
+  if (rewards?.config) {
+    lines.push(`Конфиг: ${rewards.config.activationPoints || 0} pts • окно ${rewards.config.activationConfirmHours || 24}h`);
+  }
   lines.push('', 'Топ инвайтеры:');
   if (topInviters.length) {
     topInviters.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.invitedCount || 0} invited • ${item.activatedCount || 0} activated • ${item.activationRate || 0}%`));
   } else {
     lines.push('— пока нет данных');
   }
+  lines.push('', 'Топ по rewards:');
+  if (topRewardInviters.length) {
+    topRewardInviters.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.displayName, 28)} — ${item.totalPoints || 0} pts • pending ${item.pendingPoints || 0} • available ${item.availablePoints || 0}`));
+  } else {
+    lines.push('— пока нет данных');
+  }
   lines.push('', 'Последние инвайты:');
   if (recentInvites.length) {
     recentInvites.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 24)} → ${truncate(item.displayName, 22)} • ${item.status === 'activated' ? 'activated' : 'joined'} • ${item.source === 'inline_share' ? 'inline' : item.source === 'invite_card' ? 'card' : 'link'} • ${formatDateTimeShort(item.joinedAt)}`));
+  } else {
+    lines.push('— пока нет данных');
+  }
+  lines.push('', 'Последние reward events:');
+  if (recentRewardEvents.length) {
+    recentRewardEvents.forEach((item, index) => lines.push(`${index + 1}. ${truncate(item.referrerDisplayName, 20)} → ${truncate(item.invitedDisplayName, 20)} • ${item.status} • ${item.points || 0} pts • due ${formatDateTimeShort(item.confirmAfter)}`));
   } else {
     lines.push('— пока нет данных');
   }

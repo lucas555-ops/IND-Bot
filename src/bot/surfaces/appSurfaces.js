@@ -7,7 +7,7 @@ import { loadDmInboxState, loadDmThreadDetailForTelegramUser } from '../../lib/s
 import { touchTelegramUserAndLoadProfile } from '../../lib/storage/profileStore.js';
 import { loadNotificationOperatorSurface } from '../../lib/storage/notificationStore.js';
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
-import { loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
+import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
 import { isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
@@ -86,6 +86,12 @@ const renderInviteLinkText = render.renderInviteLinkText;
 const renderInviteLinkKeyboard = render.renderInviteLinkKeyboard;
 const renderInviteCardText = render.renderInviteCardText;
 const renderInviteCardKeyboard = render.renderInviteCardKeyboard;
+const renderInvitePerformanceText = render.renderInvitePerformanceText;
+const renderInvitePerformanceKeyboard = render.renderInvitePerformanceKeyboard;
+const renderInviteHistoryText = render.renderInviteHistoryText;
+const renderInviteHistoryKeyboard = render.renderInviteHistoryKeyboard;
+const renderInviteRewardsText = render.renderInviteRewardsText;
+const renderInviteRewardsKeyboard = render.renderInviteRewardsKeyboard;
 const renderInlineInviteCaption = render.renderInlineInviteCaption;
 const renderInlineInviteShareText = render.renderInlineInviteShareText;
 
@@ -210,7 +216,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
   async function buildPricingSurface(ctx) {
     const state = await loadPricingSurfaceState({
       telegramUserId: ctx.from.id,
-      telegramUsername: ctx.from.username || null
+      telegramUsername: ctx.from.username || null,
+      recentLimit: 3
     }).catch((error) => ({
       persistenceEnabled: false,
       profile: null,
@@ -472,6 +479,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       invitePhotoFileId,
       invitedCount: 0,
       activatedCount: 0,
+      rewardsSummary: {
+        mode: 'off',
+        pendingPoints: 0,
+        availablePoints: 0,
+        redeemedPoints: 0
+      },
       invitedBy: null,
       invited: [],
       reason: String(error?.message || error)
@@ -499,6 +512,123 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     return {
       text: renderInviteLinkText({ inviteState: state }),
       reply_markup: renderInviteLinkKeyboard(),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildInvitePerformanceSurface(ctx, notice = null) {
+    const state = await loadInviteSurfaceState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      recentLimit: 3
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      inviteCode: null,
+      inviteLink: null,
+      inlineInviteLink: null,
+      inviteCardLink: null,
+      shareInlineQuery: 'invite',
+      invitedCount: 0,
+      activatedCount: 0,
+      rewardsSummary: {
+        mode: 'off',
+        pendingPoints: 0,
+        availablePoints: 0,
+        redeemedPoints: 0
+      },
+      invitedBy: null,
+      invited: [],
+      hasMoreInvites: false,
+      activationHint: 'connected LinkedIn or started a profile',
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInvitePerformanceText({ inviteState: state, notice }),
+      reply_markup: renderInvitePerformanceKeyboard({ inviteState: state }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildInviteHistorySurface(ctx, page = 1, notice = null) {
+    const state = await loadInviteHistoryState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      page
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      snapshot: {
+        inviteCode: null,
+        inviteLink: null,
+        inlineInviteLink: null,
+        inviteCardLink: null,
+        shareInlineQuery: 'invite',
+        invitedCount: 0,
+        activatedCount: 0,
+        rewardsSummary: {
+          mode: 'off',
+          pendingPoints: 0,
+          availablePoints: 0,
+          redeemedPoints: 0
+        },
+        invitedBy: null,
+        invited: [],
+        hasMoreInvites: false,
+        activationHint: 'connected LinkedIn or started a profile'
+      },
+      history: {
+        totalCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasPrev: false,
+        hasNext: false,
+        startIndex: 0,
+        endIndex: 0,
+        items: []
+      },
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInviteHistoryText({ inviteState: state.snapshot, historyState: state.history, notice }),
+      reply_markup: renderInviteHistoryKeyboard({ inviteState: state.snapshot, historyState: state.history }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildInviteRewardsSurface(ctx, notice = null) {
+    const state = await loadInviteRewardsSummaryState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch((error) => ({
+      persistenceEnabled: false,
+      rewardsSummary: {
+        mode: 'off',
+        config: {
+          activationPoints: 10,
+          activationConfirmHours: 24,
+          activationRuleVersion: 'introdeck_listed_ready_v1',
+          catalogVersion: 'v1'
+        },
+        availablePoints: 0,
+        pendingPoints: 0,
+        redeemedPoints: 0,
+        availableEntries: 0,
+        pendingEntries: 0,
+        redeemedEntries: 0
+      },
+      recentEvents: [],
+      activationHint: 'the invited member connected LinkedIn and reached listed-ready state',
+      reason: String(error?.message || error)
+    }));
+
+    return {
+      text: renderInviteRewardsText({ rewardsState: state, notice }),
+      reply_markup: renderInviteRewardsKeyboard({ rewardsState: state }),
       parse_mode: 'HTML',
       disable_web_page_preview: true
     };
@@ -634,6 +764,7 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     };
   }
 
+
   async function buildIntroInboxSurface(ctx, notice = null) {
     const state = await loadIntroInboxState({
       telegramUserId: ctx.from.id,
@@ -676,6 +807,9 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     buildHelpSurface,
     buildInviteSurface,
     buildInviteLinkSurface,
+    buildInvitePerformanceSurface,
+    buildInviteHistorySurface,
+    buildInviteRewardsSurface,
     buildInviteCardMessage,
     buildPricingSurface,
     buildProfileMenuSurface,

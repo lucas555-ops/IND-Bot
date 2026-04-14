@@ -42,6 +42,7 @@ export function createInviteComposer({
   buildInviteSurface,
   buildInviteLinkSurface,
   buildInvitePerformanceSurface,
+  buildInviteRewardsSurface,
   buildInviteHistorySurface,
   buildInviteCardMessage
 }) {
@@ -110,6 +111,21 @@ export function createInviteComposer({
     await safeEditOrReply(ctx, surface.text, options);
   };
 
+  const renderInviteRewards = async (ctx, method = 'edit', notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildInviteRewardsSurface(ctx, notice);
+    const options = {
+      reply_markup: surface.reply_markup,
+      ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
+      ...(surface.disable_web_page_preview ? { disable_web_page_preview: true } : {})
+    };
+    if (method === 'reply') {
+      await ctx.reply(surface.text, options);
+      return;
+    }
+    await safeEditOrReply(ctx, surface.text, options);
+  };
+
   composer.command('start', async (ctx, next) => {
     const startParam = parseStartParam(ctx);
     const attribution = await attemptInviteAttributionForTelegramUser({
@@ -143,6 +159,11 @@ export function createInviteComposer({
   composer.callbackQuery('invite:perf', async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderInvitePerformance(ctx, 'edit');
+  });
+
+  composer.callbackQuery('invite:points', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderInviteRewards(ctx, 'edit');
   });
 
   composer.callbackQuery(/^invite:hist:(\d+)$/, async (ctx) => {

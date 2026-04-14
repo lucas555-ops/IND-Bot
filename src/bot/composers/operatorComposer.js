@@ -192,6 +192,28 @@ export function createOperatorComposer({
         topInviters: [],
         recentInvites: []
       },
+      rewards: {
+        mode: 'off',
+        config: {
+          activationPoints: 10,
+          activationConfirmHours: 24,
+          activationRuleVersion: 'introdeck_listed_ready_v1',
+          catalogVersion: 'v1'
+        },
+        totals: {
+          pendingPoints: 0,
+          availablePoints: 0,
+          redeemedPoints: 0,
+          pendingEntries: 0,
+          availableEntries: 0,
+          redeemedEntries: 0,
+          totalRewardEvents: 0,
+          pendingCandidates: 0,
+          pendingDue: 0
+        },
+        topRewardInviters: [],
+        recentRewardEvents: []
+      },
       activationHint: 'connected LinkedIn or started a profile',
       reason: String(error?.message || error)
     }));

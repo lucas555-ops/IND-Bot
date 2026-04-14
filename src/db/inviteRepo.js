@@ -863,6 +863,40 @@ export async function getInviteRewardSummaryByUserId(client, { userId }) {
   };
 }
 
+export async function listInviteRewardEventsByUserId(client, { userId, limit = 5 } = {}) {
+  const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Math.min(20, Number(limit)) : 5;
+  const result = await client.query(
+    `
+      select
+        ire.*,
+        invited.telegram_user_id,
+        invited.telegram_username,
+        la.full_name as invited_linkedin_name,
+        mp.display_name as invited_display_name,
+        mp.headline_user as invited_headline_user
+      from invite_reward_events ire
+      join users invited on invited.id = ire.invited_user_id
+      left join linkedin_accounts la on la.user_id = invited.id
+      left join member_profiles mp on mp.user_id = invited.id
+      where ire.referrer_user_id = $1
+      order by ire.created_at desc, ire.id desc
+      limit $2
+    `,
+    [userId, safeLimit]
+  );
+
+  return (result.rows || []).map((row) => ({
+    ...normalizeInviteRewardEventRow(row),
+    invitedDisplayName: buildMemberLabel({
+      display_name: row.invited_display_name,
+      linkedin_name: row.invited_linkedin_name,
+      telegram_username: row.telegram_username,
+      telegram_user_id: row.telegram_user_id
+    }),
+    invitedHeadlineUser: row.invited_headline_user || null
+  }));
+}
+
 export async function listPendingInviteRewardConfirmationCandidates(client, { limit = 50, nowTs = null } = {}) {
   const safeLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Math.min(200, Number(limit)) : 50;
   const effectiveNow = nowTs ? new Date(nowTs).toISOString() : new Date().toISOString();
@@ -887,4 +921,132 @@ export async function listPendingInviteRewardConfirmationCandidates(client, { li
     source: row.source || null,
     joinedAt: row.joined_at || null
   }));
+}
+
+export async function getAdminInviteRewardsSnapshot(client, { topLimit = 5, recentLimit = 5 } = {}) {
+  await ensureInviteRewardsDefaults(client);
+  const safeTopLimit = Number.isFinite(Number(topLimit)) && Number(topLimit) > 0 ? Math.min(20, Number(topLimit)) : 5;
+  const safeRecentLimit = Number.isFinite(Number(recentLimit)) && Number(recentLimit) > 0 ? Math.min(20, Number(recentLimit)) : 5;
+
+  const [mode, config, totalsResult, topResult, recentResult, dueResult] = await Promise.all([
+    getInviteRewardsMode(client),
+    getInviteRewardsConfig(client),
+    client.query(
+      `
+        select
+          coalesce(sum(case when balance_bucket = 'pending' then points_delta else 0 end), 0)::int as pending_points,
+          coalesce(sum(case when balance_bucket = 'available' then points_delta else 0 end), 0)::int as available_points,
+          coalesce(sum(case when balance_bucket = 'redeemed' then abs(points_delta) else 0 end), 0)::int as redeemed_points,
+          count(*) filter (where balance_bucket = 'pending' and points_delta > 0)::int as pending_entries,
+          count(*) filter (where balance_bucket = 'available' and points_delta > 0)::int as available_entries,
+          count(*) filter (where balance_bucket = 'redeemed')::int as redeemed_entries,
+          count(*) filter (where entry_type = 'pending_credit')::int as total_reward_events
+        from invite_reward_ledger
+      `
+    ),
+    client.query(
+      `
+        select
+          ire.referrer_user_id,
+          ref.telegram_user_id as referrer_telegram_user_id,
+          ref.telegram_username as referrer_telegram_username,
+          la_ref.full_name as referrer_linkedin_name,
+          mp_ref.display_name as referrer_display_name,
+          coalesce(sum(case when irl.balance_bucket in ('pending', 'available') then irl.points_delta else 0 end), 0)::int as total_points,
+          coalesce(sum(case when irl.balance_bucket = 'pending' then irl.points_delta else 0 end), 0)::int as pending_points,
+          coalesce(sum(case when irl.balance_bucket = 'available' then irl.points_delta else 0 end), 0)::int as available_points,
+          count(*) filter (where irl.entry_type = 'pending_credit')::int as reward_events
+        from invite_reward_ledger irl
+        join invite_reward_events ire on ire.id = irl.reward_event_id
+        join users ref on ref.id = ire.referrer_user_id
+        left join linkedin_accounts la_ref on la_ref.user_id = ref.id
+        left join member_profiles mp_ref on mp_ref.user_id = ref.id
+        where irl.points_delta > 0
+        group by ire.referrer_user_id, ref.telegram_user_id, ref.telegram_username, la_ref.full_name, mp_ref.display_name
+        order by total_points desc, available_points desc, pending_points desc, ire.referrer_user_id asc
+        limit $1
+      `,
+      [safeTopLimit]
+    ),
+    client.query(
+      `
+        select
+          ire.*,
+          ref.telegram_user_id as referrer_telegram_user_id,
+          ref.telegram_username as referrer_telegram_username,
+          la_ref.full_name as referrer_linkedin_name,
+          mp_ref.display_name as referrer_display_name,
+          invited.telegram_user_id as invited_telegram_user_id,
+          invited.telegram_username as invited_telegram_username,
+          la_inv.full_name as invited_linkedin_name,
+          mp_inv.display_name as invited_display_name
+        from invite_reward_events ire
+        join users ref on ref.id = ire.referrer_user_id
+        join users invited on invited.id = ire.invited_user_id
+        left join linkedin_accounts la_ref on la_ref.user_id = ref.id
+        left join member_profiles mp_ref on mp_ref.user_id = ref.id
+        left join linkedin_accounts la_inv on la_inv.user_id = invited.id
+        left join member_profiles mp_inv on mp_inv.user_id = invited.id
+        order by ire.created_at desc, ire.id desc
+        limit $1
+      `,
+      [safeRecentLimit]
+    ),
+    client.query(
+      `
+        select
+          count(*)::int as pending_candidates,
+          count(*) filter (where confirm_after <= now())::int as pending_due
+        from invite_reward_events
+        where status = 'pending'
+      `
+    )
+  ]);
+
+  const totals = totalsResult.rows[0] || {};
+  const dueRow = dueResult.rows[0] || {};
+
+  return {
+    mode,
+    config,
+    totals: {
+      pendingPoints: Number(totals.pending_points || 0) || 0,
+      availablePoints: Number(totals.available_points || 0) || 0,
+      redeemedPoints: Number(totals.redeemed_points || 0) || 0,
+      pendingEntries: Number(totals.pending_entries || 0) || 0,
+      availableEntries: Number(totals.available_entries || 0) || 0,
+      redeemedEntries: Number(totals.redeemed_entries || 0) || 0,
+      totalRewardEvents: Number(totals.total_reward_events || 0) || 0,
+      pendingCandidates: Number(dueRow.pending_candidates || 0) || 0,
+      pendingDue: Number(dueRow.pending_due || 0) || 0
+    },
+    topRewardInviters: (topResult.rows || []).map((row) => ({
+      referrerUserId: row.referrer_user_id,
+      displayName: buildMemberLabel({
+        display_name: row.referrer_display_name,
+        linkedin_name: row.referrer_linkedin_name,
+        telegram_username: row.referrer_telegram_username,
+        telegram_user_id: row.referrer_telegram_user_id
+      }),
+      totalPoints: Number(row.total_points || 0) || 0,
+      pendingPoints: Number(row.pending_points || 0) || 0,
+      availablePoints: Number(row.available_points || 0) || 0,
+      rewardEvents: Number(row.reward_events || 0) || 0
+    })),
+    recentRewardEvents: (recentResult.rows || []).map((row) => ({
+      ...normalizeInviteRewardEventRow(row),
+      referrerDisplayName: buildMemberLabel({
+        display_name: row.referrer_display_name,
+        linkedin_name: row.referrer_linkedin_name,
+        telegram_username: row.referrer_telegram_username,
+        telegram_user_id: row.referrer_telegram_user_id
+      }),
+      invitedDisplayName: buildMemberLabel({
+        display_name: row.invited_display_name,
+        linkedin_name: row.invited_linkedin_name,
+        telegram_username: row.invited_telegram_username,
+        telegram_user_id: row.invited_telegram_user_id
+      })
+    }))
+  };
 }

@@ -4,10 +4,10 @@
 Intro Deck
 
 ## Current source baseline
-STEP052.3 — Invite Rewards Foundation (earn_only first)
+STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth
 
 ## Layer
-Product hardening / invite expansion / rewards foundation
+Product hardening / invite expansion / rewards read truth
 
 ## Source-confirmed
 - Invite layer remains a bounded module:
@@ -18,13 +18,17 @@ Product hardening / invite expansion / rewards foundation
   - `📋 Invite history`
 - Admin invite snapshot remains read-only under:
   - `👑 Админка` → `🧰 Операции` → `📨 Инвайты`
-- Rewards foundation is now implemented in source:
-  - settings truth for `off / earn_only / live / paused`
-  - reward events table
-  - ledger table
-  - redemption skeleton table
-  - pending activation reward creation
-  - duplicate guard for one invited user -> one activation reward event
+- Rewards foundation remains implemented in source.
+- User read surfaces are now implemented:
+  - `🎯 Points` read screen inside invite layer
+  - invite root points preview
+  - performance/history navigation into points
+- Founder/admin invite read truth is now expanded with:
+  - current rewards mode
+  - rewards totals
+  - top reward inviters
+  - recent reward events
+  - pending confirmation counts
 - Runtime accrual is intentionally mode-gated.
 - Safe default remains `off` until manual verification.
 
@@ -62,7 +66,6 @@ Pending reward accrual check is now re-run after:
 - no founder mode controls
 - no settlement job
 - no pending -> available transition yet
-- no rewards UI surfaces yet
 
 ## What must not break
 - LinkedIn OIDC truth
@@ -78,4 +81,4 @@ Pending reward accrual check is now re-run after:
 - live status not confirmed — manual verification required
 
 ## Next recommended step
-STEP052.4 — Invite Rewards Read Surfaces + Founder Read Truth
+STEP052.5 — Invite Rewards Redeem Foundation + Founder Mode Controls

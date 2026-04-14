@@ -1,5 +1,6 @@
 import { withDbClient, withDbTransaction, isDatabaseConfigured } from '../../db/pool.js';
 import {
+  getAdminInviteRewardsSnapshot,
   createInviteAttribution,
   createPendingInviteActivationReward,
   ensureInviteRewardsDefaults,
@@ -9,6 +10,7 @@ import {
   getInviteRewardsConfig,
   getInviteRewardsMode,
   getUserByTelegramUserId,
+  listInviteRewardEventsByUserId,
   loadAdminInviteSnapshot,
   loadInviteHistoryByUserId,
   loadInviteSnapshotByUserId,
@@ -74,10 +76,12 @@ export async function loadInviteSurfaceState({ telegramUserId, telegramUsername 
       botUsername: getTelegramConfig().botUsername,
       recentLimit
     });
+    const rewardsSummary = await getInviteRewardSummaryByUserId(client, { userId: user.id });
 
     return {
       persistenceEnabled: true,
       ...snapshot,
+      rewardsSummary,
       activationHint: INTRO_DECK_INVITE_ACTIVATION_HINT,
       reason: 'invite_snapshot_loaded'
     };
@@ -249,16 +253,42 @@ export async function loadAdminInviteSnapshotState() {
         topInviters: [],
         recentInvites: []
       },
+      rewards: {
+        mode: 'off',
+        config: {
+          activationPoints: 10,
+          activationConfirmHours: 24,
+          activationRuleVersion: 'introdeck_listed_ready_v1',
+          catalogVersion: 'v1'
+        },
+        totals: {
+          pendingPoints: 0,
+          availablePoints: 0,
+          redeemedPoints: 0,
+          pendingEntries: 0,
+          availableEntries: 0,
+          redeemedEntries: 0,
+          totalRewardEvents: 0,
+          pendingCandidates: 0,
+          pendingDue: 0
+        },
+        topRewardInviters: [],
+        recentRewardEvents: []
+      },
       activationHint: INTRO_DECK_INVITE_ACTIVATION_HINT,
       reason: 'DATABASE_URL is not configured'
     };
   }
 
   return withDbClient(async (client) => {
-    const snapshot = await loadAdminInviteSnapshot(client);
+    const [snapshot, rewards] = await Promise.all([
+      loadAdminInviteSnapshot(client),
+      getAdminInviteRewardsSnapshot(client)
+    ]);
     return {
       persistenceEnabled: true,
       snapshot,
+      rewards,
       activationHint: INTRO_DECK_INVITE_ACTIVATION_HINT,
       reason: 'admin_invite_snapshot_loaded'
     };
@@ -355,10 +385,15 @@ export async function loadInviteRewardsSummaryState({ telegramUserId, telegramUs
       telegramUsername
     });
 
-    const rewardsSummary = await getInviteRewardSummaryByUserId(client, { userId: user.id });
+    const [rewardsSummary, recentEvents] = await Promise.all([
+      getInviteRewardSummaryByUserId(client, { userId: user.id }),
+      listInviteRewardEventsByUserId(client, { userId: user.id, limit: 5 })
+    ]);
+
     return {
       persistenceEnabled: true,
       rewardsSummary,
+      recentEvents,
       activationHint: INTRO_DECK_REWARDS_ACTIVATION_HINT,
       reason: 'invite_rewards_summary_loaded'
     };
